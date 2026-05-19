@@ -114,6 +114,19 @@ zig ar rcs libpng.a *.o
 # Download rapidjson-1.1.0.zip, copy include/rapidjson/ → deps/include/rapidjson/
 ```
 
+### Build system cleanup (May 2026)
+
+All CMake and legacy build system artifacts have been removed:
+
+- **8 CMakeLists.txt files** deleted (root + all src/ subdirectories)
+- **33 CMake module files** in `cmake/Modules/` deleted
+- **Legacy IDE project directories** removed: `VS/`, `VS.2015/`, `xcode/`
+- **Generated Config.hpp duplicates** removed from `VS-includes/` and `xcode/`
+- **Linux CI scripts and GitHub workflows** removed (now Windows-only build)
+- **INSTALL.md** rewritten with Zig build instructions
+- **.gitignore** cleaned up (removed stale VS/xcode entries)
+- **ci/ and .github/workflows/** directories removed
+
 ## Optional Feature Flags
 
 | Flag | Description | Default |
