@@ -1470,7 +1470,7 @@ void drawImageRotatedAlpha( SDL_Surface* image, SDL_Rect* src, SDL_Rect* pos, re
         return;
     }
     Uint32 color = makeColor(255, 255, 255, alpha);
-    Image::draw(texid[(long int)image->userdata], image->w, image->h,
+    Image::draw(texid[(intptr_t)image->userdata], image->w, image->h,
         src, *pos, SDL_Rect{0, 0, xres, yres}, color, angle);
 }
 
@@ -1487,7 +1487,7 @@ void drawImageColor( SDL_Surface* image, SDL_Rect* src, SDL_Rect* pos, Uint32 co
     if (!image || !pos) {
         return;
     }
-    Image::draw(texid[(long int)image->userdata], image->w, image->h,
+    Image::draw(texid[(intptr_t)image->userdata], image->w, image->h,
         src, *pos, SDL_Rect{0, 0, xres, yres}, color);
 }
 
@@ -1517,7 +1517,7 @@ void drawImage( SDL_Surface* image, SDL_Rect* src, SDL_Rect* pos )
     if (!image || !pos) {
         return;
     }
-    Image::draw(texid[(long int)image->userdata], image->w, image->h,
+    Image::draw(texid[(intptr_t)image->userdata], image->w, image->h,
         src, *pos, SDL_Rect{0, 0, xres, yres}, 0xffffffff);
 }
 
@@ -1547,7 +1547,7 @@ void drawImageScaled( SDL_Surface* image, SDL_Rect* src, SDL_Rect* pos )
     if (!image || !pos) {
         return;
     }
-    Image::draw(texid[(long int)image->userdata], image->w, image->h,
+    Image::draw(texid[(intptr_t)image->userdata], image->w, image->h,
         src, *pos, SDL_Rect{0, 0, xres, yres}, 0xffffffff);
 }
 
@@ -3654,7 +3654,7 @@ void debugPrintText(int x, int y, const SDL_Rect& viewport, char const * const f
             SDL_Rect odest;
 			odest.x = dest.x;
 			odest.y = dest.y;
-            Image::draw(texid[(long int)font->userdata], font->w, font->h,
+            Image::draw(texid[(intptr_t)font->userdata], font->w, font->h,
                 &src, dest, viewport, 0xffffffff);
 			dest.x = odest.x + src.w;
 			dest.y = odest.y;

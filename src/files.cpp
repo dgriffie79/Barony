@@ -2228,7 +2228,7 @@ SDL_Surface* loadImage(char const * const filename)
 
 	// load the new surface as a GL texture
 	allsurfaces[imgref] = newSurface;
-	allsurfaces[imgref]->userdata = (void *)((long int)imgref);
+	allsurfaces[imgref]->userdata = (void *)((intptr_t)imgref);
 	GL_CHECK_ERR(glLoadTexture(allsurfaces[imgref], imgref));
 
 	// free the translated surface

@@ -1,0 +1,16 @@
+.{
+    .name = .barony,
+    .version = "3.2.0",
+    .minimum_zig_version = "0.16.0",
+    .fingerprint = 0xb63ab420c1e4d7,
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "barony.rc",
+        "editor.rc",
+        "barony.ico",
+        "editor.ico",
+    },
+    .dependencies = .{},
+}

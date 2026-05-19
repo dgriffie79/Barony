@@ -1504,7 +1504,7 @@ void glDrawVoxel(view_t* camera, Entity* entity, int mode) {
     if ( SDL_Surface* sprite = tiles[83] )
     {
         GL_CHECK_ERR(glActiveTexture(GL_TEXTURE2));
-        GL_CHECK_ERR(glBindTexture(GL_TEXTURE_2D, texid[(long int)sprite->userdata]));
+        GL_CHECK_ERR(glBindTexture(GL_TEXTURE_2D, texid[(intptr_t)sprite->userdata]));
     }
 
     GL_CHECK_ERR(glActiveTexture(GL_TEXTURE0));*/
@@ -1970,7 +1970,7 @@ void glDrawSprite(view_t* camera, Entity* entity, int mode)
     else
 #endif
     {
-        GL_CHECK_ERR(glBindTexture(GL_TEXTURE_2D, texid[(long int)sprite->userdata]));
+        GL_CHECK_ERR(glBindTexture(GL_TEXTURE_2D, texid[(intptr_t)sprite->userdata]));
     }
     
     // set GL state
@@ -2517,7 +2517,7 @@ void glDrawWorld(view_t* camera, int mode)
         GL_CHECK_ERR(glUniform4fv(shader.uniform("uLightFactor"), 1, light));
         
         // bind cloud texture
-        GL_CHECK_ERR(glBindTexture(GL_TEXTURE_2D, texid[(long int)tiles[cloudtile]->userdata]));
+        GL_CHECK_ERR(glBindTexture(GL_TEXTURE_2D, texid[(intptr_t)tiles[cloudtile]->userdata]));
         
         // draw sky
         skyMesh.draw();
