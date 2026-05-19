@@ -16,11 +16,7 @@
 #include "../../player.hpp"
 #include "../../prng.hpp"
 #include "../../files.hpp"
-#ifdef NINTENDO
- #include "../../nintendo/music.hpp"
-#else
  #include "music_pc.hpp"
-#endif
 
 bool loadMusic()
 {

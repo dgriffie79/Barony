@@ -31,10 +31,7 @@
 #include "../ui/MainMenu.hpp"
 #include "../mod_tools.hpp"
 #include "../book.hpp"
-#ifdef STEAMWORKS
-#include <steam/steam_api.h>
-#include "../steam.hpp"
-#endif
+
 
 //Prototype helper functions for player inventory helper functions.
 bool restrictPaperDollMovement = true;
@@ -4363,35 +4360,19 @@ std::string getBindingNameForMissingTooltipPrompts(int index)
 {
 	if ( index == 1 )
 	{
-#ifdef NINTENDO
-		return "MenuAlt1";
-#else
 		return "MenuAlt2";
-#endif
 	}
 	else if ( index == 2 )
 	{
-#ifdef NINTENDO
-		return "MenuAlt2";
-#else
 		return "MenuAlt1";
-#endif
 	}
 	else if ( index == 3 )
 	{
-#ifdef NINTENDO
-		return "MenuConfirm";
-#else
 		return "MenuCancel";
-#endif
 	}
 	else if ( index == 4 )
 	{
-#ifdef NINTENDO
-		return "MenuCancel";
-#else
 		return "MenuConfirm";
-#endif
 	}
 	else
 	{
@@ -4405,34 +4386,18 @@ int getContextMenuOptionOrder(const int player, ItemContextMenuPrompts prompt)
 	if ( bindingName == "MenuAlt1" )
 	{
 		return 2;
-//#ifdef NINTENDO
-//		return 1;
-//#else
-//#endif
 	}
 	else if ( bindingName == "MenuAlt2" )
 	{
 		return 1;
-//#ifdef NINTENDO
-//		return 2;
-//#else
-//#endif
 	}
 	else if ( bindingName == "MenuConfirm" )
 	{
 		return 4;
-//#ifdef NINTENDO
-//		return 3;
-//#else
-//#endif
 	}
 	else if ( bindingName == "MenuCancel" )
 	{
 		return 3;
-//#ifdef NINTENDO
-//		return 4;
-//#else
-//#endif
 	}
 	return 5;
 }

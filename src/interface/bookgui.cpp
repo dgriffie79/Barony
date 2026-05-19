@@ -622,9 +622,7 @@ void Player::SignGUI_t::openSign(std::string name, Uint32 uid)
 void Player::SignGUI_t::closeSignGUI()
 {
 	bool wasOpen = bSignOpen;
-#ifdef USE_THEORA_VIDEO
-	VideoManager[player.playernum].stop();
-#endif
+
 	bSignOpen = false;
 	signName = "";
 	signUID = 0;
@@ -726,21 +724,7 @@ void Player::SignGUI_t::createSignGUI()
 	videoFrame->setInheritParentFrameOpacity(false);
 	auto videoEmbed = videoFrame->addFrame("video");
 	videoEmbed->setSize(SDL_Rect{ 0, 0, 0, 0 });
-#ifdef USE_THEORA_VIDEO
-	videoEmbed->setDrawCallback([](const Widget& widget, SDL_Rect rect) {
-		if ( widget.getOwner() < 0 )
-		{
-			return;
-		}
-		if ( ScriptTextParser.allEntries.find(players[widget.getOwner()]->signGUI.signName)
-			!= ScriptTextParser.allEntries.end() )
-		{
-			auto& signEntry = ScriptTextParser.allEntries[players[widget.getOwner()]->signGUI.signName];
-			const Frame* f = static_cast<const Frame*>(&widget);
-			VideoManager[widget.getOwner()].drawAsFrameCallback(widget, rect, signEntry.signVideoContent.pos, f->getOpacity() / 100.0);
-		}
-	});
-#endif // USE_THEORA_VIDEO
+
 }
 
 void Player::SignGUI_t::updateSignGUI()
@@ -873,44 +857,7 @@ void Player::SignGUI_t::updateSignGUI()
 	videoFrame->setDisabled(true);
 	if ( signFadeInAnimationY >= 0.99 && signEntry.signVideoContent.path != "" )
 	{
-#ifdef USE_THEORA_VIDEO
-		if ( !VideoManager[player.playernum].isPlaying(signEntry.signVideoContent.path.c_str()) )
-		{
-			VideoManager[player.playernum].loadfile(signEntry.signVideoContent.path.c_str());
-		}
-		const real_t fpsScale = getFPSScale(50.0); // ported from 50Hz
-		real_t setpointDiffX = fpsScale * std::max(.01, (1.0 - signAnimVideo)) / 5.0;
-		signAnimVideo += setpointDiffX;
-		signAnimVideo = std::min(1.0, signAnimVideo);
-		videoFrame->setDisabled(false);
-		videoFrame->setOpacity(signAnimVideo * 100.0);
-		SDL_Rect pos = innerFrame->getSize();
-		pos.x = pos.x + signAnimVideo * pos.w;
-		videoFrame->setSize(pos);
-		auto videoImg = videoFrame->findImage("video bg");
-		videoImg->path = signEntry.signVideoContent.bgPath;
-		if ( auto imgGet = Image::get(videoImg->path.c_str()) )
-		{
-			videoImg->pos.w = imgGet->getWidth();
-			videoImg->pos.h = imgGet->getHeight();
-			videoImg->pos.x = 0;// videoFrame->getSize().w / 2 - videoImg->pos.w / 2;
-			videoImg->pos.y = videoFrame->getSize().h / 2 - videoImg->pos.h / 2;
-		}
-		else
-		{
-			videoImg->pos.w = pos.w;
-			videoImg->pos.h = pos.h;
-			videoImg->pos.y = videoFrame->getSize().h / 2 - videoImg->pos.h / 2;
-		}
-		videoImg->color = makeColor(255, 255, 255, 255 * signAnimVideo);
-
-		Frame* videoEmbed = videoFrame->findFrame("video");
-		const int border = signEntry.signVideoContent.imgBorder;
-		videoEmbed->setSize(SDL_Rect{ videoImg->pos.x + border, videoImg->pos.y + border, 
-			videoImg->pos.w - 2 * border, videoImg->pos.h - 2 * border });
-#else
 		signAnimVideo = 0.0;
-#endif
 	}
 	else
 	{

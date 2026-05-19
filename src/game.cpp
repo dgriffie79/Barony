@@ -29,13 +29,7 @@
 #include "scores.hpp"
 #include "menu.hpp"
 #include "net.hpp"
-#ifdef STEAMWORKS
-#include <steam/steam_api.h>
-#include "steam.hpp"
-#endif
-#ifdef USE_PLAYFAB
-#include "playfab.hpp"
-#endif
+
 #include "prng.hpp"
 #include "collision.hpp"
 #include "paths.hpp"
@@ -59,67 +53,13 @@
 #include <future>
 #include <thread>
 
-#ifdef LINUX
-//Sigsegv catching stuff.
-#include <signal.h>
-#include <string.h>
-#include <execinfo.h>
-#include <sys/stat.h>
 
-static SDL_bool SDL_MouseModeBeforeSignal = SDL_FALSE;
-static int SDL_MouseShowBeforeSignal = SDL_ENABLE;
 
-static void stop_sigaction(int signal, siginfo_t* si, void* arg)
-{
-    SDL_MouseModeBeforeSignal = SDL_GetRelativeMouseMode();
-    SDL_MouseShowBeforeSignal = SDL_ShowCursor(SDL_QUERY);
-	SDL_SetRelativeMouseMode(SDL_FALSE);
-	SDL_ShowCursor(SDL_ENABLE);
-}
 
-static void continue_sigaction(int signal, siginfo_t* si, void* arg)
-{
-	SDL_SetRelativeMouseMode(SDL_MouseModeBeforeSignal);
-	SDL_ShowCursor(SDL_MouseShowBeforeSignal);
-}
 
-static void segfault_sigaction(int signal, siginfo_t* si, void* arg)
-{
-	SDL_SetRelativeMouseMode(SDL_FALSE); //Uncapture mouse.
 
-	printf("Caught segfault at address %p\n", si->si_addr);
-	printf("Signal %d (dumping stack):", signal);
 
-	//Dump the stack.
 
-    constexpr unsigned int STACK_SIZE = 32;
-	void* array[STACK_SIZE];
-	size_t size = backtrace(array, STACK_SIZE);
-	backtrace_symbols_fd(array, size, STDERR_FILENO);
-
-	exit(0);
-}
-
-#endif
-
-#ifdef APPLE
-
-#include <sys/stat.h>
-
-#endif
-
-#ifdef BSD
-
-#include <sys/types.h>
-#include <sys/sysctl.h>
-
-#endif
-
-#ifdef HAIKU
-
-#include <FindDirectory.h>
-
-#endif
 
 #ifdef WINDOWS
 void make_minidump(EXCEPTION_POINTERS* e)
@@ -928,11 +868,7 @@ static ConsoleCommand ccmd_demo_play("/demo_play", "play a recorded demo(default
 
 ConsoleVariable<bool> framesEatMouse("/gui_eat_mouseclicks", true);
 static ConsoleVariable<bool> cvar_lava_use_vismap("/lava_use_vismap", true);
-#ifdef NINTENDO
-static ConsoleVariable<bool> cvar_lava_bubbles_enabled("/lava_bubbles_enabled", false);
-#else
 static ConsoleVariable<bool> cvar_lava_bubbles_enabled("/lava_bubbles_enabled", true);
-#endif
 
 static real_t drunkextend[MAXPLAYERS] = { (real_t)0.0 };
 
@@ -945,9 +881,7 @@ void gameLogic(void)
 	Uint32 i = 0, j;
 	bool entitydeletedself;
 
-#ifdef NINTENDO
-	(void)nxUpdateCrashMessage();
-#endif
+
 
     if (!gamePaused && !loading) {
         if (demo_file) {
@@ -1240,9 +1174,6 @@ void gameLogic(void)
 
 	// damage indicator timers
 	handleDamageIndicatorTicks();
-#ifdef STEAMWORKS
-	MainMenu::richPresence.process();
-#endif
 
 	if ( intro == true )
 	{
@@ -1336,12 +1267,6 @@ void gameLogic(void)
 
 			if ( !directConnect && LobbyHandler.getHostingType() == LobbyHandler_t::LobbyServiceType::LOBBY_CROSSPLAY )
 			{
-#ifdef USE_EOS
-				if ( multiplayer == SERVER && ticks % TICKS_PER_SECOND == 0 )
-				{
-					EOS.CurrentLobbyData.updateLobbyDuringGameLoop();
-				}
-#endif // USE_EOS
 			}
 
 
@@ -1976,19 +1901,6 @@ void gameLogic(void)
 					}
 					ensembleSounds.stopPlaying(true);
 					VoiceChat.deinitRecording(false);
-#elif defined USE_OPENAL
-					if ( sound_group )
-					{
-						OPENAL_ChannelGroup_Stop(sound_group);
-					}
-					if ( soundAmbient_group )
-					{
-						OPENAL_ChannelGroup_Stop(soundAmbient_group);
-					}
-					if ( soundEnvironment_group )
-					{
-						OPENAL_ChannelGroup_Stop(soundEnvironment_group);
-					}
 #endif
 					// stop combat music
 					// close chests
@@ -4171,38 +4083,7 @@ bool handleEvents(void)
 
 	Input::lastInputOfAnyKind = "";
 
-#ifdef NINTENDO
-	// update controllers
-	nxControllersUpdate();
 
-	// detect resolution changes
-	if (nxHasResolutionChanged()) {
-		int x, y;
-		nxGetCurrentResolution(x, y);
-		printlog("new display size: %d %d", x, y);
-
-		if (!changeVideoMode(x, y)) {
-			printlog("critical error! Attempting to abort safely...\n");
-			mainloop = 0;
-		}
-		if (!intro) {
-			MainMenu::setupSplitscreen();
-		}
-	}
-
-	// detect app focus changes
-	const bool asleep = nxAppOutOfFocus();
-#ifdef USE_EOS
-	EOS.SetSleepStatus(asleep);
-#endif
-	if (asleep) {
-		if (!intro && !gamePaused) {
-			if (!MainMenu::isMenuOpen() && !MainMenu::isCutsceneActive()) {
-				pauseGame(2, 0);
-			}
-		}
-	}
-#endif
 
     // consume mouse buttons that were eaten by GUI
 	if (!framesProcResult.usable && *framesEatMouse) {
@@ -4260,19 +4141,7 @@ bool handleEvents(void)
 			}
 		}
 
-#ifdef USE_EOS
-		// handle EOS timeouts and disconnects
-		const bool connected = nxConnectedToNetwork();
-		EOS.SetNetworkAvailable(connected);
-		if (EOS.isInitialized() && EOS.CurrentUserInfo.isLoggedIn() && EOS.CurrentUserInfo.isValid()) {
-			// I don't care if we're in the lobby browser, hosting a lobby, or playing a game.
-			// Any state we are in where EOS is connected, we need to end the game immediately if
-			// the network is lost. Or else Epic has a freakout.
-			if (!connected) {
-				MainMenu::timedOut();
-			}
-		}
-#endif // USE_EOS
+
 	}
 #endif // NINTENDO
 
@@ -4314,21 +4183,6 @@ bool handleEvents(void)
 
 	while ( SDL_PollEvent(&event) )   // poll SDL events
 	{
-#ifdef USE_IMGUI
-		if ( ImGui_t::isInit )
-		{
-			ImGui_ImplSDL2_ProcessEvent(&event);
-#ifdef DEBUG_EVENT_TIMERS
-			time2 = std::chrono::high_resolution_clock::now();
-			accum = 1000 * std::chrono::duration_cast<std::chrono::duration<double>>(time2 - time1).count();
-			if ( accum > 5 )
-			{
-				printlog("Large tick time: [4] %f", accum);
-			}
-			time1 = std::chrono::high_resolution_clock::now();
-#endif
-		}
-#endif
 		// Global events
 		switch ( event.type )
 		{
@@ -4413,26 +4267,6 @@ bool handleEvents(void)
 				{
 					const size_t length = strlen(inputstr);
 
-#ifdef APPLE
-					if ( (event.key.keysym.sym == SDLK_DELETE || event.key.keysym.sym == SDLK_BACKSPACE) && length > 0 )
-					{
-						size_t utfOffset = 1;
-
-						if ( length > 1 )
-						{
-							const uint32_t result = UTFD::ValidateUTF8Character(inputstr[length - 1]);
-
-							if ( result > UTFD::UTF8_REJECT )
-							{
-								++utfOffset;
-							}
-						}
-
-						inputstr[length - utfOffset] = '\0';
-						cursorflash = ticks;
-					}
-#else
-
 					if ( event.key.keysym.sym == SDLK_BACKSPACE && length > 0 )
 					{
 						size_t utfOffset = 1;
@@ -4450,7 +4284,6 @@ bool handleEvents(void)
 						inputstr[length - utfOffset] = '\0';
 						cursorflash = ticks;
 					}
-#endif
 					else if ( event.key.keysym.sym == SDLK_c && SDL_GetModState()&KMOD_CTRL )
 					{
 						SDL_SetClipboardText(inputstr);
@@ -4466,30 +4299,10 @@ bool handleEvents(void)
 						cursorflash = ticks;
 					}
 				}
-#ifdef PANDORA
-				// Pandora Shoulder as Mouse Button handling
-				if ( event.key.keysym.sym == SDLK_RCTRL ) { // L
-					mousestatus[SDL_BUTTON_LEFT] = 1; // set this mouse button to 1
-					lastkeypressed = 282 + SDL_BUTTON_LEFT;
-				}
-				else if ( event.key.keysym.sym == SDLK_RSHIFT ) { // R
-					mousestatus[SDL_BUTTON_RIGHT] = 1; // set this mouse button to 1
-					lastkeypressed = 282 + SDL_BUTTON_RIGHT;
-				}
-				else
-#endif
+
 				{
 					lastkeypressed = event.key.keysym.sym;
-#ifdef APPLE
-                    switch (lastkeypressed)
-                    {
-                        default: break;
-                        case SDLK_NUMLOCKCLEAR: lastkeypressed = SDLK_KP_CLEAR; break;
-                        case SDLK_PRINTSCREEN: lastkeypressed = SDLK_F13; break;
-                        case SDLK_SCROLLLOCK: lastkeypressed = SDLK_F14; break;
-                        case SDLK_PAUSE: lastkeypressed = SDLK_F15; break;
-                    }
-#endif
+
 					keystatus[lastkeypressed] = true;
 					Input::keys[lastkeypressed] = true;
 					Input::lastInputOfAnyKind = SDL_GetKeyName(lastkeypressed);
@@ -4499,29 +4312,10 @@ bool handleEvents(void)
 			    if (demo_mode == DemoMode::PLAYING) {
 			        break;
 			    }
-#ifdef PANDORA
-				if ( event.key.keysym.sym == SDLK_RCTRL ) { // L
-					mousestatus[SDL_BUTTON_LEFT] = 0; // set this mouse button to 0
-					lastkeypressed = 282 + SDL_BUTTON_LEFT;
-				}
-				else if ( event.key.keysym.sym == SDLK_RSHIFT ) { // R
-					mousestatus[SDL_BUTTON_RIGHT] = 0; // set this mouse button to 0
-					lastkeypressed = 282 + SDL_BUTTON_RIGHT;
-				}
-				else
-#endif
+
 				{
                     SDL_Keycode key = event.key.keysym.sym;
-#ifdef APPLE
-                    switch (key)
-                    {
-                        default: break;
-                        case SDLK_NUMLOCKCLEAR: key = SDLK_KP_CLEAR; break;
-                        case SDLK_PRINTSCREEN: key = SDLK_F13; break;
-                        case SDLK_SCROLLLOCK: key = SDLK_F14; break;
-                        case SDLK_PAUSE: key = SDLK_F15; break;
-                    }
-#endif
+
 					keystatus[key] = false;
 					Input::keys[key] = false;
 				}
@@ -4589,30 +4383,10 @@ bool handleEvents(void)
 				if (demo_mode == DemoMode::PLAYING) {
 					break;
 				}
-#ifdef USE_IMGUI
-				if ( ImGui_t::requestingMouse() )
-				{
-					break;
-				}
-#endif // USE_IMGUI
-#ifdef APPLE
-                if ((keystatus[SDLK_LCTRL] || keystatus[SDLK_RCTRL]) && event.button.button == SDL_BUTTON_LEFT) {
-                    mousestatus[SDL_BUTTON_RIGHT] = 1;
-                    Input::mouseButtons[SDL_BUTTON_RIGHT] = 1;
-                    Input::lastInputOfAnyKind = "Mouse2";
-                    lastkeypressed = 284;
-                } else {
-                    mousestatus[event.button.button] = 1; // set this mouse button to 1
-                    Input::mouseButtons[event.button.button] = 1;
-                    Input::lastInputOfAnyKind = std::string("Mouse") + std::to_string(event.button.button);
-                    lastkeypressed = 282 + event.button.button;
-                }
-#else
                 mousestatus[event.button.button] = 1; // set this mouse button to 1
                 Input::mouseButtons[event.button.button] = 1;
                 Input::lastInputOfAnyKind = std::string("Mouse") + std::to_string(event.button.button);
                 lastkeypressed = 282 + event.button.button;
-#endif
 				break;
 			case SDL_MOUSEBUTTONUP: // if a mouse button is released...
 			    if (demo_mode == DemoMode::PLAYING) {
@@ -4620,21 +4394,12 @@ bool handleEvents(void)
 			    }
 				mousestatus[event.button.button] = 0; // set this mouse button to 0
 				Input::mouseButtons[event.button.button] = 0;
-#ifdef APPLE
-                mousestatus[SDL_BUTTON_RIGHT] = 0;
-                Input::mouseButtons[SDL_BUTTON_RIGHT] = 0;
-#endif
+
 				break;
 			case SDL_MOUSEWHEEL:
 			    if (demo_mode == DemoMode::PLAYING) {
 			        break;
 			    }
-#ifdef USE_IMGUI
-				if ( ImGui_t::requestingMouse() )
-				{
-					break;
-				}
-#endif // USE_IMGUI
 				if ( event.wheel.y > 0 )
 				{
 					mousestatus[SDL_BUTTON_WHEELUP] = 1;
@@ -5041,14 +4806,6 @@ bool handleEvents(void)
 					// reobtain haptic devices for each existing controller
 					controller.reinitHaptic();
 				}
-#ifdef STEAMWORKS
-                // on steam deck, player 1 always needs a controller.
-                if (SteamUtils()->IsSteamRunningOnSteamDeck()) {
-                    if (id >= 0 && !inputs.hasController(0)) {
-                        bindControllerToPlayer(id, 0);
-                    }
-                }
-#endif
 				break;
 			}
 			case SDL_CONTROLLERDEVICEREMOVED:
@@ -5642,15 +5399,6 @@ void ingameHud()
 		{
 			players[player]->bControlEnabled = true;
 		}
-#ifdef USE_IMGUI
-		if ( ImGui_t::isInit )
-		{
-			if ( ImGui_t::disablePlayerControl && player == clientnum )
-			{
-				players[player]->bControlEnabled = false;
-			}
-		}
-#endif
 		bool& bControlEnabled = players[player]->bControlEnabled;
 
 	    Input& input = Input::inputs[player];
@@ -7085,9 +6833,7 @@ static void doConsoleCommands() {
 #include <stdio.h>
 //#include <unistd.h>
 #include <stdlib.h>
-#ifdef APPLE
-#include <mach-o/dyld.h>
-#endif
+
 
 int main(int argc, char** argv)
 {
@@ -7097,85 +6843,13 @@ int main(int argc, char** argv)
 	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 #endif // WINDOWS
-#ifdef NINTENDO
-	nxInit();
-#endif // NINTENDO
 
-#ifdef LINUX
-	struct sigaction sa;
 
-	memset(&sa, 0, sizeof(struct sigaction));
-	sigemptyset(&sa.sa_mask);
-	sa.sa_sigaction = segfault_sigaction;
-	sa.sa_flags = SA_SIGINFO;
-	sigaction(SIGSEGV, &sa, NULL);
 
-	memset(&sa, 0, sizeof(struct sigaction));
-	sigemptyset(&sa.sa_mask);
-	sa.sa_sigaction = stop_sigaction;
-	sa.sa_flags = SA_SIGINFO;
-	sigaction(SIGSTOP, &sa, NULL);
 
-	memset(&sa, 0, sizeof(struct sigaction));
-	sigemptyset(&sa.sa_mask);
-	sa.sa_sigaction = continue_sigaction;
-	sa.sa_flags = SA_SIGINFO;
-	sigaction(SIGCONT, &sa, NULL);
-
-	(void)chdir(BASE_DATA_DIR); // fixes a lot of headaches...
-#endif
-
-#ifndef NINTENDO
 	try
-#endif
 	{
-#if defined(APPLE) || defined(BSD) || defined(HAIKU)
-#ifdef APPLE
-		uint32_t buffsize = 4096;
-		char binarypath[buffsize];
-		int result = _NSGetExecutablePath(binarypath, &buffsize);
-#elif defined(BSD)
-#if defined(__FreeBSD__)
-		int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
-		size_t buffsize = PATH_MAX;
-		char binarypath[buffsize];
-		int result = sysctl(mib, 4, binarypath, &buffsize, NULL, 0);
-#elif defined(__NetBSD__)
-		constexpr size_t buffsize = PATH_MAX;
-		char binarypath[buffsize];
-		int result = (readlink("/proc/curproc/exe", binarypath, buffsize) > 0 ? 0 : -1);
-#endif
-#elif defined(HAIKU)
-		size_t buffsize = PATH_MAX;
-		char binarypath[buffsize];
-		int result = find_path(B_APP_IMAGE_SYMBOL, B_FIND_PATH_IMAGE_PATH, NULL, binarypath, sizeof(binarypath)); // B_OK is 0
-#endif
-		if (result == 0)   //It worked.
-		{
-			printlog("Binary path: %s\n", binarypath);
-			char* last = strrchr(binarypath, '/');
-			*last = '\0';
-#ifdef APPLE
-			char execpath[buffsize];
-			strcpy(execpath, binarypath);
-			//char* last = strrchr(execpath, '/');
-			//strcat(execpath, '/');
-			//strcat(execpath, "/../../../");
-			printlog("Chrooting to directory: %s\n", execpath);
-			chdir(execpath);
-			///Users/ciprian/barony/barony-sdl2-take2/barony.app/Contents/MacOS/barony
-			chdir("..");
-			//chdir("..");
-			chdir("Resources");
-			//chdir("..");
-			//chdir("..");
-#endif
-		}
-		else
-		{
-			printlog("Failed to get binary path. Program may not work corectly!\n");
-		}
-#endif
+
 		SDL_Rect pos, src;
 		int c;
 		//int tilesreceived=0;
@@ -7193,24 +6867,8 @@ int main(int argc, char** argv)
 #else
  #ifndef NINTENDO
 		char *basepath = getenv("HOME");
-  #ifdef USE_EOS
-   #ifdef STEAMWORKS
-		//Steam + EOS
-		snprintf(outputdir, sizeof(outputdir), "%s/.barony", basepath);
-   #else
-		//Just EOS.
-		std::string firstDotdir(basepath);
-		firstDotdir += "/.barony/";
-		if (access(firstDotdir.c_str(), F_OK) == -1)
-		{
-			mkdir(firstDotdir.c_str(), 0777); //Since this mkdir is not equivalent to mkdir -p, have to create each part of the path manually.
-		}
-		snprintf(outputdir, sizeof(outputdir), "%s/epicgames", firstDotdir.c_str());
-   #endif
-  #else //USE_EOS
 		//No EOS. Could be Steam though. Or could also not.
 		snprintf(outputdir, sizeof(outputdir), "%s/.barony", basepath);
-  #endif
 		if (access(outputdir, F_OK) == -1)
 		{
 			mkdir(outputdir, 0777);
@@ -7224,10 +6882,6 @@ int main(int argc, char** argv)
 		{
 			for (c = 1; c < argc; c++)
 			{
-#ifdef STEAMWORKS
-			    cmd_line += argv[c];
-			    cmd_line += " ";
-#endif
 				if ( argv[c] != NULL )
 				{
 					if ( !strcmp(argv[c], "-windowed") )
@@ -7269,12 +6923,6 @@ int main(int argc, char** argv)
 					else if ( !strcmp(argv[c], "-nosound") )
 					{
 						no_sound = true;
-					}
-					else
-					{
-#ifdef USE_EOS
-						EOS.CommandLineArgs.push_back(argv[c]);
-#endif // USE_EOS
 					}
 				}
 			}
@@ -7319,34 +6967,11 @@ int main(int argc, char** argv)
 		if ( (c = initApp("Barony", fullscreen)) )
 		{
 			printlog("Critical error: %d\n", c);
-#ifdef STEAMWORKS
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Uh oh",
-									"Barony has encountered a critical error and cannot start.\n\n"
-									"Please check the log.txt file in the game directory for additional info\n"
-									"and verify Steam is running. Alternatively, contact us through our website\n"
-									"at https://www.baronygame.com/ for support.",
-				screen);
-#elif defined USE_EOS
-			if ( EOS.appRequiresRestart == EOS_EResult::EOS_Success )
-			{
-				// restarting app from launcher.
-			}
-			else
-			{
-				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Uh oh",
-					"Barony has encountered a critical error and cannot start.\n\n"
-					"Please check the log.txt file in the game directory for additional info,\n"
-					"and verify the game is launched through the Epic Games Store. \n"
-					"Alternatively, contact us through our website at https://www.baronygame.com/ for support.",
-					screen);
-			}
-#else
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Uh oh",
 									"Barony has encountered a critical error and cannot start.\n\n"
 									"Please check the log.txt file in the game directory for additional info,\n"
 									"or contact us through our website at https://www.baronygame.com/ for support.",
 									screen);
-#endif
 			deinitApp();
 			exit(c);
 		}
@@ -7376,16 +7001,7 @@ int main(int argc, char** argv)
 		// initialize player conducts
 		setDefaultPlayerConducts();
 
-#ifdef NINTENDO
-		if (!nxIsHandheldMode()) {
-			nxAssignControllers(1, 1, true, false, true, false, nullptr);
-		}
-		for (int c = 0; c < 4; ++c) {
-			game_controllers[c].open(0, c); // first parameter is not used by Nintendo.
-			bindControllerToPlayer(c, c);
-		}
-		//inputs.setPlayerIDAllowedKeyboard(-1);
-#endif
+
 
 		// play splash sound
 #ifdef MUSIC
@@ -7403,25 +7019,6 @@ int main(int argc, char** argv)
 			// record the time at the start of this cycle
 			lastGameTickCount = SDL_GetPerformanceCounter();
 			DebugStats.t1StartLoop = std::chrono::high_resolution_clock::now();
-
-#ifdef USE_IMGUI
-			if ( ImGui_t::queueInit )
-			{
-				ImGui_t::queueInit = false;
-				if ( !ImGui_t::isInit )
-				{
-					ImGui_t::init();
-				}
-			}
-			if ( ImGui_t::queueDeinit )
-			{
-				ImGui_t::queueDeinit = false;
-				if ( ImGui_t::isInit )
-				{
-					ImGui_t::deinit();
-				}
-			}
-#endif
 
 			doConsoleCommands();
 
@@ -7453,35 +7050,9 @@ int main(int argc, char** argv)
 				printlog("Long tick time: %f", accum);
 			}
 #endif
-			// handle steam callbacks
-#ifdef STEAMWORKS
-			if ( g_SteamLeaderboards )
-			{
-				g_SteamLeaderboards->ProcessLeaderboardUpload();
-			}
-			SteamAPI_RunCallbacks();
-#endif
-#ifdef USE_PLAYFAB
-			PlayFab::PlayFabClientAPI::Update();
-			playfabUser.update();
-#endif
-#ifdef USE_EOS
-			if (EOS.PlatformHandle) {
-				EOS_Platform_Tick(EOS.PlatformHandle);
-			}
-			if (EOS.ServerPlatformHandle) {
-				EOS_Platform_Tick(EOS.ServerPlatformHandle);
-			}
-			EOS.StatGlobalManager.updateQueuedStats();
-			EOS.AccountManager.handleLogin();
-			EOS.CrossplayAccountManager.handleLogin();
-#endif // USE_EOS
+
 
 			DebugStats.t3SteamCallbacks = std::chrono::high_resolution_clock::now();
-
-#ifdef USE_IMGUI
-			ImGui_t::update();
-#endif
 
 			for ( int i = 0; i < MAXPLAYERS; ++i )
 			{
@@ -7664,9 +7235,6 @@ int main(int argc, char** argv)
 						UIToastNotificationManager.drawNotifications(MainMenu::isCutsceneActive(), true); // draw this before the cursor
                         framesProcResult = doFrames();
 
-#ifdef USE_IMGUI
-						ImGui_t::render();
-#endif
 #ifndef NINTENDO
 						Compendium_t::updateTooltip();
 
@@ -8036,10 +7604,6 @@ int main(int argc, char** argv)
 					UIToastNotificationManager.drawNotifications(MainMenu::isCutsceneActive(), true); // draw this before the cursor
 				}
 
-#ifdef USE_IMGUI
-				ImGui_t::render();
-#endif
-
 #ifndef NINTENDO
 				for ( int i = 0; i < MAXPLAYERS; ++i )
 				{
@@ -8153,12 +7717,7 @@ int main(int argc, char** argv)
 
 			UIToastNotificationManager.drawNotifications(MainMenu::isCutsceneActive(), false);
 
-#ifdef USE_THEORA_VIDEO
-			for ( int i = 0; i < MAXPLAYERS; ++i )
-			{
-				VideoManager[i].update();
-			}
-#endif
+
 
 			// update screen
 			GO_SwapBuffers(screen);
@@ -8260,7 +7819,6 @@ int main(int argc, char** argv)
 		deinitGame();
 		return deinitApp();
 	}
-#ifndef NINTENDO
 	catch (const std::exception &exc)
 	{
 		// catch anything thrown within try block that derives from std::exception
@@ -8273,11 +7831,7 @@ int main(int argc, char** argv)
 		std::cerr << "UNKNOWN EXCEPTION CAUGHT!\n";
 		return 1;
 	}
-#endif // NINTENDO
 
-#ifdef NINTENDO
-	nxTerm();
-#endif // NINTENDO
 }
 
 void DebugStatsClass::storeStats()

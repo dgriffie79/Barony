@@ -30,10 +30,6 @@ Image::Image(const char* _name) {
         path.insert(0, PHYSFS_getDirSeparator());
         path.insert(0, baseDir);
     } else {
-#ifdef NINTENDO
-        path.insert(0, PHYSFS_getDirSeparator());
-        path.insert(0, BASE_DATA_DIR);
-#endif
     }
 	printlog("loading image '%s'...", path.c_str());
 	if ((surf = IMG_Load(path.c_str())) == NULL) {

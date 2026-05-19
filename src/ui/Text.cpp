@@ -90,24 +90,6 @@ void Text::render() {
 
 	bool addedSpace = false;
 
-#ifdef NINTENDO
-	// fixes weird crash in SDL_ttf when string length < 2
-	std::string spaces;
-	int num_spaces_needed = std::max(0, 2 - (int)strToRender.size());
-	while (num_spaces_needed) {
-		spaces.append(" ");
-		--num_spaces_needed;
-	}
-	int spaces_width = 0;
-	if (spaces.size()) {
-		TTF_SizeUTF8(ttf, spaces.c_str(), &spaces_width, nullptr);
-		spaces_width += spaces.size();
-		strToRender.append(spaces);
-		if (spaces.size() == 2) {
-			addedSpace = true;
-		}
-	}
-#else
 	const int spaces_width = 0;
 #ifndef EDITOR
 	if ( *cvar_text_render_addspace ) {
@@ -116,7 +98,6 @@ void Text::render() {
 			strToRender += ' ';
 		}
 	}
-#endif
 #endif
 
 	SDL_Color colorText;

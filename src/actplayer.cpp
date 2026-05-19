@@ -30,9 +30,7 @@
 #include "classdescriptions.hpp"
 #include "ui/MainMenu.hpp"
 #include "interface/consolecommand.hpp"
-#ifdef USE_PLAYFAB
-#include "playfab.hpp"
-#endif
+
 
 bool settings_smoothmouse = false;
 bool usecamerasmoothing = false;

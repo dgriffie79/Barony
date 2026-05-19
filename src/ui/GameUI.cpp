@@ -1161,10 +1161,6 @@ void updateVoicePromptFrame(const int player, Frame* baseFrame, Frame* allyFrame
 	return;
 #else
 
-#ifdef NINTENDO
-	frame->setDisabled(true);
-	return;
-#endif
 
 	if ( !VoiceChat.bRecordingInit )
 	{
@@ -3583,9 +3579,6 @@ Frame* createPauseMenuPlayerBars()
 
 		if ( clientnum < 0 || players[clientnum]->hud.playerBars.size() == 0
 			|| voice_no_recv & (1 << clientnum) || !voice_any_send 
-#ifdef NINTENDO
-			|| directConnect
-#endif
 			)
 		{
 			//frame->setOpacity(0.0);

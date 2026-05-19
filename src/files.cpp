@@ -3105,7 +3105,7 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 		nummonsters = 0;
 		minotaurlevel = 0;
 
-#if defined (USE_FMOD) || defined(USE_OPENAL)
+#ifdef USE_FMOD
 		if ( strcmp(oldmapname, map.name) )
 		{
 			if ( gameModeManager.getMode() != GameModeManager_t::GAME_MODE_TUTORIAL
@@ -5390,9 +5390,7 @@ void physfsReloadSounds(bool reloadAll)
 #ifdef USE_FMOD
 					sounds[c]->release();    //Free the sound in FMOD
 #endif
-#ifdef USE_OPENAL
-					OPENAL_Sound_Release(sounds[c]); //Free the sound in OPENAL
-#endif
+
 					sounds[c] = nullptr;
 				}
 			}
@@ -5455,13 +5453,7 @@ void physfsReloadSounds(bool reloadAll)
 					printlog("warning: failed to load '%s' listed at line %d in sounds.txt\n", name, c + 1);
 				}
 #endif
-#ifdef USE_OPENAL
-				if ( !reloadAll )
-				{
-					OPENAL_Sound_Release(sounds[c]);
-				}
-				OPENAL_CreateSound(soundFile.c_str(), true, &sounds[c]);
-#endif
+
 				if (Mods::isLoading) {
 					updateLoadingScreen(20.f + (c / (float)numsounds) * 10.f);
 				}

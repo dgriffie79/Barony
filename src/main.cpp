@@ -316,14 +316,7 @@ SteamStat_t g_SteamStats[NUM_STEAM_STATISTICS] =
 	{ 73, STEAM_STAT_INT, "STAT_SOURCE_ENGINE" }
 };
 
-#ifdef STEAMWORKS
-bool directConnect = false;
-CSteamLeaderboards* g_SteamLeaderboards = NULL;
-CSteamWorkshop* g_SteamWorkshop = NULL;
-CSteamStatistics* g_SteamStatistics = NULL;
-#else
 bool directConnect = true;
-#endif
 char address[64];
 IPaddress net_server;
 IPaddress* net_clients = nullptr;
@@ -646,39 +639,11 @@ bool ENABLE_STACK_TRACES = false;
 #endif
 static std::unordered_map<std::string, size_t> unique_traces;
 
-#ifdef LINUX
-#include <execinfo.h>
-#endif
-
 std::string stackTrace() {
 #ifndef NDEBUG
     if (!ENABLE_STACK_TRACES) {
         return "";
     }
-#ifdef LINUX
-
-    // perform stack trace
-    constexpr unsigned int STACK_SIZE = 16;
-	void* array[STACK_SIZE];
-	size_t size = backtrace(array, STACK_SIZE);
-	if (size < 4) {
-	    return "";
-	}
-	char** symbols = backtrace_symbols(array, size);
-
-    // build string
-    std::string trace;
-	for (auto c = 3; c < size; ++c) {
-	    trace += "\n";
-	    symbols[c] = strrchr(symbols[c], (int)'(');
-	    trace += symbols[c];
-	}
-
-	// free backtrace table
-	free(symbols);
-
-    return trace;
-#endif
 #endif
 	return "";
 }
@@ -688,38 +653,6 @@ void stackTraceUnique() {
     if (!ENABLE_STACK_TRACES) {
         return;
     }
-#ifdef LINUX
-
-    // perform stack trace
-    constexpr unsigned int STACK_SIZE = 16;
-	void* array[STACK_SIZE];
-	size_t size = backtrace(array, STACK_SIZE);
-	if (size < 4) {
-	    return;
-	}
-	char** symbols = backtrace_symbols(array, size);
-
-    // build string
-    std::string trace;
-	for (auto c = 3; c < size; ++c) {
-	    trace += "\n";
-	    //symbols[c] = strrchr(symbols[c], (int)'(');
-	    trace += symbols[c];
-	}
-
-	// free backtrace table
-	free(symbols);
-
-    // attempt to place in map, or increment if it already exists
-	auto result = unique_traces.emplace(trace, 1);
-	if (result.second) {
-	    // haven't seen this trace before
-	    printlog(trace.c_str());
-	} else {
-	    // have seen this trace, simply increment counter
-	    ++result.first->second;
-	}
-#endif
 #endif
 }
 
@@ -745,19 +678,6 @@ static ConsoleCommand purgeStackTraces("/purge_stack_traces", "purge stack trace
     });
 #endif
 
-#ifdef NINTENDO
-time_t getTime() {
-    return nxGetTime();
-}
-
-char* getTimeFormatted(time_t t, char* buf, size_t size) {
-    return nxGetTimeFormatted(t, buf, size);
-}
-
-char* getTimeAndDateFormatted(time_t t, char* buf, size_t size) {
-    return nxGetTimeAndDateFormatted(t, buf, size);
-}
-#else // NINTENDO
 time_t getTime() {
     return time(nullptr);
 }
@@ -773,7 +693,6 @@ char* getTimeAndDateFormatted(time_t t, char* buf, size_t size) {
     strftime(buf, size, "%Y-%m-%d %H-%M-%S", tm);
     return buf;
 }
-#endif
 
 void getTimeAndDate(time_t t, int* year, int* month, int* day, int* hour, int* min, int* second) {
     char buf[32];

@@ -8,15 +8,7 @@ pub fn build(b: *std.Build) void {
     // Build options
     // -----------------------------------------------------------------------
     const deps_root = b.option([]const u8, "deps_root", "Path to dependency root (e.g. C:\\dev\\barony-deps)") orelse "C:\\dev\\barony-deps";
-    const steamworks_enabled = b.option(bool, "steamworks", "Enable Steamworks SDK") orelse false;
-    const eos_enabled = b.option(bool, "eos", "Enable Epic Online Services") orelse false;
-    const playfab_enabled = b.option(bool, "playfab", "Enable PlayFab") orelse false;
     const fmod_enabled = b.option(bool, "fmod", "Enable FMOD audio") orelse false;
-    const openal_enabled = b.option(bool, "openal", "Enable OpenAL audio") orelse false;
-    const tremor_enabled = b.option(bool, "tremor", "Use Tremor with OpenAL") orelse false;
-    const theoraplayer_enabled = b.option(bool, "theoraplayer", "Enable TheoraPlayer video") orelse false;
-    const curl_enabled = b.option(bool, "curl", "Enable cURL") orelse false;
-    const opus_enabled = b.option(bool, "opus", "Enable Opus audio codec") orelse false;
     const editor_enabled = b.option(bool, "editor", "Build editor executable") orelse true;
     const game_enabled = b.option(bool, "game", "Build game executable") orelse true;
     const datadir = b.option([]const u8, "datadir", "Base data directory path");
@@ -24,55 +16,13 @@ pub fn build(b: *std.Build) void {
     // -----------------------------------------------------------------------
     // Config.hpp generation
     // -----------------------------------------------------------------------
-    const target_os = target.result.os.tag;
-
     const config = b.addConfigHeader(.{
         .style = .{ .autoconf_at = b.path("src/Config.hpp.in") },
         .include_path = "Config.hpp",
     }, .{
-        .Windows = target_os == .windows,
-        .Apple = target_os == .macos,
-        .Linux = target_os == .linux,
-        .Bsd = target_os == .freebsd or target_os == .netbsd or target_os == .dragonfly,
-        .Haiku = target_os == .haiku,
-        .STEAMWORKS_ENABLED = steamworks_enabled,
-        .EOS_ENABLED = eos_enabled,
-        .PLAYFAB_ENABLED = playfab_enabled,
         .FMOD = fmod_enabled,
-        .OPENAL = openal_enabled,
-        .TREMOR = tremor_enabled,
-        .IMGUI = true,
-        .THEORAPLAYER_ENABLED = theoraplayer_enabled,
-        .CURL_ENABLED = curl_enabled,
-        .OPUS_ENABLED = opus_enabled,
-        .PANDORA = false,
-        .NOT_DWORD_DEFINED = target_os != .windows,
+        .NOT_DWORD_DEFINED = target.result.os.tag != .windows,
     });
-
-    // EOS token values (always defined for template substitution; undef when disabled)
-    if (eos_enabled) {
-        config.addValue("BUILD_ENV_PR", ?[]const u8, b.option([]const u8, "build_env_pr", "EOS product id") orelse null);
-        config.addValue("BUILD_ENV_SA", ?[]const u8, b.option([]const u8, "build_env_sa", "EOS sandbox") orelse null);
-        config.addValue("BUILD_ENV_DE", ?[]const u8, b.option([]const u8, "build_env_de", "EOS deployment") orelse null);
-        config.addValue("BUILD_ENV_CC", ?[]const u8, b.option([]const u8, "build_env_cc", "EOS cc") orelse null);
-        config.addValue("BUILD_ENV_CS", ?[]const u8, b.option([]const u8, "build_env_cs", "EOS cs") orelse null);
-        config.addValue("BUILD_ENV_GSE", ?[]const u8, b.option([]const u8, "build_env_gse", "EOS gse") orelse null);
-    } else {
-        config.addValue("BUILD_ENV_PR", ?[]const u8, null);
-        config.addValue("BUILD_ENV_SA", ?[]const u8, null);
-        config.addValue("BUILD_ENV_DE", ?[]const u8, null);
-        config.addValue("BUILD_ENV_CC", ?[]const u8, null);
-        config.addValue("BUILD_ENV_CS", ?[]const u8, null);
-        config.addValue("BUILD_ENV_GSE", ?[]const u8, null);
-    }
-
-    if (playfab_enabled) {
-        config.addValue("BUILD_ENV_PFTID", ?[]const u8, b.option([]const u8, "build_env_pftid", "PlayFab TID") orelse null);
-        config.addValue("BUILD_ENV_PFHID", ?[]const u8, b.option([]const u8, "build_env_pfhid", "PlayFab HID") orelse null);
-    } else {
-        config.addValue("BUILD_ENV_PFTID", ?[]const u8, null);
-        config.addValue("BUILD_ENV_PFHID", ?[]const u8, null);
-    }
 
     // -----------------------------------------------------------------------
     // Compiler flags
@@ -126,12 +76,12 @@ pub fn build(b: *std.Build) void {
         "src/actarrowtrap.cpp", "src/actboulder.cpp", "src/actheadstone.cpp",
         "src/actthrown.cpp", "src/actbeartrap.cpp", "src/actspeartrap.cpp",
         "src/actwallbuster.cpp", "src/book.cpp", "src/init_game.cpp", "src/prng.cpp",
-        "src/scores.cpp", "src/steam.cpp", "src/hash.cpp", "src/player.cpp",
+        "src/scores.cpp", "src/achievements.cpp", "src/hash.cpp", "src/player.cpp",
         "src/entity_shared.cpp", "src/stat_shared.cpp", "src/item_tool.cpp",
         "src/actsummontrap.cpp", "src/actpowercrystal.cpp", "src/monster_shared.cpp",
         "src/actpedestal.cpp", "src/actteleporter.cpp", "src/actmagictrap.cpp",
-        "src/steam_shared.cpp", "src/mod_tools.cpp", "src/json.cpp", "src/eos.cpp",
-        "src/lobbies.cpp", "src/shader.cpp", "src/playfab.cpp",
+        "src/mod_tools.cpp", "src/json.cpp",
+        "src/lobbies.cpp", "src/shader.cpp",
         "src/monster_d.cpp", "src/monster_m.cpp", "src/monster_s.cpp", "src/monster_g.cpp",
         "src/monster_summons.cpp", "src/monster_moth.cpp", "src/monster_duck.cpp",
         "src/magic/magic.cpp", "src/magic/actmagic.cpp", "src/magic/spell.cpp",
@@ -151,9 +101,7 @@ pub fn build(b: *std.Build) void {
         "src/engine/audio/defines.cpp", "src/engine/audio/init_audio.cpp",
         "src/engine/audio/sound.cpp", "src/engine/audio/sound_game.cpp",
         "src/engine/audio/music.cpp",
-        "src/imgui/imgui.cpp", "src/imgui/imgui_demo.cpp", "src/imgui/imgui_draw.cpp",
-        "src/imgui/imgui_impl_opengl3.cpp", "src/imgui/imgui_impl_sdl.cpp",
-        "src/imgui/imgui_tables.cpp", "src/imgui/imgui_widgets.cpp",
+
     };
 
     const editor_sources = &.{
@@ -162,7 +110,7 @@ pub fn build(b: *std.Build) void {
         "src/entity_editor.cpp", "src/input.cpp", "src/list.cpp", "src/hash.cpp",
         "src/files.cpp", "src/editor.cpp", "src/entity_shared.cpp",
         "src/stat_editor.cpp", "src/stat_shared.cpp", "src/items_editor.cpp",
-        "src/steam_shared.cpp", "src/json.cpp", "src/eos_editor.cpp",
+        "src/json.cpp",
         "src/mod_tools.cpp", "src/prng.cpp", "src/shader.cpp",
         "src/ui/Button.cpp", "src/ui/Field.cpp", "src/ui/Font.cpp",
         "src/ui/Frame.cpp", "src/ui/Image.cpp", "src/ui/Slider.cpp",
@@ -202,29 +150,15 @@ pub fn build(b: *std.Build) void {
         editor_mod.addSystemIncludePath(.{ .cwd_relative = sdl_inc });
     }
 
-    // Platform-specific include paths
-    if (target_os == .macos) {
-        game_mod.addSystemIncludePath(b.path("/opt/local/include"));
-        editor_mod.addSystemIncludePath(b.path("/opt/local/include"));
-    }
-
     // Platform defines
-    if (target_os == .windows) {
-        game_mod.addCMacro("WINDOWS", "");
-        editor_mod.addCMacro("WINDOWS", "");
-        game_mod.addCMacro("_CRT_SECURE_NO_WARNINGS", "");
-        editor_mod.addCMacro("_CRT_SECURE_NO_WARNINGS", "");
-        game_mod.addCMacro("WIN32_LEAN_AND_MEAN", "");
-        editor_mod.addCMacro("WIN32_LEAN_AND_MEAN", "");
-        game_mod.addCMacro("GLEW_STATIC", "");
-        editor_mod.addCMacro("GLEW_STATIC", "");
-    } else if (target_os == .macos) {
-        game_mod.addCMacro("APPLE", "");
-        editor_mod.addCMacro("APPLE", "");
-    } else if (target_os == .linux) {
-        game_mod.addCMacro("LINUX", "");
-        editor_mod.addCMacro("LINUX", "");
-    }
+    game_mod.addCMacro("WINDOWS", "");
+    editor_mod.addCMacro("WINDOWS", "");
+    game_mod.addCMacro("_CRT_SECURE_NO_WARNINGS", "");
+    editor_mod.addCMacro("_CRT_SECURE_NO_WARNINGS", "");
+    game_mod.addCMacro("WIN32_LEAN_AND_MEAN", "");
+    editor_mod.addCMacro("WIN32_LEAN_AND_MEAN", "");
+    game_mod.addCMacro("GLEW_STATIC", "");
+    editor_mod.addCMacro("GLEW_STATIC", "");
 
     // Add source files
     game_mod.addCSourceFiles(.{ .files = game_sources, .flags = cxx_flags });
@@ -252,10 +186,7 @@ pub fn build(b: *std.Build) void {
             mod.linkSystemLibrary("png", .{});
             mod.linkSystemLibrary("z", .{});
 
-            if (os == .macos) {
-                mod.linkFramework("OpenGL", .{});
-                mod.linkFramework("IOKit", .{});
-            } else if (os == .windows) {
+            if (os == .windows) {
                 mod.linkSystemLibrary("opengl32", .{});
                 mod.linkSystemLibrary("ws2_32", .{});
                 mod.linkSystemLibrary("wsock32", .{});
@@ -271,11 +202,6 @@ pub fn build(b: *std.Build) void {
             mod.linkSystemLibrary("rpcrt4", .{});
             mod.linkSystemLibrary("usp10", .{});
             mod.linkSystemLibrary("iphlpapi", .{});
-            } else {
-                mod.linkSystemLibrary("GL", .{});
-                mod.linkSystemLibrary("pthread", .{});
-                mod.linkSystemLibrary("dl", .{});
-                mod.linkSystemLibrary("rt", .{});
             }
             mod.linkSystemLibrary("m", .{});
         }
@@ -290,41 +216,11 @@ pub fn build(b: *std.Build) void {
             .root_module = game_mod,
         });
 
-        if (target_os == .windows) {
-            barony.root_module.addWin32ResourceFile(.{ .file = b.path("barony.rc") });
-        }
+        barony.root_module.addWin32ResourceFile(.{ .file = b.path("barony.rc") });
 
-        link_required(barony.root_module, deps_root, target_os);
+        link_required(barony.root_module, deps_root, target.result.os.tag);
         // Optional libs
         if (fmod_enabled) barony.root_module.linkSystemLibrary("fmod", .{});
-        if (steamworks_enabled) barony.root_module.linkSystemLibrary("steam_api", .{});
-        if (eos_enabled) barony.root_module.linkSystemLibrary("EOSSDK", .{});
-        if (playfab_enabled) {
-            barony.root_module.linkSystemLibrary("playfab", .{});
-            barony.root_module.linkSystemLibrary("jsoncpp", .{});
-        }
-        if (curl_enabled) {
-            barony.root_module.linkSystemLibrary("curl", .{});
-            barony.root_module.linkSystemLibrary("ssl", .{});
-            barony.root_module.linkSystemLibrary("crypto", .{});
-        }
-        if (opus_enabled) barony.root_module.linkSystemLibrary("opus", .{});
-        if (theoraplayer_enabled) {
-            barony.root_module.linkSystemLibrary("theoraplayer", .{});
-            barony.root_module.linkSystemLibrary("ogg", .{});
-            barony.root_module.linkSystemLibrary("vorbis", .{});
-            barony.root_module.linkSystemLibrary("vorbisfile", .{});
-        }
-        if (openal_enabled) {
-            barony.root_module.linkSystemLibrary("openal", .{});
-            if (tremor_enabled) {
-                barony.root_module.linkSystemLibrary("tremor", .{});
-            } else {
-                barony.root_module.linkSystemLibrary("ogg", .{});
-                barony.root_module.linkSystemLibrary("vorbis", .{});
-                barony.root_module.linkSystemLibrary("vorbisfile", .{});
-            }
-        }
 
         if (datadir) |dd| {
             const escaped = std.mem.replaceOwned(u8, b.allocator, dd, "\\", "\\\\") catch @panic("OOM");
@@ -352,41 +248,11 @@ pub fn build(b: *std.Build) void {
             .root_module = editor_mod,
         });
 
-        if (target_os == .windows) {
-            editor.root_module.addWin32ResourceFile(.{ .file = b.path("editor.rc") });
-        }
+        editor.root_module.addWin32ResourceFile(.{ .file = b.path("editor.rc") });
 
-        link_required(editor.root_module, deps_root, target_os);
+        link_required(editor.root_module, deps_root, target.result.os.tag);
         // Optional libs
         if (fmod_enabled) editor.root_module.linkSystemLibrary("fmod", .{});
-        if (steamworks_enabled) editor.root_module.linkSystemLibrary("steam_api", .{});
-        if (eos_enabled) editor.root_module.linkSystemLibrary("EOSSDK", .{});
-        if (playfab_enabled) {
-            editor.root_module.linkSystemLibrary("playfab", .{});
-            editor.root_module.linkSystemLibrary("jsoncpp", .{});
-        }
-        if (curl_enabled) {
-            editor.root_module.linkSystemLibrary("curl", .{});
-            editor.root_module.linkSystemLibrary("ssl", .{});
-            editor.root_module.linkSystemLibrary("crypto", .{});
-        }
-        if (opus_enabled) editor.root_module.linkSystemLibrary("opus", .{});
-        if (theoraplayer_enabled) {
-            editor.root_module.linkSystemLibrary("theoraplayer", .{});
-            editor.root_module.linkSystemLibrary("ogg", .{});
-            editor.root_module.linkSystemLibrary("vorbis", .{});
-            editor.root_module.linkSystemLibrary("vorbisfile", .{});
-        }
-        if (openal_enabled) {
-            editor.root_module.linkSystemLibrary("openal", .{});
-            if (tremor_enabled) {
-                editor.root_module.linkSystemLibrary("tremor", .{});
-            } else {
-                editor.root_module.linkSystemLibrary("ogg", .{});
-                editor.root_module.linkSystemLibrary("vorbis", .{});
-                editor.root_module.linkSystemLibrary("vorbisfile", .{});
-            }
-        }
 
         if (datadir) |dd| {
             const escaped = std.mem.replaceOwned(u8, b.allocator, dd, "\\", "\\\\") catch @panic("OOM");

@@ -66,13 +66,6 @@ using std::string; //Instead of including an entire namespace, please explicitly
 #include <functional>
 #include "physfs.h"
 
-#ifdef NINTENDO
-#include "nintendo/baronynx.hpp"
-#endif
-
-#ifdef STEAMWORKS
-#define STEAM_APPID 371970
-#endif
 
 enum ESteamStatTypes
 {
@@ -129,14 +122,6 @@ extern bool autoLimbReload;
 #undef max
 #endif
 
-#ifdef APPLE
- //#include <Cocoa/Cocoa.h>
- //#include <OpenGL/OpenGL.h>
- #define GL_GLEXT_PROTOTYPES
- #include <OpenGL/gl3ext.h>
- #include <OpenGL/gl3.h>
- #include <SDL2/SDL_opengl.h>
-#else // APPLE
  #ifndef NINTENDO
   #define GL_GLEXT_PROTOTYPES
   #ifdef WINDOWS
@@ -144,50 +129,21 @@ extern bool autoLimbReload;
   #endif
   #include <GL/gl.h>
   #include <GL/glu.h>
-  #ifdef LINUX
-  	typedef uint16_t GLhalf;
-  #endif
  #endif
 #ifndef WINDOWS
  #include <GL/glext.h>
 #endif
  #include "SDL_opengl.h"
-#endif // !APPLE
 
-#ifdef APPLE
-#include <SDL2/SDL.h>
-#else
 #include "SDL.h"
-#endif
 #ifdef WINDOWS
 #include "SDL_syswm.h"
 #endif
-#ifdef APPLE
- #include <SDL2_image/SDL_image.h>
-#else // APPLE
- #ifndef NINTENDO
-  #include "SDL_image.h"
- #endif // NINTENDO
-#endif // !APPLE
-#ifdef APPLE
-#include <SDL2_net/SDL_net.h>
-#else
-#ifndef NINTENDO
+#include "SDL_image.h"
 #include "SDL_net.h"
-#endif
-#endif
-#ifdef APPLE
-#include <SDL2_ttf/SDL_ttf.h>
-#else
 #include "SDL_ttf.h"
-#endif
 //#include "sprig.h"
 #include "savepng.hpp"
-
-//Ifdef steam or something?
-#ifdef STEAMWORKS
-//#include <steamworks_cwrapper/steam_wrapper.h>
-#endif
 
 #ifdef WINDOWS
 #include <io.h>
@@ -206,24 +162,6 @@ extern bool autoLimbReload;
 
 void printlog(const char* str, ...);
 const char* gl_error_string(GLenum err);
-#ifdef _MSC_VER
-#define GL_CHECK_ERR(expression) expression;\
-    {\
-		GLenum err;\
-		while((err = glGetError()) != GL_NO_ERROR) {\
-			printlog("[OpenGL]: ERROR type = 0x%x, message = %s",\
-				err, gl_error_string(err));\
-		}\
-	}
-#define GL_CHECK_ERR_RET(expression) expression;\
-    {\
-		GLenum err;\
-		while((err = glGetError()) != GL_NO_ERROR) {\
-			printlog("[OpenGL]: ERROR type = 0x%x, message = %s",\
-				err, gl_error_string(err));\
-		}\
-	}
-#else
 #define GL_CHECK_ERR(expression) ({ \
     expression;\
     GLenum err;\
@@ -241,7 +179,6 @@ const char* gl_error_string(GLenum err);
     }\
     retval;\
 })
-#endif
 
 typedef struct vec4 {
     vec4(float f):
@@ -911,23 +848,6 @@ void GO_SwapBuffers(SDL_Window* screen);
 static const int NUM_STEAM_STATISTICS = 73;
 extern SteamStat_t g_SteamStats[NUM_STEAM_STATISTICS];
 
-#ifdef STEAMWORKS
- #include <steam/steam_api.h>
- struct SteamGlobalStat_t
- {
-	 int m_ID;
-	 ESteamStatTypes m_eStatType;
-	 const char *m_pchStatName;
-	 int64 m_iValue;
-	 float m_flValue;
-	 float m_flAvgNumerator;
-	 float m_flAvgDenominator;
- };
- #include "steam.hpp"
- extern CSteamLeaderboards* g_SteamLeaderboards;
- extern CSteamWorkshop* g_SteamWorkshop;
- extern CSteamStatistics* g_SteamStatistics;
-#else
 struct SteamGlobalStat_t
 {
 	int m_ID;
@@ -939,21 +859,12 @@ struct SteamGlobalStat_t
 	float m_flAvgNumerator;
 	float m_flAvgDenominator;
 };
-#endif // STEAMWORKS
 extern SteamGlobalStat_t g_SteamAPIGlobalStats[1];
 
-#ifdef USE_EOS
- #include "eos.hpp"
-#endif // USE_EOS
+#define getSizeOfText(A, B, C, D) TTF_SizeUTF8(A, B, C, D)
+#define getHeightOfFont(A) TTF_FontHeight(A)
 
-#ifndef NINTENDO
- #define getSizeOfText(A, B, C, D) TTF_SizeUTF8(A, B, C, D)
- #define getHeightOfFont(A) TTF_FontHeight(A)
-#endif // NINTENDO
-
-#if defined(NINTENDO) || (!defined(USE_EOS) && !defined(STEAMWORKS))
- #define LOCAL_ACHIEVEMENTS
-#endif
+#define LOCAL_ACHIEVEMENTS
 
 std::string stackTrace();
 void stackTraceUnique();

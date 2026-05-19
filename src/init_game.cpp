@@ -24,13 +24,7 @@
 #include "magic/magic.hpp"
 #include "monster.hpp"
 #include "net.hpp"
-#ifdef STEAMWORKS
-#include <steam/steam_api.h>
-#include "steam.hpp"
-#endif
-#ifdef USE_PLAYFAB
-#include "playfab.hpp"
-#endif
+
 #include "menu.hpp"
 #include "paths.hpp"
 #include "player.hpp"
@@ -613,10 +607,7 @@ void deinitGame()
 		safePacketsReceivedMap[c].clear();
 	}
 #ifdef SOUND
-#ifdef USE_OPENAL //TODO: OpenAL is now all of the broken...
-#define FMOD_Channel_Stop OPENAL_Channel_Stop
-#define FMOD_Sound_Release OPENAL_Sound_Release
-#endif
+
 	if ( !no_sound )
 	{
 		music_channel->stop();
@@ -735,18 +726,12 @@ void deinitGame()
 			free(fortressmusic);
 		}
 	}
-#ifdef USE_OPENAL
-#undef FMOD_Channel_Stop
-#undef FMOD_Sound_Release
-#endif
+
 #endif
 
 #ifdef USE_FMOD
 #ifndef EDITOR
 	VoiceChat.deinit();
-#ifdef USE_OPUS
-	OpusAudioCodec.deinit();
-#endif
 #endif
 #endif
 
@@ -862,12 +847,7 @@ void deinitGame()
 		players[i] = nullptr;
 	}
 
-#ifdef USE_THEORA_VIDEO
-	VideoManager_t::deinitManager();
-#endif
-#ifdef USE_IMGUI
-	ImGui_t::deinit();
-#endif
+
 #ifdef USE_PLAYFAB
 	playfabUser.postScoreHandler.deinit();
 #endif

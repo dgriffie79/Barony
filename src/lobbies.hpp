@@ -21,22 +21,6 @@ public:
 	LobbyHandler_t() :
 		lobbyDisplayedSearchResults(kNumSearchResults, std::make_pair(-1, LOBBY_DISABLE))
 	{
-#if defined STEAMWORKS && !defined USE_EOS
-		searchType = LOBBY_STEAM;
-		joiningType = LOBBY_STEAM;
-		hostingType = LOBBY_STEAM;
-		P2PType = LOBBY_STEAM;
-#elif !defined STEAMWORKS && defined USE_EOS
-		searchType = LOBBY_CROSSPLAY;
-		joiningType = LOBBY_CROSSPLAY;
-		hostingType = LOBBY_CROSSPLAY;
-		P2PType = LOBBY_CROSSPLAY;
-#elif defined STEAMWORKS && defined USE_EOS
-		searchType = LOBBY_COMBINED;
-		joiningType = LOBBY_STEAM;
-		hostingType = LOBBY_STEAM;
-		P2PType = LOBBY_STEAM;
-#endif
 	};
 
 	enum LobbyServiceType : int
@@ -110,11 +94,7 @@ public:
 		printlog("[Lobbies Error]: %s", newstr);
 	}
 	static std::string getLobbyJoinFailedConnectString(int result);
-#ifdef STEAMWORKS
-	CSteamID steamLobbyToValidate = {};
-	void steamValidateAndJoinLobby(CSteamID& id);
-	bool validateSteamLobbyDataOnJoin();
-#endif
+
 	enum EResult_LobbyFailures : int
 	{
 	    LOBBY_NO_ERROR = 1,             // no error (success)

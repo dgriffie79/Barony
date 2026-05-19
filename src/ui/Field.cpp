@@ -71,18 +71,6 @@ void Field::activate() {
 	if (!editable) {
 		return;
 	}
-#ifdef NINTENDO
-	auto result = nxKeyboard(guide.c_str());
-	if (result.success) {
-		setText(result.str.c_str());
-		if (callback) {
-			(*callback)(*this);
-		}
-		else {
-			printlog("modified field with no callback");
-		}
-	}
-#else
     if (activated) {
         deactivate();
     } else {
@@ -92,7 +80,6 @@ void Field::activate() {
 	    inputlen = (int)textlen;
 	    SDL_StartTextInput();
 	}
-#endif
 }
 
 void Field::deselect() {

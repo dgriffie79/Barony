@@ -28,14 +28,6 @@
 #endif
 #include <mutex>
 #include <queue>
-#ifdef USE_OPUS
-#ifdef NINTENDO
-typedef int16_t opus_int16;
-#define opus_strerror(x) ""
-#else
-#include <opus/opus.h>
-#endif
-#endif
 #include "../../interface/consolecommand.hpp"
 
 extern Uint32 numsounds;
@@ -245,13 +237,8 @@ public:
     {
         bool loopback_local_record = false;
         float voice_global_volume = 100.f;
-#ifdef NINTENDO
-        bool enable_voice_input = false;
-        bool enable_voice_receive = false;
-#else
         bool enable_voice_input = false;
         bool enable_voice_receive = true;
-#endif
         float recordingGain = 100.f;
         bool pushToTalk = true;
         bool use_custom_rolloff = true;
@@ -278,11 +265,7 @@ public:
     bool getAudioSettingBool(AudioSettingBool option);
     float getAudioSettingFloat(AudioSettingFloat option);
     void updateOnMapChange3DRolloff();
-#ifdef USE_OPUS
-	bool using_encoding = true;
-#else
-    bool using_encoding = false;
-#endif
+	bool using_encoding = false;
 	bool voiceToggleTalk = false;
 	FMOD::ChannelGroup* outChannelGroup = nullptr;
 	class PlayerChannels_t
@@ -389,100 +372,8 @@ public:
 		int _writeBytesAvail;
 	};
 	static RingBuffer ringBufferRecord;
-#ifdef USE_OPUS
-    class OpusAudioCodec_t
-    {
-#ifndef NINTENDO
-        OpusEncoder* encoder = nullptr;
-        OpusDecoder* decoder[MAXPLAYERS] = { nullptr };
-#endif
-        bool bInit = false;
-    public:
-        static void logError(const char* str, ...)
-        {
-            char newstr[1024] = { 0 };
-            va_list argptr;
-
-            // format the content
-            va_start(argptr, str);
-            vsnprintf(newstr, 1023, str, argptr);
-            va_end(argptr);
-            printlog("[Opus Error]: %s", newstr);
-        }
-        static void logInfo(const char* str, ...)
-        {
-            char newstr[1024] = { 0 };
-            va_list argptr;
-
-            // format the content
-            va_start(argptr, str);
-            vsnprintf(newstr, 1023, str, argptr);
-            va_end(argptr);
-            printlog("[Opus Info]: %s", newstr);
-        }
-        int numChannels = 0;
-        int sampleRate = 0;
-        void init(int sampleRate, int numChannels);
-
-        void deinit()
-        {
-#ifdef NINTENDO
-            nxDeinitOpus();
-#else
-            if ( encoder )
-            {
-                opus_encoder_destroy(encoder);
-                encoder = nullptr;
-            }
-            for ( int i = 0; i < MAXPLAYERS; ++i )
-            {
-                if ( decoder[i] )
-                {
-                    opus_decoder_destroy(decoder[i]);
-                    decoder[i] = nullptr;
-                }
-            }
-#endif
-            if ( bInit )
-            {
-                logInfo("OpusAudioCodec_t::deinit()");
-            }
-            bInit = false;
-        }
-
-        struct encode_rtn
-        {
-            int frame_size = 0;
-            static const int OPUS_MAX_PACKET_SIZE = FRAME_SIZE * 2;
-            unsigned char cbits[OPUS_MAX_PACKET_SIZE] = {};
-            int numBytes = 0;
-            int encoder_id = -1;
-        };
-        static constexpr int MAX_FRAME_SIZE = 6 * FRAME_SIZE;
-        unsigned int encoded_samples = 0;
-        double encoding_time = 0.0;
-        unsigned int decoded_samples;
-        double decoding_time = 0.0;
-        double encoding_fetch_time = 0.0;
-        unsigned int max_num_bytes_encoded = 0;
-    private:
-        static encode_rtn encodeFrame(std::vector<opus_int16>& in);
-    public:
-        encode_rtn encodeFrameSync(const std::vector<char>& data, int frame_size)
-        {
-            std::vector<opus_int16> in(frame_size * numChannels);
-            for ( int i = 0; i < numChannels * frame_size; i++ )
-                in[i] = (unsigned char)data[2 * i + 1] << 8 | (unsigned char)data[2 * i];
-            return OpusAudioCodec_t::encodeFrame(in);
-        }
-        int decodeFrame(int which_decoder, encode_rtn& frame_in, std::vector<opus_int16>& out);
-    };
-#endif
 };
 extern VoiceChat_t VoiceChat;
-#ifdef USE_OPUS
-extern VoiceChat_t::OpusAudioCodec_t OpusAudioCodec;
-#endif
 #endif
 
 #elif defined USE_OPENAL

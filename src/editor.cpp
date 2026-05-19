@@ -24,10 +24,6 @@
 #define EDITOR
 #endif
 
-#ifdef STEAMWORKS
-#include <steam/steam_api.h>
-#include "steam.hpp"
-#endif // STEAMWORKS
 
 
 //#include "player.hpp"
@@ -808,13 +804,6 @@ bool handleEvents(void)
 			case SDL_KEYDOWN: // if a key is pressed...
 				if ( SDL_IsTextInputActive() )
 				{
-#ifdef APPLE
-					if ( (event.key.keysym.sym == SDLK_DELETE || event.key.keysym.sym == SDLK_BACKSPACE) && strlen(inputstr) > 0 )
-					{
-						inputstr[strlen(inputstr) - 1] = 0;
-						cursorflash = ticks;
-					}
-#else
 					if ( event.key.keysym.sym == SDLK_BACKSPACE && strlen(inputstr) > 0 )
 					{
 						if ( textInsertCaratPosition >= 0 && newwindow == 20 && textInsertCaratPosition != strlen(inputstr) )
@@ -851,7 +840,6 @@ bool handleEvents(void)
 						}
 						cursorflash = ticks;
 					}
-#endif
 					else if ( event.key.keysym.sym == SDLK_c && SDL_GetModState()&KMOD_CTRL )
 					{
 						SDL_SetClipboardText(inputstr);
@@ -1557,44 +1545,13 @@ int selectedarea_y1, selectedarea_y2;
 bool selectedarea = false;
 bool pasting = false;
 
-#ifdef APPLE
-#include <mach-o/dyld.h> //For _NSGetExecutablePath()
-#endif
+
 
 int main(int argc, char** argv)
 {
-#ifdef APPLE
-	uint32_t buffsize = 4096;
-	char binarypath[buffsize];
-	int result = _NSGetExecutablePath(binarypath, &buffsize);
-	if (result == 0)   //It worked.
-	{
-		printlog( "Binary path: %s\n", binarypath);
-		char* last = strrchr(binarypath, '/');
-		*last = '\0';
-		char execpath[buffsize];
-		strcpy(execpath, binarypath);
-		//char* last = strrchr(execpath, '/');
-		//strcat(execpath, '/');
-		//strcat(execpath, "/../../../");
-		printlog( "Chrooting to directory: %s\n", execpath);
-		chdir(execpath);
-		///Users/ciprian/barony/barony-sdl2-take2/barony.app/Contents/MacOS/barony
-		chdir("..");
-		chdir("..");
-		chdir("..");
-		chdir("barony.app/Contents/Resources");
-		//chdir("..");
-	}
-	else
-	{
-		printlog( "Failed to get binary path. Program may not work correctly!\n");
-	}
-#endif
 
-#ifdef LINUX
-	(void)chdir(BASE_DATA_DIR); // fixes a lot of headaches...
-#endif
+
+
 
 	button_t* button;
 	node_t* node;
@@ -1643,27 +1600,16 @@ int main(int argc, char** argv)
 	if ( (x = initApp("Barony Editor", fullscreen)) )
 	{
 		printlog("Critical error: %d\n", x);
-#ifdef STEAMWORKS
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Uh oh",
-								"Barony has encountered a critical error and cannot start.\n\n"
-								"Please check the log.txt file in the game directory for additional info\n"
-								"and verify Steam is running. Alternatively, contact us through our website\n"
-								"at http://www.baronygame.com/ for support.",
-								screen);
-#else
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Uh oh",
 								"Barony has encountered a critical error and cannot start.\n\n"
 								"Please check the log.txt file in the game directory for additional info,\n"
 								"or contact us through our website at http://www.baronygame.com/ for support.",
 								screen);
-#endif
 		deinitApp();
 		exit(x);
 	}
 	
-#ifdef STEAMWORKS
-	g_SteamStatistics->RequestStats();
-#endif // STEAMWORKS
+
 
 
 	copymap.tiles = nullptr;
@@ -2129,16 +2075,7 @@ int main(int argc, char** argv)
 		// game logic
 		(void)handleEvents();
 
-#ifdef STEAMWORKS
-		SteamAPI_RunCallbacks();
-		if ( SteamUser()->BLoggedOn() && !achievementCartographer )
-		{
-			SteamUserStats()->SetAchievement("BARONY_ACH_CARTOGRAPHER");
-			achievementCartographer = true;
-			SteamUserStats()->StoreStats();
-			//printlog("STEAM ACHIEVEMENT\n");
-		}
-#endif
+
 
 		// move buttons
 		/*if( !fullscreen ) {

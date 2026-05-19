@@ -351,11 +351,6 @@ bool initSoundEngine()
 		VoiceChat.setRecordingDevice(selected_recording_driver);
 #endif
 	}
-#elif defined USE_OPENAL
-	if (!no_sound)
-	{
-		initOPENAL();
-	}
 #endif
 
 #ifndef EDITOR
@@ -421,18 +416,7 @@ int loadSoundResources(real_t base_load_percent, real_t top_load_percent)
 	}
 	FileIO::close(fp);
 	fmod_system->set3DSettings(1.0, 2.0, 1.0);
-#elif defined USE_OPENAL
-	sounds = (OPENAL_BUFFER**) malloc(sizeof(OPENAL_BUFFER*)*numsounds);
-	for (c = 0, fp = openDataFile(soundsDirectory.c_str(), "rb"); fp->gets2(name, 128); ++c)
-	{
-		//TODO: Might need to malloc the sounds[c]->sound
-		OPENAL_CreateSound(name, true, &sounds[c]);
-		//TODO: set sound volume? Or otherwise handle sound volume.
-		updateLoadingScreen(base_load_percent + (top_load_percent * c) / numsounds);
-	}
-	FileIO::close(fp);
-	//FMOD_System_Set3DSettings(fmod_system, 1.0, 2.0, 1.0); // This on is hardcoded, I've been lazy here'
-#endif // defined USE_OPENAL
+#endif
 
 	return 0;
 }

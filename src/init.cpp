@@ -16,9 +16,6 @@
 #include <sys/stat.h>
 #include <sstream>
 
-#ifdef NINTENDO
- #include "nintendo/nxplatform.hpp"
-#endif // NINTENDO
 #include "draw.hpp"
 #include "files.hpp"
 #include "engine/audio/sound.hpp"
@@ -31,10 +28,6 @@
  #include "editor.hpp"
 #endif // NINTENDO
 #include "menu.hpp"
-#ifdef STEAMWORKS
- #include <steam/steam_api.h>
- #include "steam.hpp"
-#endif // STEAMWORKS
 #ifndef EDITOR
 #include "player.hpp"
 #endif
@@ -93,16 +86,6 @@ bool mountBaseDataFolders() {
 			PHYSFS_mkdir("data/statues");
 			PHYSFS_mkdir("data/scripts");
 			PHYSFS_mkdir("config");
-#ifdef STEAMWORKS
-			PHYSFS_mkdir("workshop_cache");
-#endif
-#ifdef NINTENDO
-			PHYSFS_mkdir("mods");
-			std::string path = outputdir;
-			path.append(PHYSFS_getDirSeparator()).append("mods");
-			PHYSFS_setWriteDir(path.c_str()); //Umm...should it really be doing that? First off, it didn't actually create this directory. Second off, what about the rest of the directories it created?
-			printlog("[PhysFS]: successfully set write folder %s", path.c_str());
-#else // NINTENDO
 			if ( PHYSFS_mkdir("mods") )
 			{
 				std::string path = outputdir;
@@ -115,7 +98,6 @@ bool mountBaseDataFolders() {
 				printlog("[PhysFS]: unsuccessfully created mods/ folder. Error: %s", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
 				return false;
 			}
-#endif // !NINTENDO
 		}
 	}
 	else
@@ -257,67 +239,6 @@ int initApp(char const * const title, int fullscreen)
 		return 1;
 	}*/
 
-	// init steamworks
-#ifdef STEAMWORKS
-	SteamAPI_RestartAppIfNecessary(STEAM_APPID);
-	if ( !SteamAPI_Init() )
-	{
-		printlog("error: failed to initialize Steamworks!\n");
-		printlog(" make sure your steam client is running before attempting to start again.\n");
-		return 1;
-	}
-	steam_init = true;
-	g_SteamLeaderboards = new CSteamLeaderboards();
-	g_SteamWorkshop = new CSteamWorkshop();
-	g_SteamStatistics = new CSteamStatistics(g_SteamStats, g_SteamAPIGlobalStats, NUM_STEAM_STATISTICS);
-    if (xres == 1280 && yres == 720 && SteamUtils()->IsSteamRunningOnSteamDeck()) {
-        // default steam deck native resolution
-        xres = 1280;
-        yres = 800;
-    }
-#ifdef PANDORA
-    if (xres == 1280 && yres == 720) {
-        // Pandora native resolution
-        xres = 800;
-        yres = 480;
-    }
-#endif
-	// Preloads mod content from a workshop fileID
-	//gamemodsWorkshopPreloadMod(YOUR WORKSHOP FILE ID HERE, "YOUR WORKSHOP TITLE HERE");
-#endif
-#if defined USE_EOS
-	EOS.readFromFile();
-	EOS.readFromCmdLineArgs();
-#ifndef NINTENDO
-	if ( EOS.initPlatform(true) == false )
-	{
-		return 14;
-	}
-#endif
-#ifndef STEAMWORKS
-#ifndef NINTENDO
-#ifdef APPLE
-	if ( EOS.CredentialName.compare("") == 0 )
-	{
-		EOSFuncs::logInfo("Error, attempting to launch outside of store...");
-		return 15;
-	}
-#else
-	if ( EOS.appRequiresRestart == EOS_EResult::EOS_Success )
-	{
-		// restarting app
-		EOSFuncs::logInfo("App attempting restart through store...");
-		return 15;
-	}
-#endif
-#endif
-#ifdef NINTENDO
-	EOS.SetNetworkAvailable(nxConnectedToNetwork());
-#else
-	EOS.initAuth();
-#endif
-#endif // !STEAMWORKS
-#endif
 #ifndef EDITOR
 	for ( int i = 0; i < MAXPLAYERS; ++i )
 	{
@@ -368,17 +289,11 @@ int initApp(char const * const title, int fullscreen)
 				new_event.window.windowID = screen ? SDL_GetWindowID(screen) : 0;
 				SDL_PushEvent(&new_event);
 			}
-#ifdef USE_EOS
-			EOS.SetSleepStatus(false);
-#endif
 			break;
 		}
 		case SDL_APP_WILLENTERBACKGROUND:
 		case SDL_APP_DIDENTERBACKGROUND:
 			printlog("barony going to sleep");
-#ifdef USE_EOS
-			EOS.SetSleepStatus(true);
-#endif
 			break;
 		case SDL_APP_LOWMEMORY:
 			printlog("barony low memory, dumping UI cache");
@@ -393,11 +308,7 @@ int initApp(char const * const title, int fullscreen)
 	SDL_SetEventFilter(event_filter, nullptr);
 #endif
 
-#ifdef NINTENDO
-	SDL_GameControllerAddMappingsFromFile(GAME_CONTROLLER_DB_FILEPATH);
-#else
 	SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
-#endif
 
 	//printlog("initializing SDL_mixer. rate: %d format: %d channels: %d buffers: %d\n", audio_rate, audio_format, audio_channels, audio_buffers);
 	/*if( Mix_OpenAudio(audio_rate, audio_format, audio_channels, audio_buffers) ) {
@@ -851,11 +762,7 @@ int Language::loadLanguage(char const * const lang, bool forceLoadBaseDirectory)
 	}
 	else
 	{
-#ifdef NINTENDO
 		langFilepath = std::string(BASE_DATA_DIR) + filename;
-#else
-		langFilepath = std::string(BASE_DATA_DIR) + filename;
-#endif
 	}
 
 	// check if language file is valid
@@ -1082,9 +989,6 @@ static GLuint tileTextures[numTileAtlases] = { 0 };
 static ConsoleVariable<int> cvar_tileTextureSize("/tile_texture_size", 32, "the size of a tile texture");
 void readTilesJson()
 {
-#ifdef NINTENDO
-	return;
-#endif
 	if ( !PHYSFS_getRealDir("/data/tiles.json") )
 	{
 		printlog("[JSON]: Error: Could not find file: data/tiles.json");
@@ -1203,9 +1107,6 @@ void bindTextureAtlas(int index) {
 -------------------------------------------------------------------------------*/
 int deinitApp()
 {
-#ifdef USE_OPENAL
-	closeOPENAL();
-#endif
 	// close engine
 	printlog("closing engine...\n");
 
@@ -1391,25 +1292,6 @@ int deinitApp()
 	TTF_Quit();
 	SDL_Quit();
 
-	// shutdown steamworks
-#ifdef STEAMWORKS
-	if (steam_init) {
-		printlog("storing user stats to Steam...\n");
-		SteamUserStats()->StoreStats();
-		if (g_SteamLeaderboards) {
-			delete g_SteamLeaderboards;
-		}
-		if (g_SteamWorkshop) {
-			delete g_SteamWorkshop;
-		}
-		if (g_SteamStatistics) {
-			delete g_SteamStatistics;
-		}
-		SteamAPI_Shutdown();
-	}
-#endif
-
-
 #ifndef NINTENDO
 	int numLogFilesToKeepInArchive = 30;
 	// archive logfiles.
@@ -1522,13 +1404,6 @@ int deinitApp()
 
 static void positionAndLimitWindow(int& x, int& y, int& w, int& h)
 {
-#ifdef NINTENDO
-	// don't do anything on nintendo.
-	// SDL_GetDisplayBounds() isn't helpful, because it just returns
-	// the size of the current display, which is incorrect when you're
-	// trying to switch the display size.
-	return;
-#else
 	static const int displays = SDL_GetNumVideoDisplays();
 	std::vector<SDL_Rect> displayBounds;
 	for (int i = 0; i < displays; i++) {
@@ -1540,17 +1415,12 @@ static void positionAndLimitWindow(int& x, int& y, int& w, int& h)
 		if (fullscreen) {
 			x = bound.x;
 			y = bound.y;
-			//w = std::min(bound.w, w);
-			//h = std::min(bound.h, h);
 		}
 		else {
-            //w = std::min(bound.w, w);
-            //h = std::min(bound.h, h);
 			x = bound.x + (bound.w - w) / 2;
 			y = bound.y + (bound.h - h) / 2;
 		}
 	}
-#endif
 }
 
 bool initVideo()
@@ -1607,20 +1477,13 @@ bool initVideo()
         
         flags |= SDL_WINDOW_RESIZABLE;
         
-#ifdef PANDORA
-	    flags |= SDL_WINDOW_FULLSCREEN;
-#endif
         
-#ifdef NINTENDO
-    	flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-#else
         if (fullscreen) {
             flags |= SDL_WINDOW_FULLSCREEN;
         }
         if (borderless) {
             flags |= SDL_WINDOW_BORDERLESS;
         }
-#endif
 
 		positionAndLimitWindow(screen_x, screen_y, screen_width, screen_height);
         
@@ -1681,9 +1544,6 @@ bool initVideo()
 		glewInit();
 #endif
 
-#ifdef NINTENDO
-		initNxGL();
-#endif
         
         // do this to fix the window size/position caused by high-dpi scaling
         int w1, w2, h1, h2;

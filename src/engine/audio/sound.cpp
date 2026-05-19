@@ -19,18 +19,9 @@
 
 #ifdef USE_FMOD
 #include "fmod_errors.h"
-#elif defined USE_OPENAL
-#ifdef USE_TREMOR
-#include <tremor/ivorbisfile.h>
-#else
-#include <ogg/ogg.h>
-#include <vorbis/vorbisfile.h>
-#include <vorbis/codec.h>
-#endif
 #endif
 
 #ifdef USE_FMOD
-#elif defined USE_OPENAL
 #else
 void setGlobalVolume(real_t master, real_t music, real_t gameplay, real_t ambient, real_t environment, real_t notification)
 {
@@ -415,7 +406,6 @@ void sound_update(int player, int index, int numplayers)
 #endif
 }
 
-#elif defined USE_OPENAL
 
 struct OPENAL_BUFFER {
 	ALuint id;
@@ -547,11 +537,7 @@ static int openal_streamread(OPENAL_SOUND *self, ALuint buffer) {
 
 
 	while (size < OGGSIZE) {
-		#ifdef USE_TREMOR
-		result = ov_read(&self->oggStream, pcm+size, OGGSIZE -size, &section);
-		#else
 		result = ov_read(&self->oggStream, pcm+size, OGGSIZE -size, 0, 2, 1, &section);
-		#endif
 		if(result==0 && self->loop)
 			ov_raw_seek(&self->oggStream, 0);
 
@@ -1040,11 +1026,7 @@ int OPENAL_CreateSound(const char* name, bool b3D, OPENAL_BUFFER **buffer) {
 	size_t sz = 0;
 	do {
 		int bitStream;
-		#ifdef USE_TREMOR
-		bytes = ov_read(&oggFile, ptr, size, &bitStream);
-		#else
 		bytes = ov_read(&oggFile, ptr, size, 0, 2, 1, &bitStream);
-		#endif
 		size-=bytes;
 		ptr+=bytes;
 		sz+=bytes;
@@ -1440,14 +1422,6 @@ void physfsReloadMusic(bool &introMusicChanged, bool reloadAll) //TODO: This sho
 	}
 #ifdef SOUND
 	int index = 0;
-#ifdef USE_OPENAL
-#define FMOD_System_CreateStream(A, B, C, D, E) OPENAL_CreateStreamSound(B, E) //TODO: If this is still needed, it's probably now broke!
-#define FMOD_SOUND OPENAL_BUFFER
-#define fmod_system 0
-#define FMOD_SOFTWARE 0
-#define FMOD_Sound_Release OPENAL_Sound_Release
-	int fmod_result;
-#endif
 	bool ensembleNeedsUpdate = false;
 	for ( auto it = themeMusic.begin(); it != themeMusic.end(); ++it )
 	{
@@ -1963,13 +1937,6 @@ void physfsReloadMusic(bool &introMusicChanged, bool reloadAll) //TODO: This sho
 #endif
 
 	introMusicChanged = introChanged; // use this variable outside of this function to start playing a new fresh list of tracks in the main menu.
-#ifdef USE_OPENAL
-#undef FMOD_System_CreateStream
-#undef FMOD_SOUND
-#undef fmod_system
-#undef FMOD_SOFTWARE
-#undef FMOD_Sound_Release
-#endif
 
 #endif // SOUND
 }
@@ -1977,9 +1944,6 @@ void physfsReloadMusic(bool &introMusicChanged, bool reloadAll) //TODO: This sho
 void gamemodsUnloadCustomThemeMusic()
 {
 #ifdef SOUND
-#ifdef USE_OPENAL
-#define FMOD_Sound_Release OPENAL_Sound_Release
-#endif
 	// free custom music slots, not used by official music assets.
 	if ( gnomishminesmusic )
 	{
@@ -2011,8 +1975,5 @@ void gamemodsUnloadCustomThemeMusic()
 		hamletmusic->release();
 		hamletmusic = nullptr;
 	}
-#ifdef USE_OPENAL
-#undef FMOD_Sound_Release
-#endif
 #endif // !SOUND
 }

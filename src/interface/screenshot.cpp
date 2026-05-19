@@ -17,9 +17,6 @@
 #include "../files.hpp"
 #include "interface.hpp"
 
-#ifdef NINTENDO
-#include "../nintendo/baronynx.hpp"
-#endif
 
 /*-------------------------------------------------------------------------------
 

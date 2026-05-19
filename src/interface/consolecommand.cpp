@@ -4993,16 +4993,7 @@ namespace ConsoleCommands {
 			return;
 		}
 
-#ifdef USE_IMGUI
-		if ( ImGui_t::isInit )
-		{
-			ImGui_t::queueDeinit = true;
-		}
-		else
-		{
-			ImGui_t::queueInit = true;
-		}
-#endif
+
 	});
 
 	static ConsoleCommand ccmd_loadshopkeeperconsumables("/loadshopconsumables", "", []CCMD{

@@ -883,7 +883,7 @@ Stat* Stat::copyStats()
 		newStat->mask = NULL;
 	}
 
-#if defined(USE_FMOD) || defined(USE_OPENAL)
+#ifdef USE_FMOD
 	newStat->monster_sound = nullptr;
 #endif
 	newStat->monster_idlevar = this->monster_idlevar;

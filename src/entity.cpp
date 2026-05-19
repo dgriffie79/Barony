@@ -23,9 +23,7 @@ See LICENSE for details.
 #include "paths.hpp"
 #include "book.hpp"
 #include "shops.hpp"
-#ifdef STEAMWORKS
-#include <steam/steam_api.h>
-#endif
+
 #include "player.hpp"
 #include "scores.hpp"
 #include "menu.hpp"

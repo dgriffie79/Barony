@@ -2996,12 +2996,6 @@ void actMonster(Entity* my)
 				{
 					MONSTER_SOUND->stop();
 				}
-#elif defined USE_OPENAL
-				if ( MONSTER_SOUND )
-				{
-					OPENAL_Channel_Stop(MONSTER_SOUND);
-				}
-#endif
 				int c;
 				for ( c = 0; c < MAXPLAYERS; c++ )
 				{
@@ -3010,6 +3004,7 @@ void actMonster(Entity* my)
 					Uint32 color = makeColorRGB(255, 0, 255);
 					messagePlayerColor(c, MESSAGE_WORLD, color, Language::get(512));
 				}
+#endif
 			}
 		}
 		// dodging away
@@ -3938,12 +3933,6 @@ void actMonster(Entity* my)
 		{
 			MONSTER_SOUND->stop();
 		}
-#elif defined USE_OPENAL
-		if ( MONSTER_SOUND )
-		{
-			OPENAL_Channel_Stop(MONSTER_SOUND);
-		}
-#endif
 		myStats = my->getStats();
 
 		real_t deathLocationX = my->x;
@@ -4221,6 +4210,7 @@ void actMonster(Entity* my)
 			}
 		}
 		return;
+#endif
 	}
 
 	if ( multiplayer != CLIENT )
@@ -4247,13 +4237,6 @@ void actMonster(Entity* my)
 		if (!playing)
 		{
 			MONSTER_SOUND = nullptr;
-		}
-#elif defined USE_OPENAL
-		ALboolean playing;
-		OPENAL_Channel_IsPlaying(MONSTER_SOUND, &playing);
-		if (!playing)
-		{
-			MONSTER_SOUND = NULL;
 		}
 #endif
 

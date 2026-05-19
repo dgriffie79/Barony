@@ -27,10 +27,6 @@
 #include "scores.hpp"
 #include "collision.hpp"
 #include "paths.hpp"
-#ifdef STEAMWORKS
-#include <steam/steam_api.h>
-#include "steam.hpp"
-#endif
 #include "player.hpp"
 #include "scores.hpp"
 #include "colors.hpp"
@@ -40,9 +36,7 @@
 #include "ui/LoadingScreen.hpp"
 #include "ui/GameUI.hpp"
 #include "interface/ui.hpp"
-#ifdef USE_PLAYFAB
-#include "playfab.hpp"
-#endif
+
 
 #include <atomic>
 #include <future>
@@ -91,17 +85,7 @@ void pollNetworkForShutdown() {
 			}
 		}
 	}
-#ifdef STEAMWORKS
-	SteamAPI_RunCallbacks();
-#endif // STEAMWORKS
-#ifdef USE_EOS
-	if (EOS.PlatformHandle) {
-		EOS_Platform_Tick(EOS.PlatformHandle);
-	}
-	if (EOS.ServerPlatformHandle) {
-		EOS_Platform_Tick(EOS.ServerPlatformHandle);
-	}
-#endif // USE_EOS
+
 }
 
 /*-------------------------------------------------------------------------------
@@ -129,23 +113,11 @@ int sendPacket(UDPsocket sock, int channel, UDPpacket* packet, int hostnum, bool
 	    }
 		if ( LobbyHandler.getP2PType() == LobbyHandler_t::LobbyServiceType::LOBBY_STEAM )
 		{
-#ifdef STEAMWORKS
-			if ( steamIDRemote[hostnum] )
-			{
-				return SteamNetworking()->SendP2PPacket(*static_cast<CSteamID* >(steamIDRemote[hostnum]), packet->data, packet->len, tryReliable? k_EP2PSendReliable : k_EP2PSendUnreliable, 0);
-			}
-			else
-			{
-				return 0;
-			}
-#endif
+
 		}
 		else if ( LobbyHandler.getP2PType() == LobbyHandler_t::LobbyServiceType::LOBBY_CROSSPLAY )
 		{
-#if defined USE_EOS
-			EOS.SendMessageP2P(EOS.P2PConnectionInfo.getPeerIdFromIndex(hostnum), (char*)packet->data, packet->len);
-			return 0;
-#endif
+
 		}
 		return 0;
 	}
@@ -176,21 +148,11 @@ int sendPacketSafe(UDPsocket sock, int channel, UDPpacket* packet, int hostnum)
 	{
 		if ( LobbyHandler.getP2PType() == LobbyHandler_t::LobbyServiceType::LOBBY_STEAM )
 		{
-#ifdef STEAMWORKS
-			if ( !steamIDRemote[hostnum] )
-			{
-				return 0;
-			}
-#endif
+
 		}
 		else if ( LobbyHandler.getP2PType() == LobbyHandler_t::LobbyServiceType::LOBBY_CROSSPLAY )
 		{
-#if defined USE_EOS
-			if ( !EOS.P2PConnectionInfo.getPeerIdFromIndex(hostnum) )
-			{
-				return 0;
-			}
-#endif
+
 		}
 	}
 
@@ -236,23 +198,9 @@ int sendPacketSafe(UDPsocket sock, int channel, UDPpacket* packet, int hostnum)
 	{
 		if ( LobbyHandler.getP2PType() == LobbyHandler_t::LobbyServiceType::LOBBY_STEAM )
 		{
-#ifdef STEAMWORKS
-			if ( steamIDRemote[hostnum] )
-			{
-				return SteamNetworking()->SendP2PPacket(*static_cast<CSteamID* >(steamIDRemote[hostnum]), packetsend->packet->data, packetsend->packet->len, k_EP2PSendReliable, 0);
-			}
-			else
-			{
-				return 0;
-			}
-#endif
 		}
 		else if ( LobbyHandler.getP2PType() == LobbyHandler_t::LobbyServiceType::LOBBY_CROSSPLAY )
 		{
-#if defined USE_EOS
-			EOS.SendMessageP2P(EOS.P2PConnectionInfo.getPeerIdFromIndex(hostnum), packetsend->packet->data, packetsend->packet->len);
-			return 0;
-#endif
 		}
 		return 0;
 	}
@@ -2306,19 +2254,6 @@ static void changeLevel() {
 	}
 	ensembleSounds.stopPlaying(true);
 	VoiceChat.deinitRecording(false);
-#elif defined USE_OPENAL
-	if ( sound_group )
-	{
-		OPENAL_ChannelGroup_Stop(sound_group);
-	}
-	if ( soundAmbient_group )
-	{
-		OPENAL_ChannelGroup_Stop(soundAmbient_group);
-	}
-	if ( soundEnvironment_group )
-	{
-		OPENAL_ChannelGroup_Stop(soundEnvironment_group);
-	}
 #endif
 	if ( openedChest[clientnum] )
 	{
@@ -6316,9 +6251,7 @@ static std::unordered_map<Uint32, void(*)()> clientPacketHandlers = {
 	{ 'DEND', []() {
 		if ( multiplayer == CLIENT )
 		{
-#ifdef USE_PLAYFAB
-			playfabUser.postScore(clientnum);
-#endif
+
 		}
 	}},
 
@@ -6837,77 +6770,8 @@ void clientHandlePacket()
 
 void clientHandleMessages(Uint32 framerateBreakInterval)
 {
-#ifdef STEAMWORKS
-	if (!directConnect && !net_handler)
-	{
-		net_handler = new NetHandler();
-		if ( !disableMultithreadedSteamNetworking )
-		{
-			net_handler->initializeMultithreadedPacketHandling();
-		}
-	}
-#elif defined USE_EOS
-	if ( !directConnect && !net_handler )
-	{
-		net_handler = new NetHandler();
-	}
-#endif
-
 	if (!directConnect)
 	{
-#if defined(STEAMWORKS) || defined(USE_EOS)
-		if ( LobbyHandler.getP2PType() == LobbyHandler_t::LobbyServiceType::LOBBY_STEAM )
-		{
-#ifdef STEAMWORKS
-			//Steam stuff goes here.
-			if ( disableMultithreadedSteamNetworking )
-			{
-				steamPacketThread(static_cast<void*>(net_handler));
-			}
-#endif
-		}
-		else if ( LobbyHandler.getP2PType() == LobbyHandler_t::LobbyServiceType::LOBBY_CROSSPLAY )
-		{
-#if defined USE_EOS
-			EOSPacketThread(static_cast<void*>(net_handler));
-#endif
-		}
-		SteamPacketWrapper* packet = nullptr;
-
-		if ( logCheckMainLoopTimers )
-		{
-			DebugStats.messagesT1 = std::chrono::high_resolution_clock::now();
-			DebugStats.handlePacketStartLoop = true;
-		}
-
-		while (packet = net_handler->getGamePacket())
-		{
-			memcpy(net_packet->data, packet->data(), packet->len());
-			net_packet->len = packet->len();
-
-			clientHandlePacket(); //Uses net_packet.
-
-			if ( logCheckMainLoopTimers )
-			{
-				DebugStats.messagesT2WhileLoop = std::chrono::high_resolution_clock::now();
-				DebugStats.handlePacketStartLoop = false;
-			}
-			delete packet;
-			if ( !net_handler )
-			{
-				break;
-			}
-
-			if ( !disableFPSLimitOnNetworkMessages && !frameRateLimit(framerateBreakInterval, false) )
-			{
-				if ( logCheckMainLoopTimers )
-				{
-					printlog("[NETWORK]: Incoming messages exceeded given cycle time, packets remaining: %d", net_handler->game_packets.size());
-				}
-				break;
-			}
-		}
-#endif
 	}
 	else
 	{
@@ -9507,77 +9371,8 @@ void serverHandlePacket()
 
 void serverHandleMessages(Uint32 framerateBreakInterval)
 {
-#ifdef STEAMWORKS
-	if (!directConnect && !net_handler)
-	{
-		net_handler = new NetHandler();
-		if ( !disableMultithreadedSteamNetworking )
-		{
-			net_handler->initializeMultithreadedPacketHandling();
-		}
-	}
-#elif defined USE_EOS
-	if ( !directConnect && !net_handler )
-	{
-		net_handler = new NetHandler();
-	}
-#endif
-
 	if (!directConnect)
 	{
-#if defined(STEAMWORKS) || defined(USE_EOS)
-		if ( LobbyHandler.getP2PType() == LobbyHandler_t::LobbyServiceType::LOBBY_STEAM )
-		{
-#ifdef STEAMWORKS
-			//Steam stuff goes here.
-			if ( disableMultithreadedSteamNetworking )
-			{
-				steamPacketThread(static_cast<void*>(net_handler));
-			}
-#endif
-		}
-		else if ( LobbyHandler.getP2PType() == LobbyHandler_t::LobbyServiceType::LOBBY_CROSSPLAY )
-		{
-#if defined USE_EOS
-			EOSPacketThread(static_cast<void*>(net_handler));
-#endif // USE_EOS
-		}
-		SteamPacketWrapper* packet = nullptr;
-
-		if ( logCheckMainLoopTimers )
-		{
-			DebugStats.messagesT1 = std::chrono::high_resolution_clock::now();
-			DebugStats.handlePacketStartLoop = true;
-		}
-
-		while ( packet = net_handler->getGamePacket() )
-		{
-			memcpy(net_packet->data, packet->data(), packet->len());
-			net_packet->len = packet->len();
-
-			serverHandlePacket(); //Uses net_packet;
-
-			if ( logCheckMainLoopTimers )
-			{
-				DebugStats.messagesT2WhileLoop = std::chrono::high_resolution_clock::now();
-				DebugStats.handlePacketStartLoop = false;
-			}
-			delete packet;
-			if ( !net_handler )
-			{
-				break;
-			}
-
-			if ( !disableFPSLimitOnNetworkMessages && !frameRateLimit(framerateBreakInterval, false) )
-			{
-				if ( logCheckMainLoopTimers )
-				{
-					printlog("[NETWORK]: Incoming messages exceeded given cycle time, packets remaining: %d", net_handler->game_packets.size());
-				}
-				break;
-			}
-		}
-#endif
 	}
 	else
 	{
@@ -9789,14 +9584,7 @@ void closeNetworkInterfaces()
 		SDLNet_FreeSocketSet(tcpset);
 		tcpset = nullptr;
 	}
-#ifdef STEAMWORKS
-    for (int c = 0; c < MAXPLAYERS; ++c) {
-        if (steamIDRemote[c]) {
-            cpp_Free_CSteamID(steamIDRemote[c]);
-            steamIDRemote[c] = NULL;
-        }
-    }
-#endif
+
 }
 
 
@@ -9893,14 +9681,6 @@ void NetHandler::toggleMultithreading(bool disableMultithreading)
 
 void NetHandler::initializeMultithreadedPacketHandling()
 {
-#ifdef STEAMWORKS
-
-	printlog("Initializing multithreaded packet handling.");
-
-	steam_packet_thread = SDL_CreateThread(steamPacketThread, "steamPacketThread", static_cast<void* >(this));
-	continue_multithreading_steam_packets = true;
-
-#endif
 }
 
 void NetHandler::stopMultithreadedPacketHandling()
@@ -9956,149 +9736,12 @@ SteamPacketWrapper* NetHandler::getGamePacket()
 
 int EOSPacketThread(void* data)
 {
-#ifdef USE_EOS
-	if ( !EOS.CurrentUserInfo.isValid() )
-	{
-		//logError("EOSPacketThread: Invalid local user Id: %s", CurrentUserInfo.getProductUserIdStr());
-		return -1;
-	}
-
-	if ( !data )
-	{
-		return -1;    //Some generic error?
-	}
-
-	NetHandler& handler = *static_cast<NetHandler*>(data); //Basically, our this.
-	EOS_ProductUserId remoteId = nullptr;
-	Uint32 packetlen = 0;
-	Uint32 bytes_read = 0;
-	Uint8* packet = nullptr;
-	bool run = true;
-	std::queue<SteamPacketWrapper* > packets; //TODO: Expose to game? Use lock-free packets?
-
-	while ( run )   //1. Check if thread is supposed to be running.
-	{
-		//2. Game not over. Grab/poll for packet.
-
-		//while (handler.getContinueMultithreadingSteamPackets() && SteamNetworking()->IsP2PPacketAvailable(&packetlen)) //Burst read in a bunch of packets.
-		while (EOS.HandleReceivedMessages(&remoteId) )
-		{
-			packetlen = std::min<uint32_t>(net_packet->len, NET_PACKET_SIZE - 1);
-			//Read packets and push into queue.
-			packet = static_cast<Uint8*>(malloc(packetlen));
-			memcpy(packet, net_packet->data, packetlen);
-			if ( !EOSFuncs::Helpers_t::isMatchingProductIds(remoteId, EOS.CurrentUserInfo.getProductUserIdHandle())
-				&& net_packet->data[0] )
-			{
-				//Push packet into queue.
-				//TODO: Use lock-free queues?
-				packets.push(new SteamPacketWrapper(packet, packetlen));
-				packet = nullptr;
-			}
-			if ( packet )
-			{
-				free(packet);
-			}
-		}
-
-
-		//3. Now push our local packetstack onto the game's network stack.
-		//Well, that is: analyze packet.
-		//If packet is good, push into queue.
-		//If packet is bad, loop back to start of function.
-
-		while ( !packets.empty() )
-		{
-			//Copy over the packets read in so far, and expose them to the game.
-			SteamPacketWrapper* packet = packets.front();
-			packets.pop();
-			handler.addGamePacket(packet);
-		}
-
-		run = false; // only run thread once if multithreading disabled.
-	}
-#endif // USE_EOS
-
 	return 0;
 }
 
 int steamPacketThread(void* data)
 {
-#ifdef STEAMWORKS
-
-	if (!data)
-	{
-		return -1;    //Some generic error?
-	}
-
-	NetHandler& handler = *static_cast<NetHandler* >(data); //Basically, our this.
-
-	Uint32 packetlen = 0;
-	Uint32 bytes_read = 0;
-	CSteamID steam_id_remote;
-	Uint8* packet = nullptr;
-	CSteamID mySteamID = SteamUser()->GetSteamID();
-	bool run = true;
-	std::queue<SteamPacketWrapper* > packets; //TODO: Expose to game? Use lock-free packets?
-
-	while (run)   //1. Check if thread is supposed to be running.
-	{
-		//2. Game not over. Grab/poll for packet.
-
-		//while (handler.getContinueMultithreadingSteamPackets() && SteamNetworking()->IsP2PPacketAvailable(&packetlen)) //Burst read in a bunch of packets.
-		while (SteamNetworking()->IsP2PPacketAvailable(&packetlen))
-		{
-			packetlen = std::min<uint32_t>(packetlen, NET_PACKET_SIZE - 1);
-			//Read packets and push into queue.
-			packet = static_cast<Uint8* >(malloc(packetlen));
-			if (SteamNetworking()->ReadP2PPacket(packet, packetlen, &bytes_read, &steam_id_remote, 0))
-			{
-				if (packetlen > sizeof(uint32_t) && mySteamID.ConvertToUint64() != steam_id_remote.ConvertToUint64() && net_packet->data[0])
-				{
-					//Push packet into queue.
-					//TODO: Use lock-free queues?
-					packets.push(new SteamPacketWrapper(packet, packetlen));
-					packet = nullptr;
-				}
-			}
-			if (packet)
-			{
-				free(packet);
-			}
-		}
-
-
-		//3. Now push our local packetstack onto the game's network stack.
-		//Well, that is: analyze packet.
-		//If packet is good, push into queue.
-		//If packet is bad, loop back to start of function.
-
-		while (!packets.empty())
-		{
-			//Copy over the packets read in so far, and expose them to the game.
-			SteamPacketWrapper* packet = packets.front();
-			packets.pop();
-			handler.addGamePacket(packet);
-		}
-
-		if ( !disableMultithreadedSteamNetworking )
-		{
-			SDL_LockMutex(handler.continue_multithreading_steam_packets_lock);
-			run = handler.getContinueMultithreadingSteamPackets();
-			SDL_UnlockMutex(handler.continue_multithreading_steam_packets_lock);
-		}
-		else
-		{
-			run = false; // only run thread once if multithreading disabled.
-		}
-	}
-
-#endif
-
-	return 0; //If it isn't supposed to be running anymore, exit.
-
-	//NOTE: This thread is to be created when the gameplay starts. NOT in the steam lobby.
-	//If it's desired that it be created right when the network interfaces are opened, menu.c would need to be modified to support this, and the packet wrapper would need to include CSteamID.
+	return 0;
 }
 
 /* ***** END MULTITHREADED STEAM PACKET HANDLING ***** */

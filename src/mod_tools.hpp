@@ -25,9 +25,7 @@ See LICENSE for details.
 #include "entity.hpp"
 #include "ui/Widget.hpp"
 
-#ifdef USE_LIBCURL
-#include <curl/curl.h>
-#endif
+
 
 class CustomHelpers
 {
@@ -3125,99 +3123,9 @@ extern ScriptTextParser_t ScriptTextParser;
 #ifndef EDITOR
 //#define USE_THEORA_VIDEO
 #endif // !EDITOR
-#ifdef USE_THEORA_VIDEO
-#include <theoraplayer/theoraplayer.h>
-#include <theoraplayer/Manager.h>
-#include <theoraplayer/VideoFrame.h>
-class VideoManager_t
-{
-	theoraplayer::VideoClip* clip = NULL;
-	static bool isInit;
-	bool started = false;
-	bool whichTexture = false;
-	GLuint textureId1 = 0;
-	GLuint textureId2 = 0;
-	void drawTexturedQuad(unsigned int texID, int tw, int th, const SDL_Rect& src, const SDL_Rect& dest, float alpha);
-	GLuint createTexture(int w, int h, unsigned int format);
-	int potCeil(int value)
-	{
-		--value;
-		value |= value >> 1;
-		value |= value >> 2;
-		value |= value >> 4;
-		value |= value >> 8;
-		value |= value >> 16;
-		++value;
-		return value;
-	}
-	void destroyClip();
-	void updateCurrentClip(float timeDelta);
-	static void destroy();
-	void draw();
-	static void init();
-	std::string currentfile = "";
-public:
-	VideoManager_t() {};
-	~VideoManager_t() {};
-	void drawAsFrameCallback(const Widget& widget, SDL_Rect frameSize, SDL_Rect offset, float alpha);
-	void update();
-	void loadfile(const char* filename);
-	bool isPlaying(const char* filename) { return currentfile == filename && (clip != nullptr); }
-	void stop() { destroyClip(); }
-	static void deinitManager();
-};
-extern VideoManager_t VideoManager[MAXPLAYERS];
-#endif
 
-#ifndef EDITOR
-#ifdef USE_IMGUI
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_sdl.h"
-#include "imgui/imgui_impl_opengl3.h"
 
-class ImGui_t
-{
-public:
-	static bool isInit;
-	static bool queueInit;
-	static bool queueDeinit;
-	static bool disablePlayerControl;
-	static SDL_Rect debugRect;
-	ImGui_t() {};
-	~ImGui_t()
-	{
-		// Cleanup
-		ImGui_ImplOpenGL3_Shutdown();
-		ImGui_ImplSDL2_Shutdown();
-		ImGui::DestroyContext();
-	};
-	static void init();
-	static void deinit();
-	static ImGuiIO& getIO() { return ImGui::GetIO(); }
-	static bool show_demo_window;
-	static void showConsoleCommands();
-	static void showHUDTimers();
-	static void buttonConsoleCommandHighlight(const char* cmd, bool flag);
-	static void update();
-	static void render();
-	static bool requestingMouse() // if mouse is detected on a module (the game should not process the mouse clicks)
-	{
-		if ( isInit )
-		{
-			return getIO().WantCaptureMouse;
-		}
-		return false;
-	}
 
-	static ImVec4 colorOn;
-	static ImVec4 colorOnHovered;
-	static ImVec4 colorOnActive;
-	static ImVec4 colorBtnDefault;
-	static ImVec4 colorBtnDefaultActive;
-	static ImVec4 colorBtnDefaultHovered;
-};
-#endif
-#endif
 
 #ifndef EDITOR
 struct ShopkeeperConsumables_t
@@ -3512,32 +3420,7 @@ struct Mods
 	static void writeLevelsTxtAndPreview(std::string modFolder);
 };
 
-#ifdef USE_LIBCURL
-struct LibCURL_t
-{
-	bool bInit = false;
-	CURL* handle = nullptr;
-	void init()
-	{
-		curl_global_init(CURL_GLOBAL_DEFAULT);
-		if ( handle = curl_easy_init() )
-		{
-			bInit = true;
-		}
-	}
-	void download(std::string filename, std::string url);
 
-	~LibCURL_t()
-	{
-		curl_easy_cleanup(handle);
-		handle = nullptr;
-	}
-
-	static size_t write_data_fp(void* ptr, size_t size, size_t nmemb, File* stream);
-	static size_t write_data_string(void* ptr, size_t size, size_t nmemb, std::string* s);
-};
-extern LibCURL_t LibCURL;
-#endif
 
 struct EquipmentModelOffsets_t
 {

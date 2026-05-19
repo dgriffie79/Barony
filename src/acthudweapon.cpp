@@ -449,9 +449,6 @@ void actHudWeapon(Entity* my)
 #ifdef USE_FMOD
 	FMOD::Channel*& bowDrawingSoundChannel = playerHud.bowDrawingSoundChannel;
 	bool& bowDrawingSoundPlaying = playerHud.bowDrawingSoundPlaying;
-#elif defined USE_OPENAL
-	OPENAL_SOUND*& bowDrawingSoundChannel = playerHud.bowDrawingSoundChannel;
-	ALboolean& bowDrawingSoundPlaying = playerHud.bowDrawingSoundPlaying;
 #endif
 #endif
 
@@ -1043,17 +1040,10 @@ void actHudWeapon(Entity* my)
 			bowFire = true; // ready to fire!
 		}
 #ifdef SOUND
-#ifdef USE_OPENAL
-		if ( bowDrawingSoundChannel )
-		{
-			OPENAL_Channel_IsPlaying(bowDrawingSoundChannel, &bowDrawingSoundPlaying);
-		}
-#else
 		if ( bowDrawingSoundChannel )
 		{
 			bowDrawingSoundChannel->isPlaying(&bowDrawingSoundPlaying);
 		}
-#endif
 #endif // SOUND
 	}
 	else
@@ -1065,17 +1055,10 @@ void actHudWeapon(Entity* my)
 			&& !stats[HUDWEAPON_PLAYERNUM]->defending && !hideWeapon )
 		{
 #ifdef SOUND
-#ifdef USE_OPENAL
-			if ( bowDrawingSoundChannel )
-			{
-				OPENAL_Channel_IsPlaying(bowDrawingSoundChannel, &bowDrawingSoundPlaying);
-			}
-#else
 			if ( bowDrawingSoundChannel )
 			{
 				bowDrawingSoundChannel->isPlaying(&bowDrawingSoundPlaying);
 			}
-#endif
 #endif // SOUND
 
 			stopSound = false;
@@ -1090,11 +1073,7 @@ void actHudWeapon(Entity* my)
 #ifdef SOUND
 			if ( bowDrawingSoundPlaying && bowDrawingSoundChannel )
 			{
-#ifdef USE_OPENAL
-				OPENAL_Channel_Stop(bowDrawingSoundChannel);
-#else
 				bowDrawingSoundChannel->stop();
-#endif
 				bowDrawingSoundPlaying = 0;
 				bowDrawingSoundChannel = nullptr;
 			}
@@ -1717,11 +1696,7 @@ void actHudWeapon(Entity* my)
 #ifdef SOUND
 						if ( bowDrawingSoundPlaying && bowDrawingSoundChannel )
 						{
-#ifdef USE_OPENAL
-							OPENAL_Channel_Stop(bowDrawingSoundChannel);
-#else
 							bowDrawingSoundChannel->stop();
-#endif
 							bowDrawingSoundPlaying = 0;
 							bowDrawingSoundChannel = nullptr;
 						}
