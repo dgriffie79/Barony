@@ -16,10 +16,7 @@ See LICENSE for details.
 #include "files.hpp"
 #include "prng.hpp"
 #include "items.hpp"
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
-#include "rapidjson/filewritestream.h"
-#include "rapidjson/prettywriter.h"
+#include "cJSON.h"
 #include "net.hpp"
 #include "scores.hpp"
 #include "entity.hpp"
@@ -30,23 +27,29 @@ See LICENSE for details.
 class CustomHelpers
 {
 public:
+#ifdef MOD_TOOLS_CPP
 	static void addMemberToSubkey(rapidjson::Document& d, std::string subkey, std::string name, const rapidjson::Value& value)
 	{
-		rapidjson::Value key(name.c_str(), d.GetAllocator()); // copy string name
+		rapidjson::Value key(name.c_str(), d.GetAllocator());
 		rapidjson::Value val(value, d.GetAllocator());
 		d[subkey.c_str()].AddMember(key, val, d.GetAllocator());
 	}
 	static void addMemberToRoot(rapidjson::Document& d, std::string name, const rapidjson::Value& value)
 	{
-		rapidjson::Value key(name.c_str(), d.GetAllocator()); // copy string name
+		rapidjson::Value key(name.c_str(), d.GetAllocator());
 		rapidjson::Value val(value, d.GetAllocator());
 		d.AddMember(key, val, d.GetAllocator());
 	}
 	static void addArrayMemberToSubkey(rapidjson::Document& d, std::string subkey, const rapidjson::Value& value)
 	{
-		rapidjson::Value val(value, d.GetAllocator());        // some value
+		rapidjson::Value val(value, d.GetAllocator());
 		d[subkey.c_str()].PushBack(val, d.GetAllocator());
 	}
+#else
+	static void addMemberToSubkey(void*, const char*, const char*, void*) {}
+	static void addMemberToRoot(void*, const char*, void*) {}
+	static void addArrayMemberToSubkey(void*, const char*, void*) {}
+#endif
 	static bool isLevelPartOfSet(int level, bool secret, std::pair<std::unordered_set<int>, std::unordered_set<int>>& pairOfSets)
 	{
 		if ( !secret )
@@ -152,162 +155,21 @@ public:
 				dropItemOnDeath = false;
 			}
 		}
-		void setValueFromAttributes(rapidjson::Document& d, rapidjson::Value& outObject)
+		void setValueFromAttributes(cJSON* d)
 		{
-			rapidjson::Value key1("type", d.GetAllocator());
-			rapidjson::Value val1(itemNameStrings[type + 2], d.GetAllocator());
-			outObject.AddMember(key1, val1, d.GetAllocator());
-
-			rapidjson::Value key2("status", d.GetAllocator());
-			rapidjson::Value val2(itemStatusStrings.at(status).c_str(), d.GetAllocator());
-			outObject.AddMember(key2, val2, d.GetAllocator());
-
-			outObject.AddMember("beatitude", rapidjson::Value(beatitude), d.GetAllocator());
-			outObject.AddMember("count", rapidjson::Value(count), d.GetAllocator());
-			outObject.AddMember("appearance", rapidjson::Value(appearance), d.GetAllocator());
-			outObject.AddMember("identified", rapidjson::Value(identified), d.GetAllocator());
-			outObject.AddMember("spawn_percent_chance", rapidjson::Value(100), d.GetAllocator());
-			outObject.AddMember("drop_percent_chance", rapidjson::Value(dropItemOnDeath ? 100 : 0), d.GetAllocator());
-			outObject.AddMember("slot_weighted_chance", rapidjson::Value(1), d.GetAllocator());
 		}
 
-		const char* getRandomArrayStr(const rapidjson::GenericArray<true, rapidjson::GenericValue<rapidjson::UTF8<>>>& arr, const char* invalidEntry)
+		const char* getRandomArrayStr(cJSON* arr, const char* invalidEntry)
 		{
-			if ( arr.Size() == 0 )
-			{
-				return invalidEntry;
-			}
-			return (arr[rapidjson::SizeType(monster_stat_rng.rand() % arr.Size())].GetString());
+			return invalidEntry;
 		}
-		int getRandomArrayInt(const rapidjson::GenericArray<true, rapidjson::GenericValue<rapidjson::UTF8<>>>& arr, int invalidEntry)
+		int getRandomArrayInt(cJSON* arr, int invalidEntry)
 		{
-			if ( arr.Size() == 0 )
-			{
-				return invalidEntry;
-			}
-			return (arr[rapidjson::SizeType(monster_stat_rng.rand() % arr.Size())].GetInt());
+			return 0;
 		}
 
-		bool readKeyToItemEntry(rapidjson::Value::ConstMemberIterator& itr)
+		bool readKeyToItemEntry(cJSON* itr)
 		{
-			std::string name = itr->name.GetString();
-			if ( name.compare("type") == 0 )
-			{
-				std::string itemName = "empty";
-				if ( itr->value.IsArray() )
-				{
-					itemName = getRandomArrayStr(itr->value.GetArray(), "empty");
-				}
-				else if ( itr->value.IsString() )
-				{
-					itemName = itr->value.GetString();
-				}
-
-				if ( itemName.compare("empty") == 0 )
-				{
-					emptyItemEntry = true;
-					return true;
-				}
-				for ( int i = 0; i < NUMITEMS; ++i )
-				{
-					if ( itemName.compare(itemNameStrings[i + 2]) == 0 )
-					{
-						this->type = static_cast<ItemType>(i);
-						return true;
-					}
-				}
-			}
-			else if ( name.compare("status") == 0 )
-			{
-				std::string status = "broken";
-				if ( itr->value.IsArray() )
-				{
-					status = getRandomArrayStr(itr->value.GetArray(), "broken");
-				}
-				else if ( itr->value.IsString() )
-				{
-					status = itr->value.GetString();
-				}
-				for ( Uint32 i = 0; i < itemStatusStrings.size(); ++i )
-				{
-					if ( status.compare(itemStatusStrings.at(i)) == 0 )
-					{
-						this->status = static_cast<Status>(i);
-						return true;
-					}
-				}
-			}
-			else if ( name.compare("beatitude") == 0 )
-			{
-				if ( itr->value.IsArray() )
-				{
-					this->beatitude = static_cast<Sint16>(getRandomArrayInt(itr->value.GetArray(), 0));
-				}
-				else if ( itr->value.IsInt() )
-				{
-					this->beatitude = static_cast<Sint16>(itr->value.GetInt());
-				}
-				return true;
-			}
-			else if ( name.compare("count") == 0 )
-			{
-				if ( itr->value.IsArray() )
-				{
-					this->count = static_cast<Sint16>(getRandomArrayInt(itr->value.GetArray(), 1));
-				}
-				else if ( itr->value.IsInt() )
-				{
-					this->count = static_cast<Sint16>(itr->value.GetInt());
-				}
-				return true;
-			}
-			else if ( name.compare("appearance") == 0 )
-			{
-				if ( itr->value.IsArray() )
-				{
-					this->appearance = static_cast<Uint32>(getRandomArrayInt(itr->value.GetArray(), monster_stat_rng.rand()));
-				}
-				else if ( itr->value.IsInt() )
-				{
-					this->appearance = static_cast<Uint32>(itr->value.GetInt());
-				}
-				else if ( itr->value.IsString() )
-				{
-					std::string str = itr->value.GetString();
-					if ( str.compare("random") == 0 )
-					{
-						this->appearance = monster_stat_rng.rand();
-					}
-				}
-				return true;
-			}
-			else if ( name.compare("identified") == 0 )
-			{
-				this->identified = itr->value.GetBool();
-				return true;
-			}
-			else if ( name.compare("spawn_percent_chance") == 0 )
-			{
-				this->percentChance = itr->value.GetInt();
-				return true;
-			}
-			else if ( name.compare("drop_percent_chance") == 0 )
-			{
-				this->dropChance = itr->value.GetInt();
-				if ( monster_stat_rng.rand() % 100 >= this->dropChance )
-				{
-					this->dropItemOnDeath = false;
-				}
-				else
-				{
-					this->dropItemOnDeath = true;
-				}
-			}
-			else if ( name.compare("slot_weighted_chance") == 0 )
-			{
-				this->weightedChance = std::max(1, itr->value.GetInt());
-				return true;
-			}
 			return false;
 		}
 	};
@@ -720,615 +582,34 @@ public:
 
 	void writeAllFromStats(Stat* myStats)
 	{
-		rapidjson::Document d;
-		d.SetObject();
-		rapidjson::Value version;
-		version.SetInt(1);
-		CustomHelpers::addMemberToRoot(d, "version", version);
-		readAttributesFromStats(myStats, d);
-		readItemsFromStats(myStats, d);
-		
-		// misc properties
-		rapidjson::Value propsObject;
-		propsObject.SetObject();
-		CustomHelpers::addMemberToRoot(d, "properties", propsObject);
-		CustomHelpers::addMemberToSubkey(d, "properties", "monster_name_always_display_as_generic_species", rapidjson::Value(false));
-		CustomHelpers::addMemberToSubkey(d, "properties", "populate_empty_equipped_items_with_default", rapidjson::Value(true));
-		CustomHelpers::addMemberToSubkey(d, "properties", "populate_default_inventory", rapidjson::Value(true));
-		CustomHelpers::addMemberToSubkey(d, "properties", "disable_miniboss_chance", rapidjson::Value(false));
-		CustomHelpers::addMemberToSubkey(d, "properties", "force_player_recruitable", rapidjson::Value(false));
-		CustomHelpers::addMemberToSubkey(d, "properties", "force_player_friendly", rapidjson::Value(false));
-		CustomHelpers::addMemberToSubkey(d, "properties", "force_player_enemy", rapidjson::Value(false));
-		CustomHelpers::addMemberToSubkey(d, "properties", "disable_item_drops", rapidjson::Value(false));
-		CustomHelpers::addMemberToSubkey(d, "properties", "xp_award_percent", rapidjson::Value(100));
-		CustomHelpers::addMemberToSubkey(d, "properties", "enable_casting_inventory_spellbooks", rapidjson::Value(false));
-		CustomHelpers::addMemberToSubkey(d, "properties", "spellbook_cast_cooldown", rapidjson::Value(250));
-
-		if ( myStats->type == SHOPKEEPER )
-		{
-			// shop properties
-			CustomHelpers::addMemberToRoot(d, "shopkeeper_properties", propsObject);
-
-			rapidjson::Value shopObject(rapidjson::kObjectType);
-			shopObject.SetObject();
-
-			rapidjson::Value storeTypesObject(rapidjson::kObjectType);
-			storeTypesObject.AddMember("equipment", rapidjson::Value(1), d.GetAllocator());
-			storeTypesObject.AddMember("hats", rapidjson::Value(1), d.GetAllocator());
-			storeTypesObject.AddMember("jewelry", rapidjson::Value(1), d.GetAllocator());
-			storeTypesObject.AddMember("books", rapidjson::Value(1), d.GetAllocator());
-			storeTypesObject.AddMember("apothecary", rapidjson::Value(1), d.GetAllocator());
-			storeTypesObject.AddMember("staffs", rapidjson::Value(1), d.GetAllocator());
-			storeTypesObject.AddMember("food", rapidjson::Value(1), d.GetAllocator());
-			storeTypesObject.AddMember("hardware", rapidjson::Value(1), d.GetAllocator());
-			storeTypesObject.AddMember("hunting", rapidjson::Value(1), d.GetAllocator());
-			storeTypesObject.AddMember("general", rapidjson::Value(1), d.GetAllocator());
-
-			CustomHelpers::addMemberToSubkey(d, "shopkeeper_properties", "store_type_chances", storeTypesObject);
-			CustomHelpers::addMemberToSubkey(d, "shopkeeper_properties", "generate_default_shop_items", rapidjson::Value(true));
-			CustomHelpers::addMemberToSubkey(d, "shopkeeper_properties", "num_generated_items_min", rapidjson::Value(10));
-			CustomHelpers::addMemberToSubkey(d, "shopkeeper_properties", "num_generated_items_max", rapidjson::Value(15));
-			CustomHelpers::addMemberToSubkey(d, "shopkeeper_properties", "generated_item_blessing_max", rapidjson::Value(0));
-		}
-
-		// follower details
-		rapidjson::Value followersObject;
-		followersObject.SetObject();
-		CustomHelpers::addMemberToRoot(d, "followers", followersObject);
-		CustomHelpers::addMemberToSubkey(d, "followers", "num_followers", rapidjson::Value(0));
-		rapidjson::Value followerVariantsObject;
-		followerVariantsObject.SetObject();
-		CustomHelpers::addMemberToSubkey(d, "followers", "follower_variants", followerVariantsObject);
-
-		writeToFile(d, monstertypename[myStats->type]);
 	}
 
-	void readItemsFromStats(Stat* myStats, rapidjson::Document& d)
+	void readItemsFromStats(Stat* myStats, cJSON* d)
 	{
-		rapidjson::Value equippedItemsObject;
-		equippedItemsObject.SetObject();
-		CustomHelpers::addMemberToRoot(d, "equipped_items", equippedItemsObject);
-		addMemberFromItem(d, "equipped_items", "weapon", myStats->weapon);
-		addMemberFromItem(d, "equipped_items", "shield", myStats->shield);
-		addMemberFromItem(d, "equipped_items", "helmet", myStats->helmet);
-		addMemberFromItem(d, "equipped_items", "breastplate", myStats->breastplate);
-		addMemberFromItem(d, "equipped_items", "gloves", myStats->gloves);
-		addMemberFromItem(d, "equipped_items", "shoes", myStats->shoes);
-		addMemberFromItem(d, "equipped_items", "cloak", myStats->cloak);
-		addMemberFromItem(d, "equipped_items", "ring", myStats->ring);
-		addMemberFromItem(d, "equipped_items", "amulet", myStats->amulet);
-		addMemberFromItem(d, "equipped_items", "mask", myStats->mask);
-
-		rapidjson::Value invItemsArray;
-		invItemsArray.SetArray();
-		CustomHelpers::addMemberToRoot(d, "inventory_items", invItemsArray);
-		for ( node_t* node = myStats->inventory.first; node; node = node->next )
-		{
-			Item* item = (Item*)node->element;
-			if ( item )
-			{
-				addArrayMemberFromItem(d, "inventory_items", item);
-			}
-		}
 	}
 
-	void readAttributesFromStats(Stat* myStats, rapidjson::Document& d)
+	void readAttributesFromStats(Stat* myStats, cJSON* d)
 	{
-		rapidjson::Value statsObject;
-		statsObject.SetObject();
-		CustomHelpers::addMemberToRoot(d, "stats", statsObject);
-
-		StatEntry statEntry(myStats);
-		CustomHelpers::addMemberToSubkey(d, "stats", "name", rapidjson::Value(statEntry.name, d.GetAllocator()));
-		CustomHelpers::addMemberToSubkey(d, "stats", "type", rapidjson::Value(monstertypename[statEntry.type], d.GetAllocator()));
-		CustomHelpers::addMemberToSubkey(d, "stats", "sex", rapidjson::Value(statEntry.sex));
-		CustomHelpers::addMemberToSubkey(d, "stats", "appearance", rapidjson::Value(statEntry.appearance));
-		CustomHelpers::addMemberToSubkey(d, "stats", "HP", rapidjson::Value(statEntry.HP));
-		CustomHelpers::addMemberToSubkey(d, "stats", "MAXHP", rapidjson::Value(statEntry.MAXHP));
-		CustomHelpers::addMemberToSubkey(d, "stats", "MP", rapidjson::Value(statEntry.MP));
-		CustomHelpers::addMemberToSubkey(d, "stats", "MAXMP", rapidjson::Value(statEntry.MAXMP));
-		CustomHelpers::addMemberToSubkey(d, "stats", "STR", rapidjson::Value(statEntry.STR));
-		CustomHelpers::addMemberToSubkey(d, "stats", "DEX", rapidjson::Value(statEntry.DEX));
-		CustomHelpers::addMemberToSubkey(d, "stats", "CON", rapidjson::Value(statEntry.CON));
-		CustomHelpers::addMemberToSubkey(d, "stats", "INT", rapidjson::Value(statEntry.INT));
-		CustomHelpers::addMemberToSubkey(d, "stats", "PER", rapidjson::Value(statEntry.PER));
-		CustomHelpers::addMemberToSubkey(d, "stats", "CHR", rapidjson::Value(statEntry.CHR));
-		CustomHelpers::addMemberToSubkey(d, "stats", "EXP", rapidjson::Value(statEntry.EXP));
-		CustomHelpers::addMemberToSubkey(d, "stats", "LVL", rapidjson::Value(statEntry.LVL));
-		CustomHelpers::addMemberToSubkey(d, "stats", "GOLD", rapidjson::Value(statEntry.GOLD));
-
-		rapidjson::Value miscStatsObject;
-		miscStatsObject.SetObject();
-		CustomHelpers::addMemberToRoot(d, "misc_stats", miscStatsObject);
-
-		CustomHelpers::addMemberToSubkey(d, "misc_stats", "RANDOM_STR", rapidjson::Value(statEntry.RANDOM_STR));
-		CustomHelpers::addMemberToSubkey(d, "misc_stats", "RANDOM_DEX", rapidjson::Value(statEntry.RANDOM_DEX));
-		CustomHelpers::addMemberToSubkey(d, "misc_stats", "RANDOM_CON", rapidjson::Value(statEntry.RANDOM_CON));
-		CustomHelpers::addMemberToSubkey(d, "misc_stats", "RANDOM_INT", rapidjson::Value(statEntry.RANDOM_INT));
-		CustomHelpers::addMemberToSubkey(d, "misc_stats", "RANDOM_PER", rapidjson::Value(statEntry.RANDOM_PER));
-		CustomHelpers::addMemberToSubkey(d, "misc_stats", "RANDOM_CHR", rapidjson::Value(statEntry.RANDOM_CHR));
-		CustomHelpers::addMemberToSubkey(d, "misc_stats", "RANDOM_MAXHP", rapidjson::Value(statEntry.RANDOM_MAXHP));
-		CustomHelpers::addMemberToSubkey(d, "misc_stats", "RANDOM_HP", rapidjson::Value(statEntry.RANDOM_HP));
-		CustomHelpers::addMemberToSubkey(d, "misc_stats", "RANDOM_MAXMP", rapidjson::Value(statEntry.RANDOM_MAXMP));
-		CustomHelpers::addMemberToSubkey(d, "misc_stats", "RANDOM_MP", rapidjson::Value(statEntry.RANDOM_MP));
-		CustomHelpers::addMemberToSubkey(d, "misc_stats", "RANDOM_LVL", rapidjson::Value(statEntry.RANDOM_LVL));
-		CustomHelpers::addMemberToSubkey(d, "misc_stats", "RANDOM_GOLD", rapidjson::Value(statEntry.RANDOM_GOLD));
-
-		rapidjson::Value profObject;
-		profObject.SetObject();
-		CustomHelpers::addMemberToRoot(d, "proficiencies", profObject);
-
-		for ( int i = 0; i < NUMPROFICIENCIES; ++i )
-		{
-			CustomHelpers::addMemberToSubkey(d, "proficiencies", getSkillLangEntry(i), rapidjson::Value(statEntry.PROFICIENCIES[i]));
-		}
 	}
 
-	bool readKeyToStatEntry(StatEntry& statEntry, rapidjson::Value::ConstMemberIterator& itr)
+	bool readKeyToStatEntry(StatEntry& statEntry, cJSON* itr)
 	{
-		std::string name = itr->name.GetString();
-		if ( name.compare("name") == 0 )
-		{
-			strcpy(statEntry.name, itr->value.GetString());
-			return true;
-		}
-		else if ( name.compare("type") == 0 )
-		{
-			std::string val = itr->value.GetString();
-			for ( int i = 0; i < NUMMONSTERS; ++i )
-			{
-				if ( val.compare(monstertypename[i]) == 0 )
-				{
-					statEntry.type = i;
-					break;
-				}
-			}
-			return true;
-		}
-		else if ( name.compare("sex") == 0 )
-		{
-			statEntry.sex = static_cast<sex_t>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("appearance") == 0 )
-		{
-			statEntry.appearance = static_cast<Uint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("HP") == 0 )
-		{
-			statEntry.HP = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("MAXHP") == 0 )
-		{
-			statEntry.MAXHP = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("MP") == 0 )
-		{
-			statEntry.MP = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("MAXMP") == 0 )
-		{
-			statEntry.MAXMP = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("STR") == 0 )
-		{
-			statEntry.STR = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("DEX") == 0 )
-		{
-			statEntry.DEX = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("CON") == 0 )
-		{
-			statEntry.CON = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("INT") == 0 )
-		{
-			statEntry.INT = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("PER") == 0 )
-		{
-			statEntry.PER = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("CHR") == 0 )
-		{
-			statEntry.CHR = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("EXP") == 0 )
-		{
-			statEntry.EXP = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("LVL") == 0 )
-		{
-			statEntry.LVL = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("GOLD") == 0 )
-		{
-			statEntry.GOLD = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("RANDOM_STR") == 0 )
-		{
-			statEntry.RANDOM_STR = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("RANDOM_DEX") == 0 )
-		{
-			statEntry.RANDOM_DEX = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("RANDOM_CON") == 0 )
-		{
-			statEntry.RANDOM_CON = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("RANDOM_INT") == 0 )
-		{
-			statEntry.RANDOM_INT = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("RANDOM_PER") == 0 )
-		{
-			statEntry.RANDOM_PER = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("RANDOM_CHR") == 0 )
-		{
-			statEntry.RANDOM_CHR = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("RANDOM_MAXHP") == 0 )
-		{
-			statEntry.RANDOM_MAXHP = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("RANDOM_HP") == 0 )
-		{
-			statEntry.RANDOM_HP = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("RANDOM_MAXMP") == 0 )
-		{
-			statEntry.RANDOM_MAXMP = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("RANDOM_MP") == 0 )
-		{
-			statEntry.RANDOM_MP = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("RANDOM_LVL") == 0 )
-		{
-			statEntry.RANDOM_LVL = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else if ( name.compare("RANDOM_GOLD") == 0 )
-		{
-			statEntry.RANDOM_GOLD = static_cast<Sint32>(itr->value.GetInt());
-			return true;
-		}
-		else
-		{
-			for ( int i = 0; i < NUMPROFICIENCIES; ++i )
-			{
-				if ( name.compare(getSkillLangEntry(i)) == 0 )
-				{
-					statEntry.PROFICIENCIES[i] = static_cast<Sint32>(itr->value.GetInt());
-					return true;
-				}
-			}
-		}
 		return false;
 	}
 
-	void addArrayMemberFromItem(rapidjson::Document& d, std::string rootKey, Item* item)
+	void addArrayMemberFromItem(cJSON* d, std::string rootKey, Item* item)
 	{
-		if ( item )
-		{
-			rapidjson::Value itemObject(rapidjson::kObjectType);
-			ItemEntry itemEntry(*item);
-			itemEntry.setValueFromAttributes(d, itemObject);
-			CustomHelpers::addArrayMemberToSubkey(d, rootKey, itemObject);
-		}
 	}
-	void addMemberFromItem(rapidjson::Document& d, std::string rootKey, std::string key, Item* item)
+	void addMemberFromItem(cJSON* d, std::string rootKey, std::string key, Item* item)
 	{
-		if ( item )
-		{
-			rapidjson::Value itemObject(rapidjson::kObjectType);
-			ItemEntry itemEntry(*item);
-			itemEntry.setValueFromAttributes(d, itemObject);
-			CustomHelpers::addMemberToSubkey(d, rootKey, key.c_str(), itemObject);
-		}
 	}
 
-	void writeToFile(rapidjson::Document& d, std::string monsterFileName)
+	void writeToFile(cJSON* d, std::string monsterFileName)
 	{
-		int filenum = 0;
-		std::string testPath = "/data/custom-monsters/monster_" + monsterFileName + "_export" + std::to_string(filenum) + ".json";
-		while ( PHYSFS_getRealDir(testPath.c_str()) != nullptr && filenum < 1000 )
-		{
-			++filenum;
-			testPath = "/data/custom-monsters/monster_" + monsterFileName + "_export" + std::to_string(filenum) + ".json";
-		}
-		std::string outputPath = PHYSFS_getRealDir("/data/custom-monsters/");
-		outputPath.append(PHYSFS_getDirSeparator());
-		std::string fileName = "data/custom-monsters/monster_" + monsterFileName + "_export" + std::to_string(filenum) + ".json";
-		outputPath.append(fileName.c_str());
-
-
-		File* fp = FileIO::open(outputPath.c_str(), "wb");
-		if ( !fp )
-		{
-			return;
-		}
-		rapidjson::StringBuffer os;
-		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-		d.Accept(writer);
-		fp->write(os.GetString(), sizeof(char), os.GetSize());
-		FileIO::close(fp);
 	}
 
 	StatEntry* readFromFile(std::string monsterFileName)
 	{
-		std::string filePath = "/data/custom-monsters/";
-		filePath.append(monsterFileName);
-		if ( filePath.find(".json") == std::string::npos )
-		{
-			filePath.append(".json");
-		}
-		if ( PHYSFS_getRealDir(filePath.c_str()) )
-		{
-			std::string inputPath = PHYSFS_getRealDir(filePath.c_str());
-			inputPath.append(filePath);
-
-			File* fp = FileIO::open(inputPath.c_str(), "rb");
-			if ( !fp )
-			{
-				printlog("[JSON]: Error: Could not locate json file %s", inputPath.c_str());
-				return nullptr;
-			}
-			char buf[65536];
-			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
-			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
-			FileIO::close(fp);
-
-			rapidjson::Document d;
-			d.ParseStream(is);
-
-
-			if ( !d.HasMember("version") )
-			{
-				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
-				return nullptr;
-			}
-			StatEntry* statEntry = new StatEntry();
-			int version = d["version"].GetInt();
-			const rapidjson::Value& stats = d["stats"];
-			for ( rapidjson::Value::ConstMemberIterator stat_itr = stats.MemberBegin(); stat_itr != stats.MemberEnd(); ++stat_itr )
-			{
-				readKeyToStatEntry(*statEntry, stat_itr);
-			}
-			const rapidjson::Value& miscStats = d["misc_stats"];
-			for ( rapidjson::Value::ConstMemberIterator stat_itr = miscStats.MemberBegin(); stat_itr != miscStats.MemberEnd(); ++stat_itr )
-			{
-				readKeyToStatEntry(*statEntry, stat_itr);
-			}
-			const rapidjson::Value& proficiencies = d["proficiencies"];
-			for ( rapidjson::Value::ConstMemberIterator stat_itr = proficiencies.MemberBegin(); stat_itr != proficiencies.MemberEnd(); ++stat_itr )
-			{
-				readKeyToStatEntry(*statEntry, stat_itr);
-			}
-			const rapidjson::Value& equipped_items = d["equipped_items"];
-			for ( rapidjson::Value::ConstMemberIterator itemSlot_itr = equipped_items.MemberBegin(); itemSlot_itr != equipped_items.MemberEnd(); ++itemSlot_itr )
-			{
-				std::string slotName = itemSlot_itr->name.GetString();
-				if ( itemSlot_itr->value.IsArray() )
-				{
-					std::vector<std::pair<ItemEntry, int>> itemsToChoose;
-					// a selection of items in the slot. need to choose 1.
-					for ( rapidjson::Value::ConstValueIterator itemArray_itr = itemSlot_itr->value.Begin(); itemArray_itr != itemSlot_itr->value.End(); ++itemArray_itr )
-					{
-						ItemEntry item;
-						for ( rapidjson::Value::ConstMemberIterator item_itr = itemArray_itr->MemberBegin(); item_itr != itemArray_itr->MemberEnd(); ++item_itr )
-						{
-							item.readKeyToItemEntry(item_itr);
-						}
-						itemsToChoose.push_back(std::make_pair(item, getSlotFromKeyName(slotName)));
-					}
-					if ( itemsToChoose.size() > 0 )
-					{
-						std::vector<unsigned int> itemChances(itemsToChoose.size(), 0);
-						int index = 0;
-						for ( auto& pair : itemsToChoose )
-						{
-							itemChances.at(index) = pair.first.weightedChance;
-							++index;
-						}
-
-						int result = monster_stat_rng.discrete(itemChances.data(), itemChances.size());
-						statEntry->equipped_items.push_back(std::make_pair(itemsToChoose.at(result).first, itemsToChoose.at(result).second));
-					}
-				}
-				else if ( itemSlot_itr->value.MemberCount() > 0 )
-				{
-					ItemEntry item;
-					for ( rapidjson::Value::ConstMemberIterator item_itr = itemSlot_itr->value.MemberBegin(); item_itr != itemSlot_itr->value.MemberEnd(); ++item_itr )
-					{
-						item.readKeyToItemEntry(item_itr);
-					}
-					statEntry->equipped_items.push_back(std::make_pair(item, getSlotFromKeyName(slotName)));
-				}
-			}
-			const rapidjson::Value& inventory_items = d["inventory_items"];
-			for ( rapidjson::Value::ConstValueIterator itemSlot_itr = inventory_items.Begin(); itemSlot_itr != inventory_items.End(); ++itemSlot_itr )
-			{
-				if ( itemSlot_itr->IsArray() )
-				{
-					std::vector<ItemEntry> itemsToChoose;
-					// a selection of items in the slot. need to choose 1.
-					for ( rapidjson::Value::ConstValueIterator itemArray_itr = itemSlot_itr->Begin(); itemArray_itr != itemSlot_itr->End(); ++itemArray_itr )
-					{
-						ItemEntry item;
-						for ( rapidjson::Value::ConstMemberIterator item_itr = itemArray_itr->MemberBegin(); item_itr != itemArray_itr->MemberEnd(); ++item_itr )
-						{
-							item.readKeyToItemEntry(item_itr);
-						}
-						itemsToChoose.push_back(item);
-					}
-					if ( itemsToChoose.size() > 0 )
-					{
-						std::vector<unsigned int> itemChances(itemsToChoose.size(), 0);
-						int index = 0;
-						for ( auto& i : itemsToChoose )
-						{
-							itemChances.at(index) = i.weightedChance;
-							++index;
-						}
-
-						int result = monster_stat_rng.discrete(itemChances.data(), itemChances.size());
-						statEntry->inventory_items.push_back(itemsToChoose.at(result));
-					}
-				}
-				else
-				{
-					ItemEntry item;
-					for ( rapidjson::Value::ConstMemberIterator item_itr = itemSlot_itr->MemberBegin(); item_itr != itemSlot_itr->MemberEnd(); ++item_itr )
-					{
-						item.readKeyToItemEntry(item_itr);
-					}
-					statEntry->inventory_items.push_back(item);
-				}
-			}
-			if ( d.HasMember("followers") )
-			{
-				const rapidjson::Value& numFollowersVal = d["followers"]["num_followers"];
-				statEntry->numFollowers = numFollowersVal.GetInt();
-				const rapidjson::Value& followers = d["followers"]["follower_variants"];
-
-				statEntry->followerVariants.clear();
-				for ( rapidjson::Value::ConstMemberIterator follower_itr = followers.MemberBegin(); follower_itr != followers.MemberEnd(); ++follower_itr )
-				{
-					statEntry->followerVariants.push_back(std::make_pair(follower_itr->name.GetString(), follower_itr->value.GetInt()));
-				}
-			}
-			if ( d.HasMember("properties") )
-			{
-				if ( d["properties"].HasMember("monster_name_always_display_as_generic_species") )
-				{
-					statEntry->isMonsterNameGeneric = d["properties"]["monster_name_always_display_as_generic_species"].GetBool();
-				}
-				if ( d["properties"].HasMember("populate_empty_equipped_items_with_default") )
-				{
-					statEntry->useDefaultEquipment = d["properties"]["populate_empty_equipped_items_with_default"].GetBool();
-				}
-				if ( d["properties"].HasMember("populate_default_inventory") )
-				{
-					statEntry->useDefaultInventoryItems = d["properties"]["populate_default_inventory"].GetBool();
-				}
-				if ( d["properties"].HasMember("disable_miniboss_chance") )
-				{
-					statEntry->disableMiniboss = d["properties"]["disable_miniboss_chance"].GetBool();
-				}
-				if ( d["properties"].HasMember("force_player_recruitable") )
-				{
-					statEntry->forceRecruitableToPlayer = d["properties"]["force_player_recruitable"].GetBool();
-				}
-				if ( d["properties"].HasMember("force_player_friendly") )
-				{
-					statEntry->forceFriendlyToPlayer = d["properties"]["force_player_friendly"].GetBool();
-				}
-				if ( d["properties"].HasMember("force_player_enemy") )
-				{
-					statEntry->forceEnemyToPlayer = d["properties"]["force_player_enemy"].GetBool();
-				}
-				if ( d["properties"].HasMember("disable_item_drops") )
-				{
-					statEntry->disableItemDrops = d["properties"]["disable_item_drops"].GetBool();
-				}
-				if ( d["properties"].HasMember("xp_award_percent") )
-				{
-					statEntry->xpAwardPercent = d["properties"]["xp_award_percent"].GetInt();
-				}
-				if ( d["properties"].HasMember("enable_casting_inventory_spellbooks") )
-				{
-					statEntry->castSpellbooksFromInventory = d["properties"]["enable_casting_inventory_spellbooks"].GetBool();
-				}
-				if ( d["properties"].HasMember("spellbook_cast_cooldown") )
-				{
-					statEntry->spellbookCastCooldown = d["properties"]["spellbook_cast_cooldown"].GetInt();
-				}
-			}
-			if ( d.HasMember("shopkeeper_properties") )
-			{
-				if ( d["shopkeeper_properties"].HasMember("store_type_chances") )
-				{
-					for ( rapidjson::Value::ConstMemberIterator types_itr = d["shopkeeper_properties"]["store_type_chances"].MemberBegin(); 
-						types_itr != d["shopkeeper_properties"]["store_type_chances"].MemberEnd(); ++types_itr )
-					{
-						statEntry->shopkeeperStoreTypes.push_back(std::make_pair(types_itr->name.GetString(), types_itr->value.GetInt()));
-					}
-					if ( !statEntry->shopkeeperStoreTypes.empty() )
-					{
-						std::vector<unsigned int> storeChances(statEntry->shopkeeperStoreTypes.size(), 0);
-						int index = 0;
-						for ( auto& chance : storeChances )
-						{
-							chance = statEntry->shopkeeperStoreTypes.at(index).second;
-							++index;
-						}
-
-						std::string result = statEntry->shopkeeperStoreTypes.at(monster_stat_rng.discrete(storeChances.data(), storeChances.size())).first;
-						index = 0;
-						for ( auto& lookup : shopkeeperTypeStrings )
-						{
-							if ( lookup.compare(result) == 0 )
-							{
-								statEntry->chosenShopkeeperStore = index;
-								break;
-							}
-							++index;
-						}
-					}
-					if ( d["shopkeeper_properties"].HasMember("generate_default_shop_items") )
-					{
-						statEntry->shopkeeperGenDefaultItems = d["shopkeeper_properties"]["generate_default_shop_items"].GetBool();
-					}
-					if ( d["shopkeeper_properties"].HasMember("num_generated_items_min") )
-					{
-						statEntry->shopkeeperMinItems = d["shopkeeper_properties"]["num_generated_items_min"].GetInt();
-					}
-					if ( d["shopkeeper_properties"].HasMember("num_generated_items_max") )
-					{
-						statEntry->shopkeeperMaxItems = d["shopkeeper_properties"]["num_generated_items_max"].GetInt();
-					}
-					if ( d["shopkeeper_properties"].HasMember("generated_item_blessing_max") )
-					{
-						statEntry->shopkeeperMaxGeneratedBlessing = d["shopkeeper_properties"]["generated_item_blessing_max"].GetInt();
-					}
-				}
-			}
-			printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
-			return statEntry;
-		}
-		else
-		{
-			printlog("[JSON]: Error: Could not locate json file %s", filePath.c_str());
-		}
 		return nullptr;
 	}
 };
@@ -1387,94 +668,6 @@ public:
 
 	void readFromFile(Uint32 seed)
 	{
-		monster_curve_rng.seedBytes(&seed, sizeof(seed));
-		MonsterStatCustomManager::monster_stat_rng.seedBytes(&seed, sizeof(seed));
-
-		allLevelCurves.clear();
-		usingCustomManager = false;
-		if ( PHYSFS_getRealDir("/data/monstercurve.json") )
-		{
-			std::string inputPath = PHYSFS_getRealDir("/data/monstercurve.json");
-			inputPath.append("/data/monstercurve.json");
-
-			File* fp = FileIO::open(inputPath.c_str(), "rb");
-			if ( !fp )
-			{
-				printlog("[JSON]: Error: Could not locate json file %s", inputPath.c_str());
-				return;
-			}
-			char buf[65536];
-			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
-			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
-			FileIO::close(fp);
-
-			rapidjson::Document d;
-			d.ParseStream(is);
-			if ( !d.HasMember("version") )
-			{
-				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
-				return;
-			}
-			int version = d["version"].GetInt();
-
-			if ( d.HasMember("levels") )
-			{
-				usingCustomManager = true;
-				const rapidjson::Value& levels = d["levels"];
-				for ( rapidjson::Value::ConstMemberIterator map_itr = levels.MemberBegin(); map_itr != levels.MemberEnd(); ++map_itr )
-				{
-					LevelCurve newCurve;
-					newCurve.mapName = map_itr->name.GetString();
-					if ( map_itr->value.HasMember("random_generation_monsters") )
-					{
-						const rapidjson::Value& randomGeneration = map_itr->value["random_generation_monsters"];
-						for ( rapidjson::Value::ConstValueIterator monsters_itr = randomGeneration.Begin(); monsters_itr != randomGeneration.End(); ++monsters_itr )
-						{
-							const rapidjson::Value& monster = *monsters_itr;
-							MonsterCurveEntry newMonster(monster["name"].GetString(),
-								monster["dungeon_depth_minimum"].GetInt(),
-								monster["dungeon_depth_maximum"].GetInt(),
-								monster["weighted_chance"].GetInt(),
-								"");
-
-							if ( monster.HasMember("variants") )
-							{
-								for ( rapidjson::Value::ConstMemberIterator var_itr = monster["variants"].MemberBegin();
-									var_itr != monster["variants"].MemberEnd(); ++var_itr )
-								{
-									newMonster.addVariant(var_itr->name.GetString(), var_itr->value.GetInt());
-								}
-							}
-							newCurve.monsterCurve.push_back(newMonster);
-						}
-					}
-
-					if ( map_itr->value.HasMember("fixed_monsters") )
-					{
-						const rapidjson::Value& fixedGeneration = map_itr->value["fixed_monsters"];
-						for ( rapidjson::Value::ConstValueIterator monsters_itr = fixedGeneration.Begin(); monsters_itr != fixedGeneration.End(); ++monsters_itr )
-						{
-							const rapidjson::Value& monster = *monsters_itr;
-							MonsterCurveEntry newMonster(monster["name"].GetString(), 0, 255, 1, "");
-
-							if ( monster.HasMember("variants") )
-							{
-								for ( rapidjson::Value::ConstMemberIterator var_itr = monster["variants"].MemberBegin();
-									var_itr != monster["variants"].MemberEnd(); ++var_itr )
-								{
-									newMonster.addVariant(var_itr->name.GetString(), var_itr->value.GetInt());
-								}
-							}
-							newCurve.fixedSpawns.push_back(newMonster);
-						}
-					}
-					allLevelCurves.push_back(newCurve);
-				}
-			}
-			printCurve(allLevelCurves);
-			printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
-		}
 	}
 
 	static int getMonsterTypeFromString(std::string monsterStr)
@@ -1692,148 +885,10 @@ public:
 
 	void writeSampleToDocument()
 	{
-		rapidjson::Document d;
-		d.SetObject();
-
-		CustomHelpers::addMemberToRoot(d, "version", rapidjson::Value(1));
-		rapidjson::Value levelObj(rapidjson::kObjectType);
-		levelObj.AddMember("The Mines", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		levelObj["The Mines"].AddMember("fixed_monsters", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
-
-		auto& fm = levelObj["The Mines"]["fixed_monsters"];
-		fm.PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		fm[rapidjson::SizeType(0)].AddMember("name", "rat", d.GetAllocator());
-		fm[rapidjson::SizeType(0)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		fm[rapidjson::SizeType(0)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-
-		fm.PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		fm[rapidjson::SizeType(1)].AddMember("name", "skeleton", d.GetAllocator());
-		fm[rapidjson::SizeType(1)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		fm[rapidjson::SizeType(1)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-		
-		fm.PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		fm[rapidjson::SizeType(2)].AddMember("name", "spider", d.GetAllocator());
-		fm[rapidjson::SizeType(2)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		fm[rapidjson::SizeType(2)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-
-		fm.PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		fm[rapidjson::SizeType(3)].AddMember("name", "troll", d.GetAllocator());
-		fm[rapidjson::SizeType(3)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		fm[rapidjson::SizeType(3)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-
-		levelObj["The Mines"].AddMember("random_generation_monsters", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
-
-		auto& mines = levelObj["The Mines"]["random_generation_monsters"];
-		mines.PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		mines[rapidjson::SizeType(0)].AddMember("name", "rat", d.GetAllocator());
-		mines[rapidjson::SizeType(0)].AddMember("weighted_chance", rapidjson::Value(4), d.GetAllocator());
-		mines[rapidjson::SizeType(0)].AddMember("dungeon_depth_minimum", rapidjson::Value(0), d.GetAllocator());
-		mines[rapidjson::SizeType(0)].AddMember("dungeon_depth_maximum", rapidjson::Value(99), d.GetAllocator());
-		mines[rapidjson::SizeType(0)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		mines[rapidjson::SizeType(0)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-
-		mines.PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		mines[rapidjson::SizeType(1)].AddMember("name", "skeleton", d.GetAllocator());
-		mines[rapidjson::SizeType(1)].AddMember("weighted_chance", rapidjson::Value(4), d.GetAllocator());
-		mines[rapidjson::SizeType(1)].AddMember("dungeon_depth_minimum", rapidjson::Value(0), d.GetAllocator());
-		mines[rapidjson::SizeType(1)].AddMember("dungeon_depth_maximum", rapidjson::Value(99), d.GetAllocator());
-		mines[rapidjson::SizeType(1)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		mines[rapidjson::SizeType(1)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-
-		mines.PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		mines[rapidjson::SizeType(2)].AddMember("name", "spider", d.GetAllocator());
-		mines[rapidjson::SizeType(2)].AddMember("weighted_chance", rapidjson::Value(1), d.GetAllocator());
-		mines[rapidjson::SizeType(2)].AddMember("dungeon_depth_minimum", rapidjson::Value(2), d.GetAllocator());
-		mines[rapidjson::SizeType(2)].AddMember("dungeon_depth_maximum", rapidjson::Value(99), d.GetAllocator());
-		mines[rapidjson::SizeType(2)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		mines[rapidjson::SizeType(2)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-
-		mines.PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		mines[rapidjson::SizeType(3)].AddMember("name", "troll", d.GetAllocator());
-		mines[rapidjson::SizeType(3)].AddMember("weighted_chance", rapidjson::Value(1), d.GetAllocator());
-		mines[rapidjson::SizeType(3)].AddMember("dungeon_depth_minimum", rapidjson::Value(2), d.GetAllocator());
-		mines[rapidjson::SizeType(3)].AddMember("dungeon_depth_maximum", rapidjson::Value(99), d.GetAllocator());
-		mines[rapidjson::SizeType(3)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		mines[rapidjson::SizeType(3)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-
-		levelObj.AddMember("The Swamp", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		levelObj["The Swamp"].AddMember("random_generation_monsters", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
-		levelObj["The Swamp"]["random_generation_monsters"].PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-
-		auto& swamp = levelObj["The Swamp"]["random_generation_monsters"];
-		swamp[rapidjson::SizeType(0)].AddMember("name", "spider", d.GetAllocator());
-		swamp[rapidjson::SizeType(0)].AddMember("weighted_chance", rapidjson::Value(2), d.GetAllocator());
-		swamp[rapidjson::SizeType(0)].AddMember("dungeon_depth_minimum", rapidjson::Value(0), d.GetAllocator());
-		swamp[rapidjson::SizeType(0)].AddMember("dungeon_depth_maximum", rapidjson::Value(99), d.GetAllocator());
-		swamp[rapidjson::SizeType(0)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		swamp[rapidjson::SizeType(0)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-
-		swamp.PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		swamp[rapidjson::SizeType(1)].AddMember("name", "goblin", d.GetAllocator());
-		swamp[rapidjson::SizeType(1)].AddMember("weighted_chance", rapidjson::Value(3), d.GetAllocator());
-		swamp[rapidjson::SizeType(1)].AddMember("dungeon_depth_minimum", rapidjson::Value(0), d.GetAllocator());
-		swamp[rapidjson::SizeType(1)].AddMember("dungeon_depth_maximum", rapidjson::Value(99), d.GetAllocator());
-		swamp[rapidjson::SizeType(1)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		swamp[rapidjson::SizeType(1)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-
-		swamp.PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		swamp[rapidjson::SizeType(2)].AddMember("name", "slime", d.GetAllocator());
-		swamp[rapidjson::SizeType(2)].AddMember("weighted_chance", rapidjson::Value(3), d.GetAllocator());
-		swamp[rapidjson::SizeType(2)].AddMember("dungeon_depth_minimum", rapidjson::Value(0), d.GetAllocator());
-		swamp[rapidjson::SizeType(2)].AddMember("dungeon_depth_maximum", rapidjson::Value(99), d.GetAllocator());
-		swamp[rapidjson::SizeType(2)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		swamp[rapidjson::SizeType(2)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-
-		swamp.PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		swamp[rapidjson::SizeType(3)].AddMember("name", "ghoul", d.GetAllocator());
-		swamp[rapidjson::SizeType(3)].AddMember("weighted_chance", rapidjson::Value(2), d.GetAllocator());
-		swamp[rapidjson::SizeType(3)].AddMember("dungeon_depth_minimum", rapidjson::Value(0), d.GetAllocator());
-		swamp[rapidjson::SizeType(3)].AddMember("dungeon_depth_maximum", rapidjson::Value(99), d.GetAllocator());
-		swamp[rapidjson::SizeType(3)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		swamp[rapidjson::SizeType(3)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-
-		levelObj.AddMember("My level", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-
-		levelObj["My level"].AddMember("random_generation_monsters", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
-		levelObj["My level"]["random_generation_monsters"].PushBack(rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		auto& customLevel = levelObj["My level"]["random_generation_monsters"];
-		customLevel[rapidjson::SizeType(0)].AddMember("name", "demon", d.GetAllocator());
-		customLevel[rapidjson::SizeType(0)].AddMember("weighted_chance", rapidjson::Value(1), d.GetAllocator());
-		customLevel[rapidjson::SizeType(0)].AddMember("dungeon_depth_minimum", rapidjson::Value(0), d.GetAllocator());
-		customLevel[rapidjson::SizeType(0)].AddMember("dungeon_depth_maximum", rapidjson::Value(99), d.GetAllocator());
-		customLevel[rapidjson::SizeType(0)].AddMember("variants", rapidjson::Value(rapidjson::kObjectType), d.GetAllocator());
-		customLevel[rapidjson::SizeType(0)]["variants"].AddMember("default", rapidjson::Value(1), d.GetAllocator());
-
-		CustomHelpers::addMemberToRoot(d, "levels", levelObj);
-
-		writeToFile(d);
 	}
 
-	void writeToFile(rapidjson::Document& d)
+	void writeToFile(cJSON* d)
 	{
-		int filenum = 0;
-		std::string testPath = "/data/monstercurve_export" + std::to_string(filenum) + ".json";
-		while ( PHYSFS_getRealDir(testPath.c_str()) != nullptr && filenum < 1000 )
-		{
-			++filenum;
-			testPath = "/data/monstercurve_export" + std::to_string(filenum) + ".json";
-		}
-		std::string outputPath = PHYSFS_getRealDir("/data/");
-		outputPath.append(PHYSFS_getDirSeparator());
-		std::string fileName = "data/monstercurve_export" + std::to_string(filenum) + ".json";
-		outputPath.append(fileName.c_str());
-
-		File* fp = FileIO::open(outputPath.c_str(), "wb");
-		if ( !fp )
-		{
-			return;
-		}
-		rapidjson::StringBuffer os;
-		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-		d.Accept(writer);
-		fp->write(os.GetString(), sizeof(char), os.GetSize());
-
-		FileIO::close(fp);
 	}
 };
 extern MonsterCurveCustomManager monsterCurveCustomManager;
@@ -1920,353 +975,23 @@ public:
 
 	void writeAllToDocument()
 	{
-		rapidjson::Document d;
-		d.SetObject();
-
-		CustomHelpers::addMemberToRoot(d, "version", rapidjson::Value(1));
-		CustomHelpers::addMemberToRoot(d, "xp_share_range", rapidjson::Value(xpShareRange));
-		CustomHelpers::addMemberToRoot(d, "global_xp_award_percent", rapidjson::Value(globalXPPercent));
-		CustomHelpers::addMemberToRoot(d, "global_gold_drop_scale_percent", rapidjson::Value(globalGoldPercent));
-		CustomHelpers::addMemberToRoot(d, "player_share_minimap_progress", rapidjson::Value(minimapShareProgress));
-		CustomHelpers::addMemberToRoot(d, "player_speed_weight_impact_percent", rapidjson::Value(playerWeightPercent));
-		CustomHelpers::addMemberToRoot(d, "player_speed_max", rapidjson::Value(playerSpeedMax));
-
-		rapidjson::Value obj(rapidjson::kObjectType);
-		rapidjson::Value arr(rapidjson::kArrayType);
-		CustomHelpers::addMemberToRoot(d, "minotaur_force_disable_on_floors", obj);
-		CustomHelpers::addMemberToSubkey(d, "minotaur_force_disable_on_floors", "normal_floors", arr);
-		CustomHelpers::addMemberToSubkey(d, "minotaur_force_disable_on_floors", "secret_floors", arr);
-		CustomHelpers::addMemberToRoot(d, "minotaur_force_enable_on_floors", obj);
-		CustomHelpers::addMemberToSubkey(d, "minotaur_force_enable_on_floors", "normal_floors", arr);
-		CustomHelpers::addMemberToSubkey(d, "minotaur_force_enable_on_floors", "secret_floors", arr);
-		CustomHelpers::addMemberToRoot(d, "disable_herx_messages_on_floors", obj);
-		CustomHelpers::addMemberToSubkey(d, "disable_herx_messages_on_floors", "normal_floors", arr);
-		CustomHelpers::addMemberToSubkey(d, "disable_herx_messages_on_floors", "secret_floors", arr);
-		CustomHelpers::addMemberToRoot(d, "disable_minimap_on_floors", obj);
-		CustomHelpers::addMemberToSubkey(d, "disable_minimap_on_floors", "normal_floors", arr);
-		CustomHelpers::addMemberToSubkey(d, "disable_minimap_on_floors", "secret_floors", arr);
-
-		rapidjson::Value mapGenObj;
-		mapGenObj.SetObject();
-		CustomHelpers::addMemberToRoot(d, "map_generation", mapGenObj);
-		rapidjson::Value key1("The Mines", d.GetAllocator());
-		rapidjson::Value minesObj(rapidjson::kObjectType);
-
-		rapidjson::Value trapArray1(rapidjson::kArrayType);
-		trapArray1.PushBack("boulders", d.GetAllocator());
-		minesObj.AddMember("trap_generation_types", trapArray1, d.GetAllocator());
-		minesObj.AddMember("minotaur_floors", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
-		minesObj["minotaur_floors"].PushBack(2, d.GetAllocator());
-		minesObj["minotaur_floors"].PushBack(3, d.GetAllocator());
-		minesObj.AddMember("minotaur_floor_percent", rapidjson::Value(50), d.GetAllocator());
-
-		minesObj.AddMember("dark_floors", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
-		minesObj["dark_floors"].PushBack(1, d.GetAllocator());
-		minesObj["dark_floors"].PushBack(2, d.GetAllocator());
-		minesObj["dark_floors"].PushBack(3, d.GetAllocator());
-		minesObj["dark_floors"].PushBack(4, d.GetAllocator());
-		minesObj.AddMember("dark_floor_percent", rapidjson::Value(25), d.GetAllocator());
-
-		minesObj.AddMember("shop_floors", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
-		minesObj["shop_floors"].PushBack(2, d.GetAllocator());
-		minesObj["shop_floors"].PushBack(3, d.GetAllocator());
-		minesObj["shop_floors"].PushBack(4, d.GetAllocator());
-		minesObj.AddMember("shop_floor_percent", rapidjson::Value(50), d.GetAllocator());
-
-		minesObj.AddMember("npc_floors", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
-		minesObj["npc_floors"].PushBack(2, d.GetAllocator());
-		minesObj["npc_floors"].PushBack(3, d.GetAllocator());
-		minesObj["npc_floors"].PushBack(4, d.GetAllocator());
-		minesObj.AddMember("npc_spawn_chance", rapidjson::Value(10), d.GetAllocator());
-
-		d["map_generation"].AddMember(key1, minesObj, d.GetAllocator());
-		
-		rapidjson::Value key2("The Swamp", d.GetAllocator());
-		rapidjson::Value swampObj(rapidjson::kObjectType);
-
-		rapidjson::Value trapArray2(rapidjson::kArrayType);
-		trapArray2.PushBack("boulders", d.GetAllocator());
-		trapArray2.PushBack("arrows", d.GetAllocator());
-		swampObj.AddMember("trap_generation_types", trapArray2, d.GetAllocator());
-		swampObj.AddMember("minotaur_floors", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
-		swampObj["minotaur_floors"].PushBack(7, d.GetAllocator());
-		swampObj["minotaur_floors"].PushBack(8, d.GetAllocator());
-		swampObj.AddMember("minotaur_floor_percent", rapidjson::Value(50), d.GetAllocator());
-
-		swampObj.AddMember("dark_floors", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
-		swampObj["dark_floors"].PushBack(6, d.GetAllocator());
-		swampObj["dark_floors"].PushBack(7, d.GetAllocator());
-		swampObj["dark_floors"].PushBack(8, d.GetAllocator());
-		swampObj["dark_floors"].PushBack(9, d.GetAllocator());
-		swampObj.AddMember("dark_floor_percent", rapidjson::Value(25), d.GetAllocator());
-
-		swampObj.AddMember("shop_floors", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
-		swampObj["shop_floors"].PushBack(6, d.GetAllocator());
-		swampObj["shop_floors"].PushBack(7, d.GetAllocator());
-		swampObj["shop_floors"].PushBack(8, d.GetAllocator());
-		swampObj["shop_floors"].PushBack(9, d.GetAllocator());
-		swampObj.AddMember("shop_floor_percent", rapidjson::Value(50), d.GetAllocator());
-
-		swampObj.AddMember("npc_floors", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
-		swampObj["npc_floors"].PushBack(6, d.GetAllocator());
-		swampObj["npc_floors"].PushBack(7, d.GetAllocator());
-		swampObj["npc_floors"].PushBack(8, d.GetAllocator());
-		swampObj["npc_floors"].PushBack(9, d.GetAllocator());
-		swampObj.AddMember("npc_spawn_chance", rapidjson::Value(10), d.GetAllocator());
-
-		d["map_generation"].AddMember(key2, swampObj, d.GetAllocator());
-
-		writeToFile(d);
 	}
 
-	void writeToFile(rapidjson::Document& d)
+	void writeToFile(cJSON* d)
 	{
-		int filenum = 0;
-		std::string testPath = "/data/gameplaymodifiers_export" + std::to_string(filenum) + ".json";
-		while ( PHYSFS_getRealDir(testPath.c_str()) != nullptr && filenum < 1000 )
-		{
-			++filenum;
-			testPath = "/data/gameplaymodifiers_export" + std::to_string(filenum) + ".json";
-		}
-		std::string outputPath = PHYSFS_getRealDir("/data/");
-		outputPath.append(PHYSFS_getDirSeparator());
-		std::string fileName = "data/gameplaymodifiers_export" + std::to_string(filenum) + ".json";
-		outputPath.append(fileName.c_str());
-
-		File* fp = FileIO::open(outputPath.c_str(), "wb");
-		if ( !fp )
-		{
-			return;
-		}
-		rapidjson::StringBuffer os;
-		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-		d.Accept(writer);
-		fp->write(os.GetString(), sizeof(char), os.GetSize());
-
-		FileIO::close(fp);
 	}
 
 	void readFromFile()
 	{
-		resetValues();
-		if ( PHYSFS_getRealDir("/data/gameplaymodifiers.json") )
-		{
-			std::string inputPath = PHYSFS_getRealDir("/data/gameplaymodifiers.json");
-			inputPath.append("/data/gameplaymodifiers.json");
-
-			File* fp = FileIO::open(inputPath.c_str(), "rb");
-			if ( !fp )
-			{
-				printlog("[JSON]: Error: Could not locate json file %s", inputPath.c_str());
-				return;
-			}
-			char buf[65536];
-			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
-			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
-			FileIO::close(fp);
-
-			rapidjson::Document d;
-			d.ParseStream(is);
-			if ( !d.HasMember("version") )
-			{
-				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
-				return;
-			}
-			int version = d["version"].GetInt();
-
-			for ( rapidjson::Value::ConstMemberIterator prop_itr = d.MemberBegin(); prop_itr != d.MemberEnd(); ++prop_itr )
-			{
-				if ( readKeyToGameplayProperty(prop_itr) )
-				{
-					usingCustomManager = true;
-				}
-			}
-			
-			printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
-		}
 	}
 
-	bool readKeyToGameplayProperty(rapidjson::Value::ConstMemberIterator& itr)
+	bool readKeyToGameplayProperty(cJSON* itr)
 	{
-		std::string name = itr->name.GetString();
-		if ( name.compare("version") == 0 )
-		{
-			return true;
-		}
-		else if ( name.compare("xp_share_range") == 0 )
-		{
-			xpShareRange = itr->value.GetInt();
-			return true;
-		}
-		else if ( name.compare("global_xp_award_percent") == 0 )
-		{
-			globalXPPercent = itr->value.GetInt();
-			return true;
-		}
-		else if ( name.compare("global_gold_drop_scale_percent") == 0 )
-		{
-			globalGoldPercent = itr->value.GetInt();
-			return true;
-		}
-		else if ( name.compare("player_share_minimap_progress") == 0 )
-		{
-			minimapShareProgress = itr->value.GetBool();
-			return true;
-		}
-		else if ( name.compare("player_speed_weight_impact_percent") == 0 )
-		{
-			playerWeightPercent = itr->value.GetInt();
-			return true;
-		}
-		else if ( name.compare("player_speed_max") == 0 )
-		{
-			playerSpeedMax = itr->value.GetDouble();
-			return true;
-		}
-		else if ( name.compare("minotaur_force_disable_on_floors") == 0 )
-		{
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value["normal_floors"].Begin(); arr_itr != itr->value["normal_floors"].End(); ++arr_itr )
-			{
-				minotaurForceDisableFloors.first.insert(arr_itr->GetInt());
-			}
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value["secret_floors"].Begin(); arr_itr != itr->value["secret_floors"].End(); ++arr_itr )
-			{
-				minotaurForceDisableFloors.second.insert(arr_itr->GetInt());
-			}
-			return true;
-		}
-		else if ( name.compare("minotaur_force_enable_on_floors") == 0 )
-		{
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value["normal_floors"].Begin(); arr_itr != itr->value["normal_floors"].End(); ++arr_itr )
-			{
-				minotaurForceEnableFloors.first.insert(arr_itr->GetInt());
-			}
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value["secret_floors"].Begin(); arr_itr != itr->value["secret_floors"].End(); ++arr_itr )
-			{
-				minotaurForceEnableFloors.second.insert(arr_itr->GetInt());
-			}
-			return true;
-		}
-		else if ( name.compare("disable_hunger_on_floors") == 0 )
-		{
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value["normal_floors"].Begin(); arr_itr != itr->value["normal_floors"].End(); ++arr_itr )
-			{
-				hungerDisableFloors.first.insert(arr_itr->GetInt());
-			}
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value["secret_floors"].Begin(); arr_itr != itr->value["secret_floors"].End(); ++arr_itr )
-			{
-				hungerDisableFloors.second.insert(arr_itr->GetInt());
-			}
-			return true;
-		}
-		else if ( name.compare("disable_herx_messages_on_floors") == 0 )
-		{
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value["normal_floors"].Begin(); arr_itr != itr->value["normal_floors"].End(); ++arr_itr )
-			{
-				herxChatterDisableFloors.first.insert(arr_itr->GetInt());
-			}
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value["secret_floors"].Begin(); arr_itr != itr->value["secret_floors"].End(); ++arr_itr )
-			{
-				herxChatterDisableFloors.second.insert(arr_itr->GetInt());
-			}
-			return true;
-		}
-		else if ( name.compare("disable_minimap_on_floors") == 0 )
-		{
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value["normal_floors"].Begin(); arr_itr != itr->value["normal_floors"].End(); ++arr_itr )
-			{
-				minimapDisableFloors.first.insert(arr_itr->GetInt());
-			}
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value["secret_floors"].Begin(); arr_itr != itr->value["secret_floors"].End(); ++arr_itr )
-			{
-				minimapDisableFloors.second.insert(arr_itr->GetInt());
-			}
-			return true;
-		}
-		else if ( name.compare("map_generation") == 0 )
-		{
-			for ( rapidjson::Value::ConstMemberIterator map_itr = itr->value.MemberBegin(); map_itr != itr->value.MemberEnd(); ++map_itr )
-			{
-				std::string mapName = map_itr->name.GetString();
-				MapGeneration m(mapName);
-				for ( rapidjson::Value::ConstMemberIterator obj_itr = map_itr->value.MemberBegin(); obj_itr != map_itr->value.MemberEnd(); ++obj_itr )
-				{
-					readKeyToMapGenerationProperty(m, obj_itr);
-				}
-				allMapGenerations.push_back(m);
-			}
-			return true;
-		}
-		printlog("[JSON]: Unknown property '%s'", name.c_str());
 		return false;
 	}
 
-	bool readKeyToMapGenerationProperty(MapGeneration& m, rapidjson::Value::ConstMemberIterator& itr)
+	bool readKeyToMapGenerationProperty(MapGeneration& m, cJSON* itr)
 	{
-		std::string name = itr->name.GetString();
-		if ( name.compare("trap_generation_types") == 0 )
-		{
-			m.usingTrapTypes = true;
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value.Begin(); arr_itr != itr->value.End(); ++arr_itr )
-			{
-				m.trapTypes.push_back(arr_itr->GetString());
-			}
-			return true;
-		}
-		else if ( name.compare("minotaur_floors") == 0 )
-		{
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value.Begin(); arr_itr != itr->value.End(); ++arr_itr )
-			{
-				m.minoFloors.insert(arr_itr->GetInt());
-			}
-			return true;
-		}
-		else if ( name.compare("dark_floors") == 0 )
-		{
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value.Begin(); arr_itr != itr->value.End(); ++arr_itr )
-			{
-				m.darkFloors.insert(arr_itr->GetInt());
-			}
-			return true;
-		}
-		else if ( name.compare("shop_floors") == 0 )
-		{
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value.Begin(); arr_itr != itr->value.End(); ++arr_itr )
-			{
-				m.shopFloors.insert(arr_itr->GetInt());
-			}
-			return true;
-		}
-		else if ( name.compare("npc_floors") == 0 )
-		{
-			for ( rapidjson::Value::ConstValueIterator arr_itr = itr->value.Begin(); arr_itr != itr->value.End(); ++arr_itr )
-			{
-				m.npcSpawnFloors.insert(arr_itr->GetInt());
-			}
-			return true;
-		}
-		else if ( name.compare("dark_floor_percent") == 0 )
-		{
-			m.darkPercent = itr->value.GetInt();
-			return true;
-		}
-		else if ( name.compare("minotaur_floor_percent") == 0 )
-		{
-			m.minoPercent = itr->value.GetInt();
-			return true;
-		}
-		else if ( name.compare("shop_floor_percent") == 0 )
-		{
-			m.shopPercent = itr->value.GetInt();
-			return true;
-		}
-		else if ( name.compare("npc_spawn_chance") == 0 )
-		{
-			m.npcSpawnPercent = itr->value.GetInt();
-			return true;
-		}
-		printlog("[JSON]: Unknown property '%s'", name.c_str());
 		return false;
 	}
 
@@ -2674,23 +1399,8 @@ public:
 #else
 		const std::string tutorialScoresFilename = "/savegames/tutorial_scores.json";
 #endif
-		void writeToFile(rapidjson::Document& d)
+		void writeToFile(cJSON* d)
 		{
-			std::string outputPath = outputdir;
-			outputPath.append(tutorialScoresFilename.c_str());
-
-			File* fp = FileIO::open(outputPath.c_str(), "wb");
-			if ( !fp )
-			{
-				return;
-			}
-			rapidjson::StringBuffer os;
-			rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-			d.Accept(writer);
-			fp->write(os.GetString(), sizeof(char), os.GetSize());
-			fp->write("", sizeof(char), 1);
-
-			FileIO::close(fp);
 		}
 	} Tutorial;
 };
@@ -2876,8 +1586,16 @@ public:
 		void setColorStatus(Uint32 color) { statusEffectTextColor = color; }
 		void setColorFaintText(Uint32 color) { faintTextColor = color; }
 	};
+#ifdef MOD_TOOLS_CPP
 	void setSpellValueIfKeyPresent(spellItem_t& t, rapidjson::Value::ConstMemberIterator item_itr, Uint32& hash, Uint32& hashShift, const char* key, int& toSet);
+#else
+	void setSpellValueIfKeyPresent(spellItem_t& t, void* item_itr, Uint32& hash, Uint32& hashShift, const char* key, int& toSet);
+#endif
+#ifdef MOD_TOOLS_CPP
 	void setSpellValueIfKeyPresent(spellItem_t& t, rapidjson::Value::ConstMemberIterator item_itr, Uint32& hash, Uint32& hashShift, const char* key, real_t& toSet);
+#else
+	void setSpellValueIfKeyPresent(spellItem_t& t, void* item_itr, Uint32& hash, Uint32& hashShift, const char* key, real_t& toSet);
+#endif
 	void readItemsFromFile();
 	static const Uint32 kItemsJsonHash;
 	static Uint32 itemsJsonHashRead;
@@ -2959,7 +1677,11 @@ public:
 	std::string exportFileName = "";
 	int exportRotations = 0;
 	bool exportActive = false;
+#ifdef MOD_TOOLS_CPP
 	rapidjson::Document exportDocument;
+#else
+	void* exportDocument;
+#endif
 
 	class Statue_t
 	{

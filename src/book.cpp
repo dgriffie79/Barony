@@ -14,8 +14,7 @@
 #include "game.hpp"
 #include "interface/interface.hpp"
 #include "book.hpp"
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
+#include "cJSON.h"
 #include "player.hpp"
 #include "ui/Text.hpp"
 #include "ui/Field.hpp"
@@ -125,31 +124,45 @@ bool BookParser_t::readCompiledBooks()
 			static char buf[MAX_FILE_LENGTH];
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
 			FileIO::close(fp);
 
-			rapidjson::Document d;
-			d.ParseStream(is);
-			if ( !d.HasMember("version") || !d.HasMember("books") )
+			cJSON* d = cJSON_Parse(buf);
+			if ( !d )
 			{
-				printlog("[JSON]: Could not read member 'version' or 'books', possible invalid syntax.");
+				printlog("[JSON]: Could not parse json file, possible invalid syntax.");
 				return false;
 			}
 
+			if ( !cJSON_GetObjectItem(d, "version") || !cJSON_GetObjectItem(d, "books") )
+			{
+				printlog("[JSON]: Could not read member 'version' or 'books', possible invalid syntax.");
+				cJSON_Delete(d);
+				return false;
+			}
+
+			cJSON* books = cJSON_GetObjectItem(d, "books");
 			int numBooksRead = 0;
-			for ( rapidjson::Value::ConstMemberIterator book_itr = d["books"].MemberBegin();
-				book_itr != d["books"].MemberEnd(); ++book_itr )
+			cJSON* bookItem = NULL;
+			cJSON_ArrayForEach(bookItem, books)
 			{
 				allBooks.push_back(Book_t());
 				auto& newBook = allBooks[allBooks.size() - 1];
-				newBook.default_name = book_itr->name.GetString();
-				for ( rapidjson::Value::ConstValueIterator page_itr = book_itr->value["pages"].Begin();
-					page_itr != book_itr->value["pages"].End(); ++page_itr )
+				newBook.default_name = bookItem->string;
+				cJSON* pages = cJSON_GetObjectItem(bookItem, "pages");
+				if ( pages )
 				{
-					newBook.formattedPages.push_back(page_itr->GetString());
+					cJSON* pageItem = NULL;
+					cJSON_ArrayForEach(pageItem, pages)
+					{
+						if ( cJSON_IsString(pageItem) )
+						{
+							newBook.formattedPages.push_back(pageItem->valuestring);
+						}
+					}
 				}
 				++numBooksRead;
 			}
+			cJSON_Delete(d);
 			printlog("[Books]: Read %d precompiled books successfully.", numBooksRead);
 			return true;
 		}
@@ -173,32 +186,42 @@ bool BookParser_t::booksRequireCompiling()
 			static char buf[MAX_FILE_LENGTH];
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
 			FileIO::close(fp);
 
-			rapidjson::Document d;
-			d.ParseStream(is);
-			if ( !d.HasMember("version") || !d.HasMember("books") )
+			cJSON* d = cJSON_Parse(buf);
+			if ( !d )
 			{
-				printlog("[JSON]: Could not read member 'version' or 'books', possible invalid syntax.");
+				printlog("[JSON]: Could not parse json file, possible invalid syntax.");
 				return false;
 			}
 
-			if ( d["books"].MemberCount() != tempBookData.size() )
+			if ( !cJSON_GetObjectItem(d, "version") || !cJSON_GetObjectItem(d, "books") )
 			{
-				printlog("[Books]: Compiled Books Check - Found %d compiled books, but %d in directory, recompiling...", d["books"].MemberCount(), tempBookData.size());
+				printlog("[JSON]: Could not read member 'version' or 'books', possible invalid syntax.");
+				cJSON_Delete(d);
+				return false;
+			}
+
+			cJSON* books = cJSON_GetObjectItem(d, "books");
+			int bookCount = cJSON_GetArraySize(books);
+			if ( bookCount != static_cast<int>(tempBookData.size()) )
+			{
+				printlog("[Books]: Compiled Books Check - Found %d compiled books, but %zu in directory, recompiling...", bookCount, tempBookData.size());
+				cJSON_Delete(d);
 				return true;
 			}
 
-			for ( rapidjson::Value::ConstMemberIterator book_itr = d["books"].MemberBegin();
-				book_itr != d["books"].MemberEnd(); ++book_itr )
+			cJSON* bookItem = NULL;
+			cJSON_ArrayForEach(bookItem, books)
 			{
-				std::string bookName = book_itr->name.GetString();
-				std::string rawText = book_itr->value["raw_text"].GetString();
+				std::string bookName = bookItem->string;
+				cJSON* rawTextItem = cJSON_GetObjectItem(bookItem, "raw_text");
+				std::string rawText = rawTextItem ? rawTextItem->valuestring : "";
 
 				if ( tempBookData.find(bookName) == tempBookData.end() )
 				{
 					printlog("[Books]: Compiled Books Check - Book title: \"%s\" not found in compiled books, recompiling...", bookName.c_str());
+					cJSON_Delete(d);
 					return true;
 				}
 				else
@@ -206,10 +229,12 @@ bool BookParser_t::booksRequireCompiling()
 					if ( tempBookData[bookName] != rawText )
 					{
 						printlog("[Books]: Compiled Books Check - Book text: \"%s\" does not match in compiled books, recompiling...", bookName.c_str());
+						cJSON_Delete(d);
 						return true;
 					}
 				}
 			}
+			cJSON_Delete(d);
 		}
 	}
 	return false;
@@ -238,21 +263,32 @@ std::list<std::string> BookParser_t::getListOfBooksAfterFiltering()
 			char buf[MAX_FILE_LENGTH];
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
 			FileIO::close(fp);
 
-			rapidjson::Document d;
-			d.ParseStream(is);
-			if ( !d.HasMember("ignored_books") )
+			cJSON* d = cJSON_Parse(buf);
+			if ( !d )
 			{
-				printlog("[JSON]: Could not read member 'ignored_books', possible invalid syntax.");
+				printlog("[JSON]: Could not parse json file, possible invalid syntax.");
 			}
 			else
 			{
-				for ( rapidjson::Value::ConstValueIterator itr = d["ignored_books"].Begin(); itr != d["ignored_books"].End(); ++itr )
+				cJSON* ignoredBooksArray = cJSON_GetObjectItem(d, "ignored_books");
+				if ( !ignoredBooksArray )
 				{
-					ignoredBooks.insert(itr->GetString());
+					printlog("[JSON]: Could not read member 'ignored_books', possible invalid syntax.");
 				}
+				else
+				{
+					cJSON* item = NULL;
+					cJSON_ArrayForEach(item, ignoredBooksArray)
+					{
+						if ( cJSON_IsString(item) )
+						{
+							ignoredBooks.insert(item->valuestring);
+						}
+					}
+				}
+				cJSON_Delete(d);
 			}
 		}
 	}
@@ -389,67 +425,69 @@ void BookParser_t::writeCompiledBooks()
 	inputPath.append(fileName);
 
 	File* fp = FileIO::open(inputPath.c_str(), "rb");
-	rapidjson::Document d;
+	cJSON* d = NULL;
 	if ( !fp )
 	{
 		printlog("[JSON]: Could not locate json file %s, creating new file.", inputPath.c_str());
-		d.SetObject();
-		CustomHelpers::addMemberToRoot(d, "version", rapidjson::Value(versionJSON));
+		d = cJSON_CreateObject();
+		cJSON_AddNumberToObject(d, "version", versionJSON);
 	}
 	else
 	{
 		char buf[MAX_FILE_LENGTH];
 		int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 		buf[count] = '\0';
-		rapidjson::StringStream is(buf);
 		FileIO::close(fp);
-		d.ParseStream(is);
+		d = cJSON_Parse(buf);
 
-		if ( !d.HasMember("version") )
+		if ( !d )
+		{
+			printlog("[JSON]: Could not parse json file, possible invalid syntax.");
+			printlog("[Books]: Error: Failed to compile books into file: '%s'", inputPath.c_str());
+			return;
+		}
+
+		if ( !cJSON_GetObjectItem(d, "version") )
 		{
 			printlog("[JSON]: Could not read member 'version', possible invalid syntax.");
 			printlog("[Books]: Error: Failed to compile books into file: '%s'", inputPath.c_str());
+			cJSON_Delete(d);
 			return;
 		}
 	}
 
-	if ( d.HasMember("books") )
-	{
-		d.EraseMember("books");
-	}
-	rapidjson::Value booksObj(rapidjson::kObjectType);
-	CustomHelpers::addMemberToRoot(d, "books", booksObj);
+	cJSON_DeleteItemFromObject(d, "books");
+	cJSON* booksObj = cJSON_AddObjectToObject(d, "books");
 
 	for ( auto& book : allBooks )
 	{
-		if ( !d["books"].HasMember(book.default_name.c_str()) )
+		cJSON* bookObj = cJSON_GetObjectItem(booksObj, book.default_name.c_str());
+		if ( !bookObj )
 		{
-			rapidjson::Value bookObj(rapidjson::kObjectType);
-			CustomHelpers::addMemberToSubkey(d, "books", book.default_name.c_str(), bookObj);
+			bookObj = cJSON_CreateObject();
+			cJSON_AddItemToObject(booksObj, book.default_name.c_str(), bookObj);
 
-			rapidjson::Value rawTextKey("raw_text", d.GetAllocator());
-			rapidjson::Value rawTextVal(book.text.c_str(), d.GetAllocator());
-			d["books"][book.default_name.c_str()].AddMember(rawTextKey, rawTextVal, d.GetAllocator());
+			cJSON_AddStringToObject(bookObj, "raw_text", book.text.c_str());
 
-			rapidjson::Value pagesKey("pages", d.GetAllocator());
-			rapidjson::Value pagesArrayVal(rapidjson::kArrayType);
-			d["books"][book.default_name.c_str()].AddMember(pagesKey, pagesArrayVal, d.GetAllocator());
+			cJSON* pages = cJSON_AddArrayToObject(bookObj, "pages");
 			for ( auto& page : book.formattedPages )
 			{
-				rapidjson::Value pageVal;
-				pageVal.SetString(page.c_str(), d.GetAllocator());
-				d["books"][book.default_name.c_str()]["pages"].PushBack(pageVal, d.GetAllocator());
+				cJSON_AddItemToArray(pages, cJSON_CreateString(page.c_str()));
 			}
 		}
 		else
 		{
-			d["books"][book.default_name.c_str()]["raw_text"].SetString(book.text.c_str(), d.GetAllocator());
-			d["books"][book.default_name.c_str()]["pages"].Clear();
+			cJSON* rawText = cJSON_GetObjectItem(bookObj, "raw_text");
+			if ( rawText )
+			{
+				cJSON_SetValuestring(rawText, book.text.c_str());
+			}
+
+			cJSON_DeleteItemFromObject(bookObj, "pages");
+			cJSON* pages = cJSON_AddArrayToObject(bookObj, "pages");
 			for ( auto& page : book.formattedPages )
 			{
-				rapidjson::Value pageVal;
-				pageVal.SetString(page.c_str(), d.GetAllocator());
-				d["books"][book.default_name.c_str()]["pages"].PushBack(pageVal, d.GetAllocator());
+				cJSON_AddItemToArray(pages, cJSON_CreateString(page.c_str()));
 			}
 		}
 	}
@@ -458,13 +496,14 @@ void BookParser_t::writeCompiledBooks()
 	if ( !fp )
 	{
 		printlog("[Books]: Error: Failed to compile books into file: '%s'", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
-	rapidjson::StringBuffer os;
-	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-	d.Accept(writer);
-	fp->write(os.GetString(), sizeof(char), os.GetSize());
+	char* jsonStr = cJSON_Print(d);
+	fp->write(jsonStr, sizeof(char), strlen(jsonStr));
+	cJSON_free(jsonStr);
 	FileIO::close(fp);
+	cJSON_Delete(d);
 	
 	printlog("[Books]: Successfully compiled books into file: '%s'", inputPath.c_str());
 }

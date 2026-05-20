@@ -11,6 +11,10 @@
 #include "Widget.hpp"
 
 #include "../main.hpp"
+#include "../rapidjson/document.h"
+#include "../rapidjson/filereadstream.h"
+#include "../rapidjson/filewritestream.h"
+#include "../rapidjson/prettywriter.h"
 #include "../game.hpp"
 #include "../menu.hpp"
 #include "../interface/interface.hpp"

@@ -8,6 +8,7 @@
 #include "Text.hpp"
 #include "GameUI.hpp"
 
+#include "../cJSON.h"
 #include "../init.hpp"
 #include "../net.hpp"
 #include "../player.hpp"
@@ -11431,14 +11432,19 @@ failed:
 		char buf[32000];
 		const int count = (int)fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 		buf[count] = '\0';
-		rapidjson::StringStream is(buf);
 		FileIO::close(fp);
 
-		rapidjson::Document d;
-		d.ParseStream(is);
-		if ( !d.HasMember("version") || !d.HasMember("descriptions") )
+		cJSON* doc = cJSON_Parse(buf);
+		if ( !doc )
+		{
+			printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+			return;
+		}
+
+		if ( !cJSON_GetObjectItem(doc, "version") || !cJSON_GetObjectItem(doc, "descriptions") )
 		{
 			printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+			cJSON_Delete(doc);
 			return;
 		}
 
@@ -11450,12 +11456,15 @@ failed:
 		static constexpr Uint32 poor = makeColorRGB(255, 64, 0);
 		static constexpr Uint32 bad = makeColorRGB(255, 64, 0);
 
-		auto& classes = d["descriptions"];
+		cJSON* classes = cJSON_GetObjectItem(doc, "descriptions");
 		Stat tmpStats(0);
-		for ( auto it = classes.MemberBegin(); it != classes.MemberEnd(); ++it )
+		cJSON* cls = NULL;
+		cJSON_ArrayForEach(cls, classes)
 		{
-			std::string classname = it->name.GetString();
-			int key = it->value["id"].GetInt();
+			std::string classname = cls->string;
+			cJSON* idItem = cJSON_GetObjectItem(cls, "id");
+			if ( !cJSON_IsNumber(idItem) ) continue;
+			int key = idItem->valueint;
 			auto& classEntry = data[key];
 			classEntry.internal_name = classname;
 
@@ -11464,89 +11473,118 @@ failed:
 			classEntry.hp = tmpStats.HP;
 			classEntry.mp = tmpStats.MP;
 
-			for ( auto it2 = it->value["desc"].Begin(); it2 != it->value["desc"].End(); )
+			cJSON* descArr = cJSON_GetObjectItem(cls, "desc");
+			if ( cJSON_IsArray(descArr) )
 			{
-				std::string line = (it2->GetString());
-				if ( line.size() > 0 && line[0] == '-' )
+				int descIdx = 0;
+				int descCount = cJSON_GetArraySize(descArr);
+				cJSON* descItem = NULL;
+				cJSON_ArrayForEach(descItem, descArr)
 				{
-					line[0] = '\x1E';
-				}
-				classEntry.text += line;
+					if ( !cJSON_IsString(descItem) ) continue;
+					std::string line = descItem->valuestring;
+					if ( line.size() > 0 && line[0] == '-' )
+					{
+						line[0] = '\x1E';
+					}
+					classEntry.text += line;
 
-				++it2;
-				if ( it2 != it->value["desc"].End() )
-				{
-					classEntry.text += '\n';
+					if ( descIdx < descCount - 1 )
+					{
+						classEntry.text += '\n';
+					}
+					++descIdx;
 				}
 			}
-			for ( auto it2 = it->value["line_spacing"].Begin(); it2 != it->value["line_spacing"].End(); ++it2 )
+
+			cJSON* spacingArr = cJSON_GetObjectItem(cls, "line_spacing");
+			if ( cJSON_IsArray(spacingArr) )
 			{
-				classEntry.linePaddings.push_back(it2->GetInt());
+				cJSON* spacingItem = NULL;
+				cJSON_ArrayForEach(spacingItem, spacingArr)
+				{
+					if ( cJSON_IsNumber(spacingItem) )
+						classEntry.linePaddings.push_back(spacingItem->valueint);
+				}
 			}
 
 			int c = 0;
-			for ( auto it2 = it->value["survival_complexity"].Begin(); it2 != it->value["survival_complexity"].End(); ++it2 )
+			cJSON* scArr = cJSON_GetObjectItem(cls, "survival_complexity");
+			if ( cJSON_IsArray(scArr) )
 			{
-				int value = it2->GetInt();
-				classEntry.survivalComplexity.push_back(std::make_tuple(value, "", 0));
-				auto& survivalComplexity = classEntry.survivalComplexity.back();
-				switch ( value )
+				cJSON* scItem = NULL;
+				cJSON_ArrayForEach(scItem, scArr)
 				{
-					case 1: 
-						std::get<1>(survivalComplexity) = "*"; 
-						std::get<2>(survivalComplexity) = (c == 0 ? bad : good);
-						break;
-					case 2: 
-						std::get<1>(survivalComplexity) = "**"; 
-						std::get<2>(survivalComplexity) = (c == 0 ? poor : decent);
-						break;
-					case 3: 
-						std::get<1>(survivalComplexity) = "***"; 
-						std::get<2>(survivalComplexity) = (c == 0 ? average : average);
-						break;
-					case 4: 
-						std::get<1>(survivalComplexity) = "****"; 
-						std::get<2>(survivalComplexity) = (c == 0 ? decent : poor);
-						break;
-					case 5: 
-						std::get<1>(survivalComplexity) = "*****"; 
-						std::get<2>(survivalComplexity) = (c == 0 ? good : bad); 
-						break;
-					default:
-						break;
+					if ( !cJSON_IsNumber(scItem) ) { ++c; continue; }
+					int value = scItem->valueint;
+					classEntry.survivalComplexity.push_back(std::make_tuple(value, "", 0));
+					auto& survivalComplexity = classEntry.survivalComplexity.back();
+					switch ( value )
+					{
+						case 1:
+							std::get<1>(survivalComplexity) = "*";
+							std::get<2>(survivalComplexity) = (c == 0 ? bad : good);
+							break;
+						case 2:
+							std::get<1>(survivalComplexity) = "**";
+							std::get<2>(survivalComplexity) = (c == 0 ? poor : decent);
+							break;
+						case 3:
+							std::get<1>(survivalComplexity) = "***";
+							std::get<2>(survivalComplexity) = (c == 0 ? average : average);
+							break;
+						case 4:
+							std::get<1>(survivalComplexity) = "****";
+							std::get<2>(survivalComplexity) = (c == 0 ? decent : poor);
+							break;
+						case 5:
+							std::get<1>(survivalComplexity) = "*****";
+							std::get<2>(survivalComplexity) = (c == 0 ? good : bad);
+							break;
+						default:
+							break;
+					}
+					++c;
 				}
-				++c;
 			}
-			for ( auto it2 = it->value["stats"].Begin(); it2 != it->value["stats"].End(); ++it2 )
+
+			cJSON* statsArr = cJSON_GetObjectItem(cls, "stats");
+			if ( cJSON_IsArray(statsArr) )
 			{
-				std::string value = it2->GetString();
-				classEntry.statRatingsStrings.push_back(value);
-				if ( value == "bad" )
+				cJSON* statsItem = NULL;
+				cJSON_ArrayForEach(statsItem, statsArr)
 				{
-					classEntry.statRatings.push_back(bad);
-				}
-				else if ( value == "poor" )
-				{
-					classEntry.statRatings.push_back(poor);
-				}
-				else if ( value == "average" )
-				{
-					classEntry.statRatings.push_back(average);
-				}
-				else if ( value == "decent" )
-				{
-					classEntry.statRatings.push_back(decent);
-				}
-				else if ( value == "good" )
-				{
-					classEntry.statRatings.push_back(good);
-				}
-				else
-				{
-					classEntry.statRatings.push_back(0);
+					if ( !cJSON_IsString(statsItem) ) continue;
+					std::string value = statsItem->valuestring;
+					classEntry.statRatingsStrings.push_back(value);
+					if ( value == "bad" )
+					{
+						classEntry.statRatings.push_back(bad);
+					}
+					else if ( value == "poor" )
+					{
+						classEntry.statRatings.push_back(poor);
+					}
+					else if ( value == "average" )
+					{
+						classEntry.statRatings.push_back(average);
+					}
+					else if ( value == "decent" )
+					{
+						classEntry.statRatings.push_back(decent);
+					}
+					else if ( value == "good" )
+					{
+						classEntry.statRatings.push_back(good);
+					}
+					else
+					{
+						classEntry.statRatings.push_back(0);
+					}
 				}
 			}
 		}
+		cJSON_Delete(doc);
 		init = true;
 		printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
 	}
@@ -11579,111 +11617,187 @@ failed:
 		static char buf[32000];
 		const int count = (int)fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 		buf[count] = '\0';
-		rapidjson::StringStream is(buf);
 		FileIO::close(fp);
 
-		rapidjson::Document d;
-		d.ParseStream(is);
-		if ( !d.HasMember("version") || !d.HasMember("descriptions") )
+		cJSON* doc = cJSON_Parse(buf);
+		if ( !doc )
+		{
+			printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+			return;
+		}
+
+		if ( !cJSON_GetObjectItem(doc, "version") || !cJSON_GetObjectItem(doc, "descriptions") )
 		{
 			printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+			cJSON_Delete(doc);
 			return;
 		}
 
 		data.clear();
 
-		auto& races = d["descriptions"];
-		for ( auto it = races.MemberBegin(); it != races.MemberEnd(); ++it )
+		cJSON* races = cJSON_GetObjectItem(doc, "descriptions");
+		cJSON* race = NULL;
+		cJSON_ArrayForEach(race, races)
 		{
-			std::string key = it->name.GetString();
+			std::string key = race->string;
 			auto& raceEntry = data[key];
-			raceEntry.title = it->value["title"].GetString();
+
+			cJSON* titleItem = cJSON_GetObjectItem(race, "title");
+			raceEntry.title = titleItem && cJSON_IsString(titleItem) ? titleItem->valuestring : "";
+
 			std::vector<std::string> textLeftLines;
 			std::vector<std::string> textRightLines;
-			for ( auto it2 = it->value["left_align"].Begin(); it2 != it->value["left_align"].End(); )
+
+			cJSON* leftArr = cJSON_GetObjectItem(race, "left_align");
+			if ( cJSON_IsArray(leftArr) )
 			{
-				std::string line = (it2->GetString());
-				if ( line.size() > 0 && line[0] == '-' )
+				int leftIdx = 0;
+				int leftCount = cJSON_GetArraySize(leftArr);
+				cJSON* leftItem = NULL;
+				cJSON_ArrayForEach(leftItem, leftArr)
 				{
-					line[0] = '\x1E';
-				}
-				raceEntry.textLeft += line;
-				textLeftLines.push_back(line);
-				++it2;
-				if ( it2 != it->value["left_align"].End() )
-				{
-					raceEntry.textLeft += '\n';
-				}
-			}
-			raceEntry.traitsBasedOnPlayerRace = "";
-			for ( auto it2 = it->value["traits_active_if_polymorphed_out_of"].Begin(); 
-				it2 != it->value["traits_active_if_polymorphed_out_of"].End(); )
-			{
-				raceEntry.traitsBasedOnPlayerRace += (textLeftLines[it2->GetInt()]);
-				++it2;
-				if ( it2 != it->value["traits_active_if_polymorphed_out_of"].End() )
-				{
-					raceEntry.traitsBasedOnPlayerRace += '\n';
-				}
-			}
-			raceEntry.traitsBasedOnMonsterType = "";
-			for ( auto it2 = it->value["traits_active_if_polymorphed_into"].Begin();
-				it2 != it->value["traits_active_if_polymorphed_into"].End(); )
-			{
-				raceEntry.traitsBasedOnMonsterType += (textLeftLines[it2->GetInt()]);
-				++it2;
-				if ( it2 != it->value["traits_active_if_polymorphed_into"].End() )
-				{
-					raceEntry.traitsBasedOnMonsterType += '\n';
-				}
-			}
-			for ( auto it2 = it->value["right_align"].Begin(); it2 != it->value["right_align"].End(); )
-			{
-				std::string line = (it2->GetString());
-				if ( line.size() > 0 && line[0] == '-' )
-				{
-					line[0] = '\x1E';
-				}
-				raceEntry.textRight += line;
-				textRightLines.push_back(line);
-				++it2;
-				if ( it2 != it->value["right_align"].End() )
-				{
-					raceEntry.textRight += '\n';
+					if ( !cJSON_IsString(leftItem) ) continue;
+					std::string line = leftItem->valuestring;
+					if ( line.size() > 0 && line[0] == '-' )
+					{
+						line[0] = '\x1E';
+					}
+					raceEntry.textLeft += line;
+					textLeftLines.push_back(line);
+					if ( leftIdx < leftCount - 1 )
+					{
+						raceEntry.textLeft += '\n';
+					}
+					++leftIdx;
 				}
 			}
 
-			auto& highlights = it->value["text_line_highlights"];
+			raceEntry.traitsBasedOnPlayerRace = "";
+			cJSON* polyOutArr = cJSON_GetObjectItem(race, "traits_active_if_polymorphed_out_of");
+			if ( cJSON_IsArray(polyOutArr) )
+			{
+				int poIdx = 0;
+				int poCount = cJSON_GetArraySize(polyOutArr);
+				cJSON* poItem = NULL;
+				cJSON_ArrayForEach(poItem, polyOutArr)
+				{
+					if ( !cJSON_IsNumber(poItem) ) continue;
+					int lineIdx = poItem->valueint;
+					if ( lineIdx >= 0 && lineIdx < (int)textLeftLines.size() )
+					{
+						raceEntry.traitsBasedOnPlayerRace += textLeftLines[lineIdx];
+					}
+					if ( poIdx < poCount - 1 )
+					{
+						raceEntry.traitsBasedOnPlayerRace += '\n';
+					}
+					++poIdx;
+				}
+			}
+
+			raceEntry.traitsBasedOnMonsterType = "";
+			cJSON* polyInArr = cJSON_GetObjectItem(race, "traits_active_if_polymorphed_into");
+			if ( cJSON_IsArray(polyInArr) )
+			{
+				int piIdx = 0;
+				int piCount = cJSON_GetArraySize(polyInArr);
+				cJSON* piItem = NULL;
+				cJSON_ArrayForEach(piItem, polyInArr)
+				{
+					if ( !cJSON_IsNumber(piItem) ) continue;
+					int lineIdx = piItem->valueint;
+					if ( lineIdx >= 0 && lineIdx < (int)textLeftLines.size() )
+					{
+						raceEntry.traitsBasedOnMonsterType += textLeftLines[lineIdx];
+					}
+					if ( piIdx < piCount - 1 )
+					{
+						raceEntry.traitsBasedOnMonsterType += '\n';
+					}
+					++piIdx;
+				}
+			}
+
+			cJSON* rightArr = cJSON_GetObjectItem(race, "right_align");
+			if ( cJSON_IsArray(rightArr) )
+			{
+				int rightIdx = 0;
+				int rightCount = cJSON_GetArraySize(rightArr);
+				cJSON* rightItem = NULL;
+				cJSON_ArrayForEach(rightItem, rightArr)
+				{
+					if ( !cJSON_IsString(rightItem) ) continue;
+					std::string line = rightItem->valuestring;
+					if ( line.size() > 0 && line[0] == '-' )
+					{
+						line[0] = '\x1E';
+					}
+					raceEntry.textRight += line;
+					textRightLines.push_back(line);
+					if ( rightIdx < rightCount - 1 )
+					{
+						raceEntry.textRight += '\n';
+					}
+					++rightIdx;
+				}
+			}
+
+			cJSON* highlights = cJSON_GetObjectItem(race, "text_line_highlights");
 			int minProLine = 999;
 			int spellProLine = 999;
 			int maxProLine = 0;
-			for ( auto it2 = highlights["traits_lines"].Begin(); it2 != highlights["traits_lines"].End(); ++it2 )
+
+			if ( cJSON_IsObject(highlights) )
 			{
-				raceEntry.traitLines.insert(it2->GetInt());
-			}
-			for ( auto it2 = highlights["benefit_lines"].Begin(); it2 != highlights["benefit_lines"].End(); ++it2 )
-			{
-				raceEntry.proLines.insert(it2->GetInt());
-				if ( it2->GetInt() > 1 ) // skip racial spells
+				cJSON* traitsArr = cJSON_GetObjectItem(highlights, "traits_lines");
+				if ( cJSON_IsArray(traitsArr) )
 				{
-					minProLine = std::min(minProLine, it2->GetInt());
+					cJSON* tlItem = NULL;
+					cJSON_ArrayForEach(tlItem, traitsArr)
+					{
+						if ( cJSON_IsNumber(tlItem) )
+							raceEntry.traitLines.insert(tlItem->valueint);
+					}
 				}
-				else
+
+				cJSON* benArr = cJSON_GetObjectItem(highlights, "benefit_lines");
+				if ( cJSON_IsArray(benArr) )
 				{
-					spellProLine = std::min(spellProLine, it2->GetInt());
+					cJSON* benItem = NULL;
+					cJSON_ArrayForEach(benItem, benArr)
+					{
+						if ( !cJSON_IsNumber(benItem) ) continue;
+						int val = benItem->valueint;
+						raceEntry.proLines.insert(val);
+						if ( val > 1 )
+						{
+							minProLine = std::min(minProLine, val);
+						}
+						else
+						{
+							spellProLine = std::min(spellProLine, val);
+						}
+						maxProLine = std::max(maxProLine, val);
+					}
 				}
-				maxProLine = std::max(maxProLine, it2->GetInt());
 			}
-			for ( auto it2 = it->value["line_spacing"].Begin(); it2 != it->value["line_spacing"].End(); ++it2 )
+
+			cJSON* spacingArr = cJSON_GetObjectItem(race, "line_spacing");
+			if ( cJSON_IsArray(spacingArr) )
 			{
-				raceEntry.linePaddings.push_back(it2->GetInt());
+				cJSON* spItem = NULL;
+				cJSON_ArrayForEach(spItem, spacingArr)
+				{
+					if ( cJSON_IsNumber(spItem) )
+						raceEntry.linePaddings.push_back(spItem->valueint);
+				}
 			}
-			
+
 			int numweaknesses = 0;
 			int numresistances = 0;
 			for ( size_t index = minProLine; index < textLeftLines.size(); ++index )
 			{
-				if ( textLeftLines[index] == "" ) {	break; }
+				if ( textLeftLines[index] == "" ) { break; }
 				if ( raceEntry.resistances != "" )
 				{
 					raceEntry.resistances += '\n';
@@ -11732,6 +11846,7 @@ failed:
 				}
 			}
 		}
+		cJSON_Delete(doc);
 		init = true;
 		printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
 	}
@@ -24338,14 +24453,19 @@ failed:
 		char buf[2048];
 		int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 		buf[count] = '\0';
-		rapidjson::StringStream is(buf);
 		FileIO::close(fp);
 
-		rapidjson::Document d;
-		d.ParseStream(is);
-		if ( !d.HasMember("version") )
+		cJSON* doc = cJSON_Parse(buf);
+		if ( !doc )
+		{
+			printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+			return;
+		}
+
+		if ( !cJSON_GetObjectItem(doc, "version") )
 		{
 			printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+			cJSON_Delete(doc);
 			return;
 		}
 
@@ -24353,18 +24473,23 @@ failed:
 		updateBannerImgHighlight = "";
 		updateBannerURL = "";
 
-		if ( d.HasMember("update_banner_img") && d["update_banner_img"].IsString() )
+		cJSON* imgItem = cJSON_GetObjectItem(doc, "update_banner_img");
+		if ( cJSON_IsString(imgItem) )
 		{
-			updateBannerImg = d["update_banner_img"].GetString();
+			updateBannerImg = imgItem->valuestring;
 		}
-		if ( d.HasMember("update_banner_img_highlight") && d["update_banner_img_highlight"].IsString() )
+		cJSON* imgHighItem = cJSON_GetObjectItem(doc, "update_banner_img_highlight");
+		if ( cJSON_IsString(imgHighItem) )
 		{
-			updateBannerImgHighlight = d["update_banner_img_highlight"].GetString();
+			updateBannerImgHighlight = imgHighItem->valuestring;
 		}
-		if ( d.HasMember("update_banner_link") && d["update_banner_link"].IsString() )
+		cJSON* linkItem = cJSON_GetObjectItem(doc, "update_banner_link");
+		if ( cJSON_IsString(linkItem) )
 		{
-			updateBannerURL = d["update_banner_link"].GetString();
+			updateBannerURL = linkItem->valuestring;
 		}
+
+		cJSON_Delete(doc);
 	}
 
 	void createMainMenu(bool ingame) {

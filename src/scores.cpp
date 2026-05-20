@@ -27,6 +27,7 @@
 #include "mod_tools.hpp"
 #include "lobbies.hpp"
 #include "shops.hpp"
+#include "cJSON.h"
 
 
 // definitions
@@ -644,10 +645,9 @@ void saveAllScoresJSON(const std::string& scoresfilename)
 	char path[PATH_MAX] = "";
 	completePath(path, scoresfilename.c_str(), outputdir);
 
-	rapidjson::Document d;
-	d.SetObject();
-	d.AddMember("version", rapidjson::Value(1), d.GetAllocator());
-	d.AddMember("game_version", rapidjson::Value(VERSION), d.GetAllocator());
+	cJSON* d = cJSON_CreateObject();
+	cJSON_AddNumberToObject(d, "version", 1);
+	cJSON_AddStringToObject(d, "game_version", VERSION);
 
 	int versionNumber = 300;
 	char versionStr[4] = "000";
@@ -656,20 +656,17 @@ void saveAllScoresJSON(const std::string& scoresfilename)
 	{
 		if ( VERSION[j] >= '0' && VERSION[j] <= '9' )
 		{
-			versionStr[i] = VERSION[j]; // copy all integers into versionStr.
+			versionStr[i] = VERSION[j];
 			++i;
 			if ( i == 3 )
 			{
 				versionStr[i] = '\0';
-				break; // written 3 characters, add termination and break loop.
+				break;
 			}
 		}
 	}
-	versionNumber = atoi(versionStr); // convert from string to int.
+	versionNumber = atoi(versionStr);
 
-	// header info
-
-	// score list
 	node_t* node = nullptr;
 	if ( scoresfilename == SCORESFILE )
 	{
@@ -681,276 +678,274 @@ void saveAllScoresJSON(const std::string& scoresfilename)
 	}
 	else
 	{
+		cJSON_Delete(d);
 		return;
 	}
 
-	rapidjson::Value scores_list(rapidjson::kArrayType);
+	cJSON* scores_list = cJSON_CreateArray();
 	for ( ; node != NULL; node = node->next )
 	{
 		score_t* score = (score_t*)node->element;
-		rapidjson::Value entry(rapidjson::kObjectType);
+		cJSON* entry = cJSON_CreateObject();
 
-		entry.AddMember("name", rapidjson::Value(score->stats->name, d.GetAllocator()), d.GetAllocator());
-		entry.AddMember("type", score->stats->type, d.GetAllocator());
-		entry.AddMember("sex", score->stats->sex, d.GetAllocator());
-		entry.AddMember("race", score->stats->playerRace, d.GetAllocator());
-		entry.AddMember("appearance", score->stats->stat_appearance, d.GetAllocator());
+		cJSON_AddStringToObject(entry, "name", score->stats->name);
+		cJSON_AddNumberToObject(entry, "type", score->stats->type);
+		cJSON_AddNumberToObject(entry, "sex", score->stats->sex);
+		cJSON_AddNumberToObject(entry, "race", score->stats->playerRace);
+		cJSON_AddNumberToObject(entry, "appearance", score->stats->stat_appearance);
 
-		entry.AddMember("classnum", score->classnum, d.GetAllocator());
-		entry.AddMember("dungeonlevel", score->dungeonlevel, d.GetAllocator());
-		entry.AddMember("victory", score->victory, d.GetAllocator());
+		cJSON_AddNumberToObject(entry, "classnum", score->classnum);
+		cJSON_AddNumberToObject(entry, "dungeonlevel", score->dungeonlevel);
+		cJSON_AddNumberToObject(entry, "victory", score->victory);
 
-		entry.AddMember("completionTime", score->completionTime, d.GetAllocator());
-		entry.AddMember("conductPenniless", score->conductPenniless, d.GetAllocator());
-		entry.AddMember("conductFoodless", score->conductFoodless, d.GetAllocator());
-		entry.AddMember("conductVegetarian", score->conductVegetarian, d.GetAllocator());
-		entry.AddMember("conductIlliterate", score->conductIlliterate, d.GetAllocator());
+		cJSON_AddNumberToObject(entry, "completionTime", score->completionTime);
+		cJSON_AddBoolToObject(entry, "conductPenniless", score->conductPenniless);
+		cJSON_AddBoolToObject(entry, "conductFoodless", score->conductFoodless);
+		cJSON_AddBoolToObject(entry, "conductVegetarian", score->conductVegetarian);
+		cJSON_AddBoolToObject(entry, "conductIlliterate", score->conductIlliterate);
 
-		entry.AddMember("killer_monster", score->stats->killer_monster, d.GetAllocator());
-		entry.AddMember("killer_item", score->stats->killer_item, d.GetAllocator());
-		entry.AddMember("killer", score->stats->killer, d.GetAllocator());
-		entry.AddMember("killer_name", rapidjson::Value(score->stats->killer_name.c_str(), d.GetAllocator()), d.GetAllocator());
+		cJSON_AddNumberToObject(entry, "killer_monster", score->stats->killer_monster);
+		cJSON_AddNumberToObject(entry, "killer_item", score->stats->killer_item);
+		cJSON_AddNumberToObject(entry, "killer", score->stats->killer);
+		cJSON_AddStringToObject(entry, "killer_name", score->stats->killer_name.c_str());
 
-		entry.AddMember("HP", score->stats->HP, d.GetAllocator());
-		entry.AddMember("MAXHP", score->stats->MAXHP, d.GetAllocator());
-		entry.AddMember("MP", score->stats->MP, d.GetAllocator());
-		entry.AddMember("MAXMP", score->stats->MAXMP, d.GetAllocator());
-		entry.AddMember("STR", score->stats->STR, d.GetAllocator());
-		entry.AddMember("DEX", score->stats->DEX, d.GetAllocator());
-		entry.AddMember("CON", score->stats->CON, d.GetAllocator());
-		entry.AddMember("INT", score->stats->INT, d.GetAllocator());
-		entry.AddMember("PER", score->stats->PER, d.GetAllocator());
-		entry.AddMember("CHR", score->stats->CHR, d.GetAllocator());
-		entry.AddMember("EXP", score->stats->EXP, d.GetAllocator());
-		entry.AddMember("LVL", score->stats->LVL, d.GetAllocator());
-		entry.AddMember("GOLD", score->stats->GOLD, d.GetAllocator());
-		entry.AddMember("HUNGER", score->stats->HUNGER, d.GetAllocator());
+		cJSON_AddNumberToObject(entry, "HP", score->stats->HP);
+		cJSON_AddNumberToObject(entry, "MAXHP", score->stats->MAXHP);
+		cJSON_AddNumberToObject(entry, "MP", score->stats->MP);
+		cJSON_AddNumberToObject(entry, "MAXMP", score->stats->MAXMP);
+		cJSON_AddNumberToObject(entry, "STR", score->stats->STR);
+		cJSON_AddNumberToObject(entry, "DEX", score->stats->DEX);
+		cJSON_AddNumberToObject(entry, "CON", score->stats->CON);
+		cJSON_AddNumberToObject(entry, "INT", score->stats->INT);
+		cJSON_AddNumberToObject(entry, "PER", score->stats->PER);
+		cJSON_AddNumberToObject(entry, "CHR", score->stats->CHR);
+		cJSON_AddNumberToObject(entry, "EXP", score->stats->EXP);
+		cJSON_AddNumberToObject(entry, "LVL", score->stats->LVL);
+		cJSON_AddNumberToObject(entry, "GOLD", score->stats->GOLD);
+		cJSON_AddNumberToObject(entry, "HUNGER", score->stats->HUNGER);
 		
 		{
-			rapidjson::Value kills_num(rapidjson::kArrayType);
+			cJSON* kills_num = cJSON_CreateArray();
 			for ( int c = 0; c < NUMMONSTERS; c++ )
 			{
-				kills_num.PushBack(score->kills[c], d.GetAllocator());
+				cJSON_AddItemToArray(kills_num, cJSON_CreateNumber(score->kills[c]));
 			}
-			entry.AddMember("kills", kills_num, d.GetAllocator());
+			cJSON_AddItemToObject(entry, "kills", kills_num);
 		}
 
 		{
-			rapidjson::Value proficiencies(rapidjson::kArrayType);
+			cJSON* proficiencies = cJSON_CreateArray();
 			for ( int c = 0; c < NUMPROFICIENCIES; c++ )
 			{
-				proficiencies.PushBack(score->stats->getProficiency(c), d.GetAllocator());
+				cJSON_AddItemToArray(proficiencies, cJSON_CreateNumber(score->stats->getProficiency(c)));
 			}
-			entry.AddMember("proficiencies", proficiencies, d.GetAllocator());
+			cJSON_AddItemToObject(entry, "proficiencies", proficiencies);
 		}
 
 		{
-			rapidjson::Value effects(rapidjson::kArrayType);
+			cJSON* effects = cJSON_CreateArray();
 			for ( int c = 0; c < NUMEFFECTS; c++ )
 			{
-				effects.PushBack(score->stats->getEffectActive(c), d.GetAllocator());
+				cJSON_AddItemToArray(effects, cJSON_CreateNumber(score->stats->getEffectActive(c)));
 			}
-			entry.AddMember("effects", effects, d.GetAllocator());
+			cJSON_AddItemToObject(entry, "effects", effects);
 		}
 		{
-			rapidjson::Value effects_timers(rapidjson::kArrayType);
+			cJSON* effects_timers = cJSON_CreateArray();
 			for ( int c = 0; c < NUMEFFECTS; c++ )
 			{
-				effects_timers.PushBack(score->stats->EFFECTS_TIMERS[c], d.GetAllocator());
+				cJSON_AddItemToArray(effects_timers, cJSON_CreateNumber(score->stats->EFFECTS_TIMERS[c]));
 			}
-			entry.AddMember("effects_timers", effects_timers, d.GetAllocator());
+			cJSON_AddItemToObject(entry, "effects_timers", effects_timers);
 		}
 		{
-			rapidjson::Value effects_accretion_time(rapidjson::kArrayType);
+			cJSON* effects_accretion_time = cJSON_CreateArray();
 			for ( int c = 0; c < NUMEFFECTS; c++ )
 			{
-				effects_accretion_time.PushBack(score->stats->EFFECTS_ACCRETION_TIME[c], d.GetAllocator());
+				cJSON_AddItemToArray(effects_accretion_time, cJSON_CreateNumber(score->stats->EFFECTS_ACCRETION_TIME[c]));
 			}
-			entry.AddMember("effects_accretion_time", effects_accretion_time, d.GetAllocator());
+			cJSON_AddItemToObject(entry, "effects_accretion_time", effects_accretion_time);
 		}
 
-
 		{
-			rapidjson::Value conducts(rapidjson::kArrayType);
+			cJSON* conducts = cJSON_CreateArray();
 			for ( int c = 0; c < NUM_CONDUCT_CHALLENGES; c++ )
 			{
-				conducts.PushBack(score->conductGameChallenges[c], d.GetAllocator());
+				cJSON_AddItemToArray(conducts, cJSON_CreateNumber(score->conductGameChallenges[c]));
 			}
-			entry.AddMember("conducts", conducts, d.GetAllocator());
+			cJSON_AddItemToObject(entry, "conducts", conducts);
 		}
 
 		{
-			rapidjson::Value statistics(rapidjson::kArrayType);
+			cJSON* statistics = cJSON_CreateArray();
 			for ( int c = 0; c < NUM_GAMEPLAY_STATISTICS; c++ )
 			{
-				statistics.PushBack(score->gameStatistics[c], d.GetAllocator());
+				cJSON_AddItemToArray(statistics, cJSON_CreateNumber(score->gameStatistics[c]));
 			}
-			entry.AddMember("statistics", statistics, d.GetAllocator());
+			cJSON_AddItemToObject(entry, "statistics", statistics);
 		}
 
 		{
-			rapidjson::Value inventory(rapidjson::kArrayType);
+			cJSON* inventory = cJSON_CreateArray();
 			for ( node_t* node2 = score->stats->inventory.first; node2 != NULL; node2 = node2->next )
 			{
 				Item* item = (Item*)node2->element;
 
-				rapidjson::Value inv_item(rapidjson::kObjectType);
-				inv_item.AddMember("type", item->type, d.GetAllocator());
-				inv_item.AddMember("status", item->status, d.GetAllocator());
-				inv_item.AddMember("beatitude", item->beatitude, d.GetAllocator());
-				inv_item.AddMember("count", item->count, d.GetAllocator());
-				inv_item.AddMember("appearance", rapidjson::Value(item->appearance), d.GetAllocator());
-				inv_item.AddMember("identified", item->identified, d.GetAllocator());
+				cJSON* inv_item = cJSON_CreateObject();
+				cJSON_AddNumberToObject(inv_item, "type", item->type);
+				cJSON_AddNumberToObject(inv_item, "status", item->status);
+				cJSON_AddNumberToObject(inv_item, "beatitude", item->beatitude);
+				cJSON_AddNumberToObject(inv_item, "count", item->count);
+				cJSON_AddNumberToObject(inv_item, "appearance", item->appearance);
+				cJSON_AddBoolToObject(inv_item, "identified", item->identified);
 
-				inventory.PushBack(inv_item, d.GetAllocator());
+				cJSON_AddItemToArray(inventory, inv_item);
 			}
 
-			entry.AddMember("inventory", inventory, d.GetAllocator());
+			cJSON_AddItemToObject(entry, "inventory", inventory);
 		}
 
 		{
-			rapidjson::Value equipped(rapidjson::kArrayType);
+			cJSON* equipped = cJSON_CreateArray();
 			if ( score->stats->helmet )
 			{
 				int c = list_Index(score->stats->helmet->node);
-				equipped.PushBack(c, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(c));
 			}
 			else
 			{
-				equipped.PushBack(-1, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(-1));
 			}
 			if ( score->stats->breastplate )
 			{
 				int c = list_Index(score->stats->breastplate->node);
-				equipped.PushBack(c, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(c));
 			}
 			else
 			{
-				equipped.PushBack(-1, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(-1));
 			}
 			if ( score->stats->gloves )
 			{
 				int c = list_Index(score->stats->gloves->node);
-				equipped.PushBack(c, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(c));
 			}
 			else
 			{
-				equipped.PushBack(-1, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(-1));
 			}
 			if ( score->stats->shoes )
 			{
 				int c = list_Index(score->stats->shoes->node);
-				equipped.PushBack(c, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(c));
 			}
 			else
 			{
-				equipped.PushBack(-1, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(-1));
 			}
 			if ( score->stats->shield )
 			{
 				int c = list_Index(score->stats->shield->node);
-				equipped.PushBack(c, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(c));
 			}
 			else
 			{
-				equipped.PushBack(-1, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(-1));
 			}
 			if ( score->stats->weapon )
 			{
 				int c = list_Index(score->stats->weapon->node);
-				equipped.PushBack(c, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(c));
 			}
 			else
 			{
-				equipped.PushBack(-1, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(-1));
 			}
 			if ( score->stats->cloak )
 			{
 				int c = list_Index(score->stats->cloak->node);
-				equipped.PushBack(c, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(c));
 			}
 			else
 			{
-				equipped.PushBack(-1, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(-1));
 			}
 			if ( score->stats->amulet )
 			{
 				int c = list_Index(score->stats->amulet->node);
-				equipped.PushBack(c, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(c));
 			}
 			else
 			{
-				equipped.PushBack(-1, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(-1));
 			}
 			if ( score->stats->ring )
 			{
 				int c = list_Index(score->stats->ring->node);
-				equipped.PushBack(c, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(c));
 			}
 			else
 			{
-				equipped.PushBack(-1, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(-1));
 			}
 			if ( score->stats->mask )
 			{
 				int c = list_Index(score->stats->mask->node);
-				equipped.PushBack(c, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(c));
 			}
 			else
 			{
-				equipped.PushBack(-1, d.GetAllocator());
+				cJSON_AddItemToArray(equipped, cJSON_CreateNumber(-1));
 			}
-			entry.AddMember("equipped", equipped, d.GetAllocator());
+			cJSON_AddItemToObject(entry, "equipped", equipped);
 		}
 
-		scores_list.PushBack(entry, d.GetAllocator());
+		cJSON_AddItemToArray(scores_list, entry);
 	}
 
-	d.AddMember("scores_list", scores_list, d.GetAllocator());
+	cJSON_AddItemToObject(d, "scores_list", scores_list);
 
 	{
-		rapidjson::Value books_read(rapidjson::kArrayType);
+		cJSON* books_read = cJSON_CreateArray();
 		for ( node_t* node = booksRead.first; node != NULL; node = node->next )
 		{
 			char* book = (char*)node->element;
-			books_read.PushBack(rapidjson::Value(book, d.GetAllocator()), d.GetAllocator());
+			cJSON_AddItemToArray(books_read, cJSON_CreateString(book));
 		}
-		d.AddMember("books_read", books_read, d.GetAllocator());
+		cJSON_AddItemToObject(d, "books_read", books_read);
 	}
 
 	{
-		rapidjson::Value used_class(rapidjson::kArrayType);
+		cJSON* used_class = cJSON_CreateArray();
 		for ( int c = 0; c < NUMCLASSES; c++ )
 		{
-			used_class.PushBack(rapidjson::Value(usedClass[c]), d.GetAllocator());
+			cJSON_AddItemToArray(used_class, cJSON_CreateBool(usedClass[c]));
 		}
-		d.AddMember("used_class", used_class, d.GetAllocator());
+		cJSON_AddItemToObject(d, "used_class", used_class);
 	}
 
 	{
-		rapidjson::Value used_race(rapidjson::kArrayType);
+		cJSON* used_race = cJSON_CreateArray();
 		for ( int c = 0; c < NUMRACES; c++ )
 		{
-			used_race.PushBack(rapidjson::Value(usedRace[c]), d.GetAllocator());
+			cJSON_AddItemToArray(used_race, cJSON_CreateBool(usedRace[c]));
 		}
-		d.AddMember("used_race", used_race, d.GetAllocator());
+		cJSON_AddItemToObject(d, "used_race", used_race);
 	}
 
-	// open file
 	File* fp = FileIO::open(path, "wb");
 	if ( !fp )
 	{
 		printlog("[JSON]: Error opening json file %s for write!", path);
+		cJSON_Delete(d);
 		return;
 	}
 
-	rapidjson::StringBuffer os;
-	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-	writer.SetIndent(' ', 2);
-	writer.SetFormatOptions(rapidjson::PrettyFormatOptions::kFormatSingleLineArray);
-	d.Accept(writer);
-	fp->write(os.GetString(), sizeof(char), os.GetSize());
+	char* json = cJSON_Print(d);
+	fp->write(json, sizeof(char), strlen(json));
 	FileIO::close(fp);
+	cJSON_free(json);
+	cJSON_Delete(d);
 
 	printlog("[JSON]: Successfully wrote json file %s", path);
 	return;
@@ -1250,31 +1245,22 @@ bool deleteScore(bool multiplayer, int index)
 	loads all highscores from the scores data file
 
 -------------------------------------------------------------------------------*/
-int jsonGetInt(rapidjson::Value& d, const char* key)
+int jsonGetInt(cJSON* d, const char* key)
 {
-	if ( d.HasMember(key) && d[key].IsInt() )
-	{
-		return d[key].GetInt();
-	}
-	return 0;
+	cJSON* val = cJSON_GetObjectItem(d, key);
+	return val ? (int)val->valuedouble : 0;
 }
 
-bool jsonGetBool(rapidjson::Value& d, const char* key)
+bool jsonGetBool(cJSON* d, const char* key)
 {
-	if ( d.HasMember(key) && d[key].IsBool() )
-	{
-		return d[key].GetBool();
-	}
-	return false;
+	cJSON* val = cJSON_GetObjectItem(d, key);
+	return val ? cJSON_IsTrue(val) : false;
 }
 
-const char* jsonGetStr(rapidjson::Value& d, const char* key)
+const char* jsonGetStr(cJSON* d, const char* key)
 {
-	if ( d.HasMember(key) && d[key].IsString() )
-	{
-		return d[key].GetString();
-	}
-	return "";
+	cJSON* val = cJSON_GetObjectItem(d, key);
+	return val ? val->valuestring : "";
 }
 
 bool verifyScoreStruct(score_t* score, score_t* score2)
@@ -1436,64 +1422,7 @@ bool verifyScoreLoader()
 	return true;
 }
 
-class FileReadStreamCustomWrapper {
-public:
-	typedef char Ch;    //!< Character type (byte).
 
-	//! Constructor.
-	/*!
-		\param fp File pointer opened for read.
-		\param buffer user-supplied buffer.
-		\param bufferSize size of buffer in bytes. Must >=4 bytes.
-	*/
-	FileReadStreamCustomWrapper(File* fp, char* buffer, size_t bufferSize) : fp_(fp), buffer_(buffer), bufferSize_(bufferSize), bufferLast_(0), current_(buffer_), readCount_(0), count_(0), eof_(false) {
-		RAPIDJSON_ASSERT(fp_ != 0);
-		RAPIDJSON_ASSERT(bufferSize >= 4);
-		Read();
-	}
-
-	Ch Peek() const { return *current_; }
-	Ch Take() { Ch c = *current_; Read(); return c; }
-	size_t Tell() const { return count_ + static_cast<size_t>(current_ - buffer_); }
-
-	// Not implemented
-	void Put(Ch) { RAPIDJSON_ASSERT(false); }
-	void Flush() { RAPIDJSON_ASSERT(false); }
-	Ch* PutBegin() { RAPIDJSON_ASSERT(false); return 0; }
-	size_t PutEnd(Ch*) { RAPIDJSON_ASSERT(false); return 0; }
-
-	// For encoding detection only.
-	const Ch* Peek4() const {
-		return (current_ + 4 <= bufferLast_) ? current_ : 0;
-	}
-
-private:
-	void Read() {
-		if ( current_ < bufferLast_ )
-			++current_;
-		else if ( !eof_ ) {
-			count_ += readCount_;
-			readCount_ = fp_->read(buffer_, 1, bufferSize_);
-			bufferLast_ = buffer_ + readCount_ - 1;
-			current_ = buffer_;
-
-			if ( readCount_ < bufferSize_ ) {
-				buffer_[readCount_] = '\0';
-				++bufferLast_;
-				eof_ = true;
-			}
-		}
-	}
-
-	File* fp_;
-	Ch* buffer_;
-	size_t bufferSize_;
-	Ch* bufferLast_;
-	Ch* current_;
-	size_t readCount_;
-	size_t count_;  //!< Number of characters read
-	bool eof_;
-};
 
 void loadAllScoresJSON(const std::string& scoresfilename)
 {
@@ -1525,17 +1454,21 @@ void loadAllScoresJSON(const std::string& scoresfilename)
 
 	static char buf[65536];
 	memset(buf, 0, sizeof(buf));
-	//int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
-	//buf[count] = '\0';
-	FileReadStreamCustomWrapper is(fp, buf, sizeof(buf));
-
-	rapidjson::Document d;
-	d.ParseStream(is);
+	int count = (int)fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
+	buf[count] = '\0';
 	FileIO::close(fp);
 
-	if ( !d.HasMember("version") )
+	cJSON* d = cJSON_Parse(buf);
+	if ( !d )
+	{
+		printlog("[JSON]: Error: Could not parse JSON file %s", path);
+		return;
+	}
+
+	if ( !cJSON_HasObjectItem(d, "version") )
 	{
 		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", path);
+		cJSON_Delete(d);
 		return;
 	}
 
@@ -1547,39 +1480,44 @@ void loadAllScoresJSON(const std::string& scoresfilename)
 	{
 		if ( checkStr[j] >= '0' && checkStr[j] <= '9' )
 		{
-			versionStr[i] = checkStr[j]; // copy all integers into versionStr.
+			versionStr[i] = checkStr[j];
 			++i;
 			if ( i == 3 )
 			{
 				versionStr[i] = '\0';
-				break; // written 3 characters, add termination and break loop.
+				break;
 			}
 		}
 	}
-	versionNumber = atoi(versionStr); // convert from string to int.
+	versionNumber = atoi(versionStr);
 	printlog("notice: '%s' version number %d", scoresfilename.c_str(), versionNumber);
 	if ( versionNumber < 200 || versionNumber > 999 )
 	{
-		// if version number less than v2.0.0, or more than 3 digits, abort and rebuild scores file.
 		printlog("error: '%s' is corrupt!\n", scoresfilename.c_str());
+		cJSON_Delete(d);
 		return;
 	}
 
 	list_FreeAll(&booksRead);
-	if ( d.HasMember("books_read") )
+	cJSON* books_read_json = cJSON_GetObjectItem(d, "books_read");
+	if ( books_read_json )
 	{
-		for ( auto itr = d["books_read"].Begin(); itr != d["books_read"].End(); ++itr )
+		cJSON* book_item = nullptr;
+		cJSON_ArrayForEach(book_item, books_read_json)
 		{
-			std::string bookname = itr->GetString();
-			if ( char* book = (char*)malloc(sizeof(char) * (bookname.size() + 1)) )
+			if ( book_item->valuestring )
 			{
-				memset(book, 0, sizeof(char) * (bookname.size() + 1));
-				strcpy(book, bookname.c_str());
-				node_t* node = list_AddNodeLast(&booksRead);
-				book[bookname.size()] = '\0';
-				node->element = book;
-				node->size = sizeof(char) * (bookname.size() + 1);
-				node->deconstructor = &defaultDeconstructor;
+				std::string bookname = book_item->valuestring;
+				if ( char* book = (char*)malloc(sizeof(char) * (bookname.size() + 1)) )
+				{
+					memset(book, 0, sizeof(char) * (bookname.size() + 1));
+					strcpy(book, bookname.c_str());
+					node_t* node = list_AddNodeLast(&booksRead);
+					book[bookname.size()] = '\0';
+					node->element = book;
+					node->size = sizeof(char) * (bookname.size() + 1);
+					node->deconstructor = &defaultDeconstructor;
+				}
 			}
 		}
 	}
@@ -1589,11 +1527,16 @@ void loadAllScoresJSON(const std::string& scoresfilename)
 		usedClass[c] = false;
 	}
 	int c = 0;
-	for ( auto itr = d["used_class"].Begin(); itr != d["used_class"].End(); ++itr )
+	cJSON* used_class_json = cJSON_GetObjectItem(d, "used_class");
+	if ( used_class_json )
 	{
-		if ( c >= NUMCLASSES ) { break; }
-		usedClass[c] = itr->GetBool();
-		++c;
+		cJSON* item = nullptr;
+		cJSON_ArrayForEach(item, used_class_json)
+		{
+			if ( c >= NUMCLASSES ) { break; }
+			usedClass[c] = cJSON_IsTrue(item);
+			++c;
+		}
 	}
 
 	for ( int c = 0; c < NUMRACES; ++c )
@@ -1601,20 +1544,28 @@ void loadAllScoresJSON(const std::string& scoresfilename)
 		usedRace[c] = false;
 	}
 	c = 0;
-	for ( auto itr = d["used_race"].Begin(); itr != d["used_race"].End(); ++itr )
+	cJSON* used_race_json = cJSON_GetObjectItem(d, "used_race");
+	if ( used_race_json )
 	{
-		if ( c >= NUMRACES ) { break; }
-		usedRace[c] = itr->GetBool();
-		++c;
+		cJSON* item = nullptr;
+		cJSON_ArrayForEach(item, used_race_json)
+		{
+			if ( c >= NUMRACES ) { break; }
+			usedRace[c] = cJSON_IsTrue(item);
+			++c;
+		}
 	}
 
-	if ( !d.HasMember("scores_list") )
+	cJSON* scores_list = cJSON_GetObjectItem(d, "scores_list");
+	if ( !scores_list )
 	{
+		cJSON_Delete(d);
 		return;
 	}
 
 	int numscore = 0;
-	for ( auto itr = d["scores_list"].Begin(); itr != d["scores_list"].End(); ++itr )
+	cJSON* itr = nullptr;
+	cJSON_ArrayForEach(itr, scores_list)
 	{
 		node_t* node = nullptr;
 		if ( scoresfilename == SCORESFILE )
@@ -1636,7 +1587,6 @@ void loadAllScoresJSON(const std::string& scoresfilename)
 			printlog("failed to allocate memory for new score!\n");
 			exit(1);
 		}
-		// Stat set to 0 as monster type not needed, values will be overwritten by the savegame data
 		score->stats = new Stat(0);
 		score->totalscore = -1;
 		if ( !score->stats )
@@ -1653,78 +1603,103 @@ void loadAllScoresJSON(const std::string& scoresfilename)
 			score->kills[c] = false;
 		}
 		c = 0;
-		for ( auto itr2 = (*itr)["kills"].Begin(); itr2 != (*itr)["kills"].End(); ++itr2 )
+		cJSON* kills_arr = cJSON_GetObjectItem(itr, "kills");
+		if ( kills_arr )
 		{
-			if ( c >= NUMMONSTERS ) { break; }
-			score->kills[c] = itr2->GetInt();
-			++c;
+			cJSON* kills_item = nullptr;
+			cJSON_ArrayForEach(kills_item, kills_arr)
+			{
+				if ( c >= NUMMONSTERS ) { break; }
+				score->kills[c] = (int)kills_item->valuedouble;
+				++c;
+			}
 		}
 
-		score->completionTime = jsonGetInt(*itr, "completionTime");
-		score->conductPenniless = jsonGetBool(*itr, "conductPenniless");
-		score->conductFoodless = jsonGetBool(*itr, "conductFoodless");
-		score->conductVegetarian = jsonGetBool(*itr, "conductVegetarian");
-		score->conductIlliterate = jsonGetBool(*itr, "conductIlliterate");
-		score->stats->type = (Monster)jsonGetInt(*itr, "type");
-		score->stats->sex = (sex_t)jsonGetInt(*itr, "sex");
-		score->stats->playerRace = jsonGetInt(*itr, "race");
-		score->stats->stat_appearance = (Uint32)jsonGetInt(*itr, "appearance");
-		const char* name = jsonGetStr(*itr, "name");
+		score->completionTime = jsonGetInt(itr, "completionTime");
+		score->conductPenniless = jsonGetBool(itr, "conductPenniless");
+		score->conductFoodless = jsonGetBool(itr, "conductFoodless");
+		score->conductVegetarian = jsonGetBool(itr, "conductVegetarian");
+		score->conductIlliterate = jsonGetBool(itr, "conductIlliterate");
+		score->stats->type = (Monster)jsonGetInt(itr, "type");
+		score->stats->sex = (sex_t)jsonGetInt(itr, "sex");
+		score->stats->playerRace = jsonGetInt(itr, "race");
+		score->stats->stat_appearance = (Uint32)jsonGetInt(itr, "appearance");
+		const char* name = jsonGetStr(itr, "name");
 		stringCopy(score->stats->name, name, 32, strlen(name));
 
-		score->stats->killer_monster = (Monster)jsonGetInt(*itr, "killer_monster");
-		score->stats->killer_item = (ItemType)jsonGetInt(*itr, "killer_item");
-		score->stats->killer = (KilledBy)jsonGetInt(*itr, "killer");
-		score->stats->killer_name = jsonGetStr(*itr, "killer_name");
+		score->stats->killer_monster = (Monster)jsonGetInt(itr, "killer_monster");
+		score->stats->killer_item = (ItemType)jsonGetInt(itr, "killer_item");
+		score->stats->killer = (KilledBy)jsonGetInt(itr, "killer");
+		score->stats->killer_name = jsonGetStr(itr, "killer_name");
 
-		score->classnum = jsonGetInt(*itr, "classnum");
-		score->dungeonlevel = jsonGetInt(*itr, "dungeonlevel");
-		score->victory = jsonGetInt(*itr, "victory");
-		score->stats->HP = jsonGetInt(*itr, "HP");
-		score->stats->MAXHP = jsonGetInt(*itr, "MAXHP");
-		score->stats->MP = jsonGetInt(*itr, "MP");
-		score->stats->MAXMP = jsonGetInt(*itr, "MAXMP");
-		score->stats->STR = jsonGetInt(*itr, "STR");
-		score->stats->DEX = jsonGetInt(*itr, "DEX");
-		score->stats->CON = jsonGetInt(*itr, "CON");
-		score->stats->INT = jsonGetInt(*itr, "INT");
-		score->stats->PER = jsonGetInt(*itr, "PER");
-		score->stats->CHR = jsonGetInt(*itr, "CHR");
-		score->stats->EXP = jsonGetInt(*itr, "EXP");
-		score->stats->LVL = jsonGetInt(*itr, "LVL");
-		score->stats->GOLD = jsonGetInt(*itr, "GOLD");
-		score->stats->HUNGER = jsonGetInt(*itr, "HUNGER");
+		score->classnum = jsonGetInt(itr, "classnum");
+		score->dungeonlevel = jsonGetInt(itr, "dungeonlevel");
+		score->victory = jsonGetInt(itr, "victory");
+		score->stats->HP = jsonGetInt(itr, "HP");
+		score->stats->MAXHP = jsonGetInt(itr, "MAXHP");
+		score->stats->MP = jsonGetInt(itr, "MP");
+		score->stats->MAXMP = jsonGetInt(itr, "MAXMP");
+		score->stats->STR = jsonGetInt(itr, "STR");
+		score->stats->DEX = jsonGetInt(itr, "DEX");
+		score->stats->CON = jsonGetInt(itr, "CON");
+		score->stats->INT = jsonGetInt(itr, "INT");
+		score->stats->PER = jsonGetInt(itr, "PER");
+		score->stats->CHR = jsonGetInt(itr, "CHR");
+		score->stats->EXP = jsonGetInt(itr, "EXP");
+		score->stats->LVL = jsonGetInt(itr, "LVL");
+		score->stats->GOLD = jsonGetInt(itr, "GOLD");
+		score->stats->HUNGER = jsonGetInt(itr, "HUNGER");
 
 		c = 0;
-		for ( auto itr2 = (*itr)["proficiencies"].Begin(); itr2 != (*itr)["proficiencies"].End(); ++itr2 )
+		cJSON* proficiencies_arr = cJSON_GetObjectItem(itr, "proficiencies");
+		if ( proficiencies_arr )
 		{
-			if ( c >= NUMPROFICIENCIES ) { break; }
-			score->stats->setProficiency(c, itr2->GetInt());
-			++c;
+			cJSON* prof_item = nullptr;
+			cJSON_ArrayForEach(prof_item, proficiencies_arr)
+			{
+				if ( c >= NUMPROFICIENCIES ) { break; }
+				score->stats->setProficiency(c, (int)prof_item->valuedouble);
+				++c;
+			}
 		}
 
 		c = 0;
-		for ( auto itr2 = (*itr)["effects"].Begin(); itr2 != (*itr)["effects"].End(); ++itr2 )
+		cJSON* effects_arr = cJSON_GetObjectItem(itr, "effects");
+		if ( effects_arr )
 		{
-			if ( c >= NUMEFFECTS ) { break; }
-			score->stats->setEffectValueUnsafe(c, itr2->GetInt());
-			++c;
+			cJSON* eff_item = nullptr;
+			cJSON_ArrayForEach(eff_item, effects_arr)
+			{
+				if ( c >= NUMEFFECTS ) { break; }
+				score->stats->setEffectValueUnsafe(c, (int)eff_item->valuedouble);
+				++c;
+			}
 		}
 
 		c = 0;
-		for ( auto itr2 = (*itr)["effects_timers"].Begin(); itr2 != (*itr)["effects_timers"].End(); ++itr2 )
+		cJSON* effects_timers_arr = cJSON_GetObjectItem(itr, "effects_timers");
+		if ( effects_timers_arr )
 		{
-			if ( c >= NUMEFFECTS ) { break; }
-			score->stats->EFFECTS_TIMERS[c] = itr2->GetInt();
-			++c;
+			cJSON* timer_item = nullptr;
+			cJSON_ArrayForEach(timer_item, effects_timers_arr)
+			{
+				if ( c >= NUMEFFECTS ) { break; }
+				score->stats->EFFECTS_TIMERS[c] = (int)timer_item->valuedouble;
+				++c;
+			}
 		}
 
 		c = 0;
-		for ( auto itr2 = (*itr)["effects_accretion_time"].Begin(); itr2 != (*itr)["effects_accretion_time"].End(); ++itr2 )
+		cJSON* effects_accretion_arr = cJSON_GetObjectItem(itr, "effects_accretion_time");
+		if ( effects_accretion_arr )
 		{
-			if ( c >= NUMEFFECTS ) { break; }
-			score->stats->EFFECTS_ACCRETION_TIME[c] = itr2->GetInt();
-			++c;
+			cJSON* accretion_item = nullptr;
+			cJSON_ArrayForEach(accretion_item, effects_accretion_arr)
+			{
+				if ( c >= NUMEFFECTS ) { break; }
+				score->stats->EFFECTS_ACCRETION_TIME[c] = (int)accretion_item->valuedouble;
+				++c;
+			}
 		}
 
 		for ( int c = 0; c < NUM_CONDUCT_CHALLENGES; ++c )
@@ -1732,11 +1707,16 @@ void loadAllScoresJSON(const std::string& scoresfilename)
 			score->conductGameChallenges[c] = 0;
 		}
 		c = 0;
-		for ( auto itr2 = (*itr)["conducts"].Begin(); itr2 != (*itr)["conducts"].End(); ++itr2 )
+		cJSON* conducts_arr = cJSON_GetObjectItem(itr, "conducts");
+		if ( conducts_arr )
 		{
-			if ( c >= NUM_CONDUCT_CHALLENGES ) { break; }
-			score->conductGameChallenges[c] = itr2->GetInt();
-			++c;
+			cJSON* conduct_item = nullptr;
+			cJSON_ArrayForEach(conduct_item, conducts_arr)
+			{
+				if ( c >= NUM_CONDUCT_CHALLENGES ) { break; }
+				score->conductGameChallenges[c] = (int)conduct_item->valuedouble;
+				++c;
+			}
 		}
 
 		for ( int c = 0; c < NUM_GAMEPLAY_STATISTICS; ++c )
@@ -1744,11 +1724,16 @@ void loadAllScoresJSON(const std::string& scoresfilename)
 			score->gameStatistics[c] = 0;
 		}
 		c = 0;
-		for ( auto itr2 = (*itr)["statistics"].Begin(); itr2 != (*itr)["statistics"].End(); ++itr2 )
+		cJSON* statistics_arr = cJSON_GetObjectItem(itr, "statistics");
+		if ( statistics_arr )
 		{
-			if ( c >= NUM_GAMEPLAY_STATISTICS ) { break; }
-			score->gameStatistics[c] = itr2->GetInt();
-			++c;
+			cJSON* stat_item = nullptr;
+			cJSON_ArrayForEach(stat_item, statistics_arr)
+			{
+				if ( c >= NUM_GAMEPLAY_STATISTICS ) { break; }
+				score->gameStatistics[c] = (int)stat_item->valuedouble;
+				++c;
+			}
 		}
 
 		score->stats->leader_uid = 0;
@@ -1756,66 +1741,62 @@ void loadAllScoresJSON(const std::string& scoresfilename)
 		score->stats->FOLLOWERS.last = NULL;
 
 		c = 0;
-		for ( auto itr2 = (*itr)["inventory"].Begin(); itr2 != (*itr)["inventory"].End(); ++itr2 )
+		cJSON* inventory_arr = cJSON_GetObjectItem(itr, "inventory");
+		if ( inventory_arr )
 		{
-			ItemType type = WOODEN_SHIELD;
-			Status status = EXCELLENT;
-			Sint16 beatitude = 0;
-			Sint16 count = 1;
-			Uint32 appearance = 0;
-			bool identified = true;
-
-			for ( auto itemItr = itr2->MemberBegin(); itemItr != itr2->MemberEnd(); ++itemItr )
+			cJSON* itr2 = nullptr;
+			cJSON_ArrayForEach(itr2, inventory_arr)
 			{
-				if ( !strcmp(itemItr->name.GetString(), "type") && itemItr->value.IsInt() )
+				ItemType type = WOODEN_SHIELD;
+				Status status = EXCELLENT;
+				Sint16 beatitude = 0;
+				Sint16 count = 1;
+				Uint32 appearance = 0;
+				bool identified = true;
+
+				cJSON* item_field = nullptr;
+				cJSON_ArrayForEach(item_field, itr2)
 				{
-					int val = itemItr->value.GetInt();
-					if ( val >= 0 && val < NUMITEMS )
+					if ( !strcmp(item_field->string, "type") && cJSON_IsNumber(item_field) )
 					{
-						type = static_cast<ItemType>(val);
+						int val = (int)item_field->valuedouble;
+						if ( val >= 0 && val < NUMITEMS )
+						{
+							type = static_cast<ItemType>(val);
+						}
+					}
+					if ( !strcmp(item_field->string, "status") && cJSON_IsNumber(item_field) )
+					{
+						int val = (int)item_field->valuedouble;
+						if ( val >= 0 && val <= EXCELLENT )
+						{
+							status = static_cast<Status>(val);
+						}
+					}
+					if ( !strcmp(item_field->string, "beatitude") && cJSON_IsNumber(item_field) )
+					{
+						beatitude = (Sint16)item_field->valuedouble;
+					}
+					if ( !strcmp(item_field->string, "count") && cJSON_IsNumber(item_field) )
+					{
+						count = (Sint16)item_field->valuedouble;
+					}
+					if ( !strcmp(item_field->string, "appearance") && cJSON_IsNumber(item_field) )
+					{
+						appearance = (Uint32)item_field->valuedouble;
+					}
+					if ( !strcmp(item_field->string, "identified") && cJSON_IsNumber(item_field) )
+					{
+						identified = (int)item_field->valuedouble ? true : false;
+					}
+					else if ( !strcmp(item_field->string, "identified") && cJSON_IsBool(item_field) )
+					{
+						identified = cJSON_IsTrue(item_field);
 					}
 				}
-				if ( !strcmp(itemItr->name.GetString(), "status") && itemItr->value.IsInt() )
-				{
-					int val = itemItr->value.GetInt();
-					if ( val >= 0 && val <= EXCELLENT )
-					{
-						status = static_cast<Status>(val);
-					}
-				}
-				if ( !strcmp(itemItr->name.GetString(), "beatitude") && itemItr->value.IsInt() )
-				{
-					beatitude = itemItr->value.GetInt();
-				}
-				if ( !strcmp(itemItr->name.GetString(), "count") && itemItr->value.IsInt() )
-				{
-					count = itemItr->value.GetInt();
-				}
-				if ( !strcmp(itemItr->name.GetString(), "appearance") )
-				{
-					if ( itemItr->value.IsUint() )
-					{
-						appearance = itemItr->value.GetUint();
-					}
-					else if ( itemItr->value.IsInt() )
-					{
-						appearance = itemItr->value.GetInt();
-					}
-				}
-				if ( !strcmp(itemItr->name.GetString(), "identified") )
-				{
-					if ( itemItr->value.IsInt() )
-					{
-						identified = itemItr->value.GetInt() ? true : 0;
-					}
-					else if ( itemItr->value.IsBool() )
-					{
-						identified = itemItr->value.GetBool();
-					}
-				}
+				newItem(type, status, beatitude, count, appearance, identified, &score->stats->inventory);
+				++c;
 			}
-			newItem(type, status, beatitude, count, appearance, identified, &score->stats->inventory);
-			++c;
 		}
 
 		int num_inventory_items = c;
@@ -1836,28 +1817,35 @@ void loadAllScoresJSON(const std::string& scoresfilename)
 		{
 			equip_slot.second = nullptr;
 		}
-		for ( auto itr2 = (*itr)["equipped"].Begin(); itr2 != (*itr)["equipped"].End(); ++itr2 )
+		cJSON* equipped_arr = cJSON_GetObjectItem(itr, "equipped");
+		if ( equipped_arr )
 		{
-			if ( itr2->IsInt() )
+			cJSON* equip_item = nullptr;
+			cJSON_ArrayForEach(equip_item, equipped_arr)
 			{
-				int inventory_item_num = itr2->GetInt();
-				if ( inventory_item_num >= 0 && inventory_item_num < num_inventory_items )
+				if ( cJSON_IsNumber(equip_item) )
 				{
-					if ( node_t* node = list_Node(&score->stats->inventory, inventory_item_num) )
+					int inventory_item_num = (int)equip_item->valuedouble;
+					if ( inventory_item_num >= 0 && inventory_item_num < num_inventory_items )
 					{
-						if ( c >= 0 && c < player_slots.size() )
+						if ( node_t* node = list_Node(&score->stats->inventory, inventory_item_num) )
 						{
-							*(player_slots[c].second) = (Item*)node->element;
+							if ( c >= 0 && c < player_slots.size() )
+							{
+								*(player_slots[c].second) = (Item*)node->element;
+							}
 						}
 					}
 				}
+				++c;
 			}
-			++c;
 		}
 
 		score->stats->monster_sound = NULL;
 		score->stats->monster_idlevar = 0;
 	}
+
+	cJSON_Delete(d);
 }
 
 void loadAllScores(const std::string& scoresfilename)
@@ -5643,10 +5631,9 @@ int SaveGameInfo::getTotalScore(const int playernum, const int victory)
 
 std::string SaveGameInfo::serializeToOnlineHiscore(const int playernum, const int victory)
 {
-	rapidjson::Document d;
-	d.SetObject();
+	cJSON* d = cJSON_CreateObject();
 
-	rapidjson::Value character(rapidjson::kObjectType);
+	cJSON* character = cJSON_CreateObject();
 
 	auto& player = players[playernum];
 	auto& myStats = players[playernum].stats;
@@ -5671,150 +5658,148 @@ std::string SaveGameInfo::serializeToOnlineHiscore(const int playernum, const in
 		}
 	}
 
-	character.AddMember("version", rapidjson::Value(1), d.GetAllocator());
-	character.AddMember("game_ver", rapidjson::Value(VERSION, d.GetAllocator()), d.GetAllocator());
-	character.AddMember("leaderboard", rapidjson::Value(lid.c_str(), d.GetAllocator()), d.GetAllocator());
-	character.AddMember("leaderboard_version", rapidjson::Value(lid_version), d.GetAllocator());
-	character.AddMember("time", rapidjson::Value(gametimer), d.GetAllocator());
-	character.AddMember("totalscore", rapidjson::Value(getTotalScore(playernum, victory)), d.GetAllocator());
-	character.AddMember("seed", rapidjson::Value(customseed), d.GetAllocator());
-	character.AddMember("seed_str", rapidjson::Value(customseed_string.c_str(), d.GetAllocator()), d.GetAllocator());
+	cJSON_AddNumberToObject(character, "version", 1);
+	cJSON_AddStringToObject(character, "game_ver", VERSION);
+	cJSON_AddStringToObject(character, "leaderboard", lid.c_str());
+	cJSON_AddNumberToObject(character, "leaderboard_version", lid_version);
+	cJSON_AddNumberToObject(character, "time", gametimer);
+	cJSON_AddNumberToObject(character, "totalscore", getTotalScore(playernum, victory));
+	cJSON_AddNumberToObject(character, "seed", customseed);
+	cJSON_AddStringToObject(character, "seed_str", customseed_string.c_str());
 
-	character.AddMember("victory", rapidjson::Value(victory), d.GetAllocator());
+	cJSON_AddNumberToObject(character, "victory", victory);
 	int multi = multiplayer;
 	if ( multi == 0 )
 	{
 		if ( player.additionalConducts[CONDUCT_MULTIPLAYER] )
 		{
-			multi = CLIENT; // failsafe to set if session wrapped up prematurely
+			multi = CLIENT;
 		}
 	}
-	character.AddMember("multiplayer", rapidjson::Value(multi), d.GetAllocator());
-	character.AddMember("splitscreen", rapidjson::Value(splitscreen), d.GetAllocator());
-	character.AddMember("flags", rapidjson::Value(svflags), d.GetAllocator());
-	character.AddMember("lvl", rapidjson::Value(dungeon_lvl), d.GetAllocator());
-	character.AddMember("secret", rapidjson::Value(level_track), d.GetAllocator());
+	cJSON_AddNumberToObject(character, "multiplayer", multi);
+	cJSON_AddNumberToObject(character, "splitscreen", splitscreen);
+	cJSON_AddNumberToObject(character, "flags", svflags);
+	cJSON_AddNumberToObject(character, "lvl", dungeon_lvl);
+	cJSON_AddNumberToObject(character, "secret", level_track);
 
 	{
-		rapidjson::Value statsObj(rapidjson::kObjectType);
-		//statsObj.AddMember("name", rapidjson::Value(myStats.name.c_str(), d.GetAllocator()), d.GetAllocator());
-		statsObj.AddMember("MAXHP", myStats.maxHP, d.GetAllocator());
-		statsObj.AddMember("MAXMP", myStats.maxMP, d.GetAllocator());
-		statsObj.AddMember("STR", myStats.STR, d.GetAllocator());
-		statsObj.AddMember("DEX", myStats.DEX, d.GetAllocator());
-		statsObj.AddMember("CON", myStats.CON, d.GetAllocator());
-		statsObj.AddMember("INT", myStats.INT, d.GetAllocator());
-		statsObj.AddMember("PER", myStats.PER, d.GetAllocator());
-		statsObj.AddMember("CHR", myStats.CHR, d.GetAllocator());
+		cJSON* statsObj = cJSON_CreateObject();
+		cJSON_AddNumberToObject(statsObj, "MAXHP", myStats.maxHP);
+		cJSON_AddNumberToObject(statsObj, "MAXMP", myStats.maxMP);
+		cJSON_AddNumberToObject(statsObj, "STR", myStats.STR);
+		cJSON_AddNumberToObject(statsObj, "DEX", myStats.DEX);
+		cJSON_AddNumberToObject(statsObj, "CON", myStats.CON);
+		cJSON_AddNumberToObject(statsObj, "INT", myStats.INT);
+		cJSON_AddNumberToObject(statsObj, "PER", myStats.PER);
+		cJSON_AddNumberToObject(statsObj, "CHR", myStats.CHR);
 
-		statsObj.AddMember("LVL", myStats.LVL, d.GetAllocator());
-		statsObj.AddMember("EXP", myStats.EXP, d.GetAllocator());
-		statsObj.AddMember("race", player.race, d.GetAllocator());
-		statsObj.AddMember("appearance", myStats.statscore_appearance, d.GetAllocator());
-		statsObj.AddMember("sex", myStats.sex, d.GetAllocator());
-		statsObj.AddMember("class", player.char_class, d.GetAllocator());
+		cJSON_AddNumberToObject(statsObj, "LVL", myStats.LVL);
+		cJSON_AddNumberToObject(statsObj, "EXP", myStats.EXP);
+		cJSON_AddNumberToObject(statsObj, "race", player.race);
+		cJSON_AddNumberToObject(statsObj, "appearance", myStats.statscore_appearance);
+		cJSON_AddNumberToObject(statsObj, "sex", myStats.sex);
+		cJSON_AddNumberToObject(statsObj, "class", player.char_class);
 
-		statsObj.AddMember("GOLD", myStats.GOLD, d.GetAllocator());
-		statsObj.AddMember("kill_by", hiscore_killed_by, d.GetAllocator());
-		statsObj.AddMember("kill_mon", hiscore_killed_monster, d.GetAllocator());
-		statsObj.AddMember("kill_item", hiscore_killed_item, d.GetAllocator());
+		cJSON_AddNumberToObject(statsObj, "GOLD", myStats.GOLD);
+		cJSON_AddNumberToObject(statsObj, "kill_by", hiscore_killed_by);
+		cJSON_AddNumberToObject(statsObj, "kill_mon", hiscore_killed_monster);
+		cJSON_AddNumberToObject(statsObj, "kill_item", hiscore_killed_item);
 
-		character.AddMember("stats", statsObj, d.GetAllocator());
+		cJSON_AddItemToObject(character, "stats", statsObj);
 
-		rapidjson::Value attrObj(rapidjson::kObjectType);
-		rapidjson::Value killsArr(rapidjson::kArrayType);
+		cJSON* attrObj = cJSON_CreateObject();
+		cJSON* killsArr = cJSON_CreateArray();
 		for ( int i = 0; i < NUMMONSTERS; ++i )
 		{
-			killsArr.PushBack(player.kills[i], d.GetAllocator());
+			cJSON_AddItemToArray(killsArr, cJSON_CreateNumber(player.kills[i]));
 		}
-		attrObj.AddMember("kills", killsArr, d.GetAllocator());
+		cJSON_AddItemToObject(attrObj, "kills", killsArr);
 
-		rapidjson::Value profArr(rapidjson::kArrayType);
+		cJSON* profArr = cJSON_CreateArray();
 		for ( int i = 0; i < NUMPROFICIENCIES; ++i )
 		{
-			profArr.PushBack(myStats.PROFICIENCIES[i], d.GetAllocator());
+			cJSON_AddItemToArray(profArr, cJSON_CreateNumber(myStats.PROFICIENCIES[i]));
 		}
-		attrObj.AddMember("proficiencies", profArr, d.GetAllocator());
+		cJSON_AddItemToObject(attrObj, "proficiencies", profArr);
 
-		rapidjson::Value conductsArr(rapidjson::kArrayType);
-		conductsArr.PushBack((int)player.conductPenniless, d.GetAllocator());
-		conductsArr.PushBack((int)player.conductFoodless, d.GetAllocator());
-		conductsArr.PushBack((int)player.conductVegetarian, d.GetAllocator());
-		conductsArr.PushBack((int)player.conductIlliterate, d.GetAllocator());
+		cJSON* conductsArr = cJSON_CreateArray();
+		cJSON_AddItemToArray(conductsArr, cJSON_CreateNumber((int)player.conductPenniless));
+		cJSON_AddItemToArray(conductsArr, cJSON_CreateNumber((int)player.conductFoodless));
+		cJSON_AddItemToArray(conductsArr, cJSON_CreateNumber((int)player.conductVegetarian));
+		cJSON_AddItemToArray(conductsArr, cJSON_CreateNumber((int)player.conductIlliterate));
 		for ( int i = 0; i < NUM_CONDUCT_CHALLENGES; ++i )
 		{
-			conductsArr.PushBack(player.additionalConducts[i], d.GetAllocator());
+			cJSON_AddItemToArray(conductsArr, cJSON_CreateNumber(player.additionalConducts[i]));
 		}
-		attrObj.AddMember("conducts", conductsArr, d.GetAllocator());
+		cJSON_AddItemToObject(attrObj, "conducts", conductsArr);
 
-		rapidjson::Value statisticsArr(rapidjson::kArrayType);
+		cJSON* statisticsArr = cJSON_CreateArray();
 		for ( int i = 0; i < NUM_GAMEPLAY_STATISTICS; ++i )
 		{
-			statisticsArr.PushBack(player.gameStatistics[i], d.GetAllocator());
+			cJSON_AddItemToArray(statisticsArr, cJSON_CreateNumber(player.gameStatistics[i]));
 		}
-		attrObj.AddMember("statistics", statisticsArr, d.GetAllocator());
+		cJSON_AddItemToObject(attrObj, "statistics", statisticsArr);
 
-		rapidjson::Value effectsObj(rapidjson::kObjectType);
+		cJSON* effectsObj = cJSON_CreateObject();
 		for ( int i = 0; i < NUMEFFECTS; ++i )
 		{
 			if ( myStats.EFFECTS[i] > 0 )
 			{
-				effectsObj.AddMember(rapidjson::Value(std::to_string(i).c_str(), d.GetAllocator()), rapidjson::Value(myStats.EFFECTS[i]), d.GetAllocator());
+				cJSON_AddNumberToObject(effectsObj, std::to_string(i).c_str(), myStats.EFFECTS[i]);
 			}
 		}
-		attrObj.AddMember("effects", effectsObj, d.GetAllocator());
+		cJSON_AddItemToObject(attrObj, "effects", effectsObj);
 
-		character.AddMember("attributes", attrObj, d.GetAllocator());
+		cJSON_AddItemToObject(character, "attributes", attrObj);
 	}
 
-	rapidjson::Value inventory(rapidjson::kArrayType);
+	cJSON* inventory = cJSON_CreateArray();
 	for ( const auto& item : myStats.inventory )
 	{
-		rapidjson::Value itemArray(rapidjson::kArrayType);
-		itemArray.PushBack((int)item.type, d.GetAllocator());
-		itemArray.PushBack((int)item.status, d.GetAllocator());
-		itemArray.PushBack((int)item.beatitude, d.GetAllocator());
-		itemArray.PushBack((int)item.count, d.GetAllocator());
-		itemArray.PushBack((int)item.appearance, d.GetAllocator());
-		itemArray.PushBack((int)item.identified, d.GetAllocator());
-		itemArray.PushBack((int)0 /* blank uid */, d.GetAllocator());
-		itemArray.PushBack((int)item.x, d.GetAllocator());
-		itemArray.PushBack((int)item.y, d.GetAllocator());
+		cJSON* itemArray = cJSON_CreateArray();
+		cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.type));
+		cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.status));
+		cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.beatitude));
+		cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.count));
+		cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.appearance));
+		cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.identified));
+		cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)0));
+		cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.x));
+		cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.y));
 
-		inventory.PushBack(itemArray, d.GetAllocator());
+		cJSON_AddItemToArray(inventory, itemArray);
 	}
 
 	{
-		// equip slots
 		for ( const auto& equipment : player.stats.player_equipment )
 		{
-			rapidjson::Value itemArray(rapidjson::kArrayType);
+			cJSON* itemArray = cJSON_CreateArray();
 			if ( equipment.second != UINT32_MAX && equipment.second < player.stats.inventory.size() )
 			{
 				auto& item = player.stats.inventory[equipment.second];
-				itemArray.PushBack((int)item.type, d.GetAllocator());
-				itemArray.PushBack((int)item.status, d.GetAllocator());
-				itemArray.PushBack((int)item.beatitude, d.GetAllocator());
-				itemArray.PushBack((int)item.count, d.GetAllocator());
-				itemArray.PushBack((int)item.appearance, d.GetAllocator());
-				itemArray.PushBack((int)item.identified, d.GetAllocator());
-				itemArray.PushBack((int)0 /* blank uid */, d.GetAllocator());
-				itemArray.PushBack((int)item.x, d.GetAllocator());
-				itemArray.PushBack((int)item.y, d.GetAllocator());
+				cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.type));
+				cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.status));
+				cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.beatitude));
+				cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.count));
+				cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.appearance));
+				cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.identified));
+				cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)0));
+				cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.x));
+				cJSON_AddItemToArray(itemArray, cJSON_CreateNumber((int)item.y));
 			}
-			rapidjson::Value key(equipment.first.c_str(), d.GetAllocator());
-			character.AddMember(key, itemArray, d.GetAllocator());
+			cJSON_AddItemToObject(character, equipment.first.c_str(), itemArray);
 		}
 	}
 
-	character.AddMember("inventory", inventory, d.GetAllocator());
+	cJSON_AddItemToObject(character, "inventory", inventory);
 
-	d.AddMember("score", character, d.GetAllocator());
+	cJSON_AddItemToObject(d, "score", character);
 
-	rapidjson::StringBuffer os;
-	rapidjson::Writer<rapidjson::StringBuffer> writer(os);
-	d.Accept(writer);
-	return os.GetString();
+	char* json = cJSON_PrintUnformatted(d);
+	std::string result(json);
+	cJSON_free(json);
+	cJSON_Delete(d);
+	return result;
 }
 
 int loadGame(int player, const SaveGameInfo& info) {

@@ -641,94 +641,7 @@ VoiceChat_t::VoiceChat_t()
 	}
 }
 
-#ifdef USE_OPUS
-VoiceChat_t::OpusAudioCodec_t OpusAudioCodec;
-VoiceChat_t::OpusAudioCodec_t::encode_rtn VoiceChat_t::OpusAudioCodec_t::encodeFrame(std::vector<opus_int16>& in)
-{
-	encode_rtn data;
-#ifndef NINTENDO
-	if ( !OpusAudioCodec.bInit || !OpusAudioCodec.encoder )
-	{
-		return data;
-	}
-	auto t1 = std::chrono::high_resolution_clock::now();
-	data.numBytes = opus_encode(OpusAudioCodec.encoder, in.data(), in.size(), data.cbits, encode_rtn::OPUS_MAX_PACKET_SIZE);
-	auto t2 = std::chrono::high_resolution_clock::now();
-	++OpusAudioCodec.encoded_samples;
-	OpusAudioCodec.encoding_time += 1000 * std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
-	if ( data.numBytes > 0 )
-	{
-		OpusAudioCodec.max_num_bytes_encoded = std::max(OpusAudioCodec.max_num_bytes_encoded, (unsigned int)data.numBytes);
-	}
-#endif
-	return data;
-}
 
-int VoiceChat_t::OpusAudioCodec_t::decodeFrame(int which_decoder, encode_rtn& frame_in, std::vector<opus_int16>& out)
-{
-	if ( !bInit ) { return 0; }
-
-	auto t3 = std::chrono::high_resolution_clock::now();
-#ifdef NINTENDO
-	int frame_size = nxDecodeFrame(which_decoder, &frame_in, &out);
-#else
-	if ( !decoder[which_decoder] ) { return 0; }
-	int frame_size = opus_decode(decoder[which_decoder], frame_in.cbits, frame_in.numBytes, out.data(), MAX_FRAME_SIZE, 0);
-#endif
-	auto t4 = std::chrono::high_resolution_clock::now();
-	++decoded_samples;
-	decoding_time += 1000 * std::chrono::duration_cast<std::chrono::duration<double>>(t4 - t3).count();
-	return frame_size;
-}
-
-void VoiceChat_t::OpusAudioCodec_t::init(int sampleRate, int numChannels)
-{
-	deinit();
-
-	this->sampleRate = sampleRate;
-	this->numChannels = numChannels;
-	
-#ifdef NINTENDO
-	if ( !nxInitOpus(sampleRate, numChannels) )
-	{
-		deinit();
-		return;
-	}
-#else
-	int opus_err;
-	encoder = opus_encoder_create(sampleRate, numChannels, OPUS_APPLICATION_VOIP, &opus_err);
-	if ( opus_err < 0 )
-	{
-		logError("opus_encoder_create failed, error: %d (%s)", opus_err, opus_strerror(opus_err));
-		deinit();
-		return;
-	}
-	logInfo("encoder created successfully, sample rate: %d, channels: %d", sampleRate, numChannels);
-
-	opus_err = opus_encoder_ctl(encoder, OPUS_SET_BITRATE(BITRATE));
-	if ( opus_err < 0 )
-	{
-		logError("opus_encoder_ctl failed, error: %d (%s)", opus_err, opus_strerror(opus_err));
-		deinit();
-		return;
-	}
-	logInfo("opus_encoder_ctl set bitrate to: %d", BITRATE);
-
-	for ( int i = 0; i < MAXPLAYERS; ++i )
-	{
-		decoder[i] = opus_decoder_create(sampleRate, numChannels, &opus_err);
-		if ( opus_err < 0 )
-		{
-			logError("opus_decoder_create failed, error: %d (%s)", opus_err, opus_strerror(opus_err));
-			deinit();
-			return;
-		}
-	}
-	logInfo("decoder created successfully, sample rate: %d, channels: %d", sampleRate, numChannels);
-#endif
-	bInit = true;
-}
-#endif
 
 void VoiceChat_t::init()
 {
@@ -765,9 +678,7 @@ void VoiceChat_t::init()
 		loopbackPacket = SDLNet_AllocPacket(NET_PACKET_SIZE);
 	}
 
-#ifdef USE_OPUS
-	OpusAudioCodec.init(nativeRate, nativeChannels);
-#endif
+
 
 	bInit = true;
 	logInfo("VoiceChat_t::init()");
@@ -781,9 +692,6 @@ void VoiceChat_t::setRecordingDevice(int device_index)
 
 void VoiceChat_t::deinitRecording(bool resetPushTalkToggle)
 {
-#ifdef NINTENDO
-	return;
-#endif
 	lastRecordTick = 0;
 	recordingLastPos = 0;
 	bIsRecording = false;
@@ -1389,27 +1297,7 @@ void VoiceChat_t::pushAvailableDatagrams()
 {
 	if ( using_encoding )
 	{
-#ifdef USE_OPUS
-		static std::vector<char> buffer(FRAME_SIZE * sizeof(short));
-		while ( ringBufferRecord.GetReadAvail() >= FRAME_SIZE * sizeof(short) )
-		{
-			std::fill(buffer.begin(), buffer.end(), 0);
-			ringBufferRecord.Read(buffer.data(), FRAME_SIZE * sizeof(short));
 
-			OpusAudioCodec_t::encode_rtn encode_rtn = OpusAudioCodec.encodeFrameSync(buffer, FRAME_SIZE);
-			if ( encode_rtn.numBytes < 0 )
-			{
-				// error
-				OpusAudioCodec_t::logError("failed encoding frame, result: %d (%s)", encode_rtn.numBytes, opus_strerror(encode_rtn.numBytes));
-			}
-			else if ( encode_rtn.numBytes > 0 )
-			{
-				recordingDatagrams.push_back(std::vector<char>(encode_rtn.numBytes));
-				auto& back = recordingDatagrams.back();
-				memcpy(back.data(), encode_rtn.cbits, encode_rtn.numBytes);
-			}
-		}
-#endif
 	}
 	else
 	{
@@ -1548,9 +1436,6 @@ ConsoleVariable<bool> cvar_voice_debug("/voice_debug", false);
 void VoiceChat_t::updateRecording()
 {
 	allowInputs = false;
-#ifdef NINTENDO
-	return;
-#endif
 	pushAvailableDatagrams();
 
 	auto& input = Input::inputs[clientnum];
@@ -2310,15 +2195,7 @@ void VoiceChat_t::sendPackets()
 	}
 }
 
-#ifdef USE_OPUS
-static ConsoleCommand ccmd_voice_opus_stats("/voice_opus_stats", "",
-	[](int argc, const char* argv[]) {
-		messagePlayer(clientnum, MESSAGE_HINT, "samples encode: %u (%.2fms) | decode: %u (%.2fms) | max frame bytes: %u",
-			OpusAudioCodec.encoded_samples, OpusAudioCodec.encoding_time,
-			OpusAudioCodec.decoded_samples, OpusAudioCodec.decoding_time,
-			OpusAudioCodec.max_num_bytes_encoded);
-	});
-#endif
+
 
 void VoiceChat_t::receivePacket(UDPpacket* packet)
 {
@@ -2351,75 +2228,8 @@ void VoiceChat_t::receivePacket(UDPpacket* packet)
 		{
 			if ( encodedFrame )
 			{
-#ifdef USE_OPUS
-				static std::vector<opus_int16> out(OpusAudioCodec_t::MAX_FRAME_SIZE * OpusAudioCodec.numChannels);
-				static OpusAudioCodec_t::encode_rtn encodedFrame;
-				std::fill(out.begin(), out.end(), 0);
-
-#ifdef NINTENDO
-				if ( readBytes + 8 >= OpusAudioCodec_t::encode_rtn::OPUS_MAX_PACKET_SIZE )
-				{
-					OpusAudioCodec_t::logError("failed decoding frame, frame too large with header, size: %d, limit: %d", readBytes + 8, OpusAudioCodec_t::encode_rtn::OPUS_MAX_PACKET_SIZE);
-					return; // no space to decode packet
-				}
-				// header data (packet size, big endian)
-				encodedFrame.cbits[0] = (readBytes >> 24) & 0xFF;
-				encodedFrame.cbits[1] = (readBytes >> 16) & 0xFF;
-				encodedFrame.cbits[2] = (readBytes >> 8) & 0xFF;
-				encodedFrame.cbits[3] = (readBytes >> 0) & 0xFF;
-				// header data (zeroes)
-				memset(encodedFrame.cbits + 4, 0, sizeof(Uint32));
-				// opus data offset by 8 due to header
-				memcpy(encodedFrame.cbits + 8, &packet->data[packetVoiceDataIdx], readBytes);
-				// length of packet increases
-				encodedFrame.numBytes = readBytes + 8;
-#else
-				memcpy(encodedFrame.cbits, &packet->data[packetVoiceDataIdx], readBytes);
-				encodedFrame.numBytes = readBytes;
-#endif
-				int frame_size = OpusAudioCodec.decodeFrame(player, encodedFrame, out);
-				if ( frame_size < 0 )
-				{
-					// error
-					OpusAudioCodec_t::logError("failed decoding frame, result: %d (%s)", frame_size, opus_strerror(frame_size));
-				}
-				else if ( frame_size % 2 != 0 )
-				{
-					// error
-					OpusAudioCodec_t::logError("failed decoding frame, frame size odd: %d", frame_size);
-				}
-				else if ( frame_size > 0 )
-				{
-					PlayerChannels[player].audio_queue_mutex.lock();
-					int i = 0;
-					for ( i = 0; i < OpusAudioCodec.numChannels * frame_size 
-						&& (PlayerChannels[player].audioQueue.size() < PlayerChannels_t::audioQueueSizeLimit - 1); i++ )
-					{
-						// insert 2x bytes per decoded unit
-						PlayerChannels[player].audioQueue.push_back(out[i] & 0xFF);
-						PlayerChannels[player].audioQueue.push_back((out[i] >> 8) & 0xFF);
-					}
-					PlayerChannels[player].audio_queue_mutex.unlock();
-					unsigned int samplesWritten = i;
-					PlayerChannels[player].totalSamplesWritten += samplesWritten * 2;
-					if ( samplesWritten != 0 && (samplesWritten < PlayerChannels[player].minimumSamplesWritten) )
-					{
-						PlayerChannels[player].minimumSamplesWritten = samplesWritten;
-						PlayerChannels[player].adjustedLatency = std::max(samplesWritten, PlayerChannels[player].desiredLatency);
-					}
-					if ( PlayerChannels[player].audioQueue.size() >= PlayerChannels_t::audioQueueSizeLimit )
-					{
-						logInfo("warning: VoiceChat_t::receivePacket() audio queue full");
-					}
-					if ( i % 2 == 1 )
-					{
-						logError("warning: VoiceChat_t::receivePacket() decoded odd number bytes");
-					}
-				}
-#else
 				logError("received encoded frame without Opus encoder configured");
 				return;
-#endif
 			}
 			else
 			{

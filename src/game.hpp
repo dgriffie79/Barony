@@ -14,21 +14,12 @@
 #include <vector>
 #include <chrono>
 
-#ifdef STEAMWORKS
-#include <steam/steam_api.h>
-#include "steam.hpp"
-#endif
-
 #include "interface/consolecommand.hpp"
 
 #include "Config.hpp"
 
 // REMEMBER TO CHANGE THIS WITH EVERY NEW OFFICIAL VERSION!!!
-#ifdef NINTENDO
 static const char VERSION[] = "v5.0.2";
-#else
-static const char VERSION[] = "v5.0.2";
-#endif
 #define GAME_CODE
 
 class Entity;

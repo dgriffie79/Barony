@@ -10,6 +10,7 @@
 -------------------------------------------------------------------------------*/
 
 #include "../main.hpp"
+#include "cJSON.h"
 #include "consolecommand.hpp"
 
 #include <sstream>
@@ -2778,19 +2779,7 @@ namespace ConsoleCommands {
 				printlog("[Mods]: Adding mod \"%s\" in path \"%s\"", directory.c_str(), modname.c_str());
 				Mods::mountedFilepaths.push_back(std::make_pair(directory, modname));
 			}
-#ifdef STEAMWORKS
-			else
-			{
-				std::string directory = dir;
-				modname = name;
-				printlog("[Mods]: Adding mod \"%s\" in path \"%s\"", directory.c_str(), modname.c_str());
-				Mods::mountedFilepaths.push_back(std::make_pair(directory, modname));
 
-				uint64 id = atoi(fileid.c_str());
-				Mods::workshopLoadedFileIDMap.push_back(std::make_pair(modname, id));
-				printlog("[Mods]: Steam Workshop mod file ID added for previous entry:%lld", id);
-			}
-#endif
 		}
 		});
 
@@ -3459,78 +3448,7 @@ namespace ConsoleCommands {
 			messagePlayer(clientnum, MESSAGE_MISC, Language::get(277));
 			return;
 		}
-#ifdef STEAMWORKS
-		steamUnsetAchievement("BARONY_ACH_TAKING_WITH");
-		steamUnsetAchievement("BARONY_ACH_TELEFRAG");
-		steamUnsetAchievement("BARONY_ACH_FASCIST");
-		steamUnsetAchievement("BARONY_ACH_REAL_BOY");
-		steamUnsetAchievement("BARONY_ACH_OVERCLOCKED");
-		steamUnsetAchievement("BARONY_ACH_TRASH_COMPACTOR");
-		steamUnsetAchievement("BARONY_ACH_BOILERPLATE_BARON");
-		steamUnsetAchievement("BARONY_ACH_PIMPIN");
-		steamUnsetAchievement("BARONY_ACH_BAD_BEAUTIFUL");
-		steamUnsetAchievement("BARONY_ACH_SERIAL_THRILLA");
-		steamUnsetAchievement("BARONY_ACH_TRADITION");
-		steamUnsetAchievement("BARONY_ACH_BAD_BOY_BARON");
-		steamUnsetAchievement("BARONY_ACH_POP_QUIZ");
-		steamUnsetAchievement("BARONY_ACH_DYSLEXIA");
-		steamUnsetAchievement("BARONY_ACH_SAVAGE");
-		steamUnsetAchievement("BARONY_ACH_TRIBE_SUBSCRIBE");
-		steamUnsetAchievement("BARONY_ACH_BAYOU_BARON");
-		steamUnsetAchievement("BARONY_ACH_GASTRIC_BYPASS");
-		steamUnsetAchievement("BARONY_ACH_BOOKWORM");
-		steamUnsetAchievement("BARONY_ACH_FLUTTERSHY");
-		steamUnsetAchievement("BARONY_ACH_MONARCH");
-		steamUnsetAchievement("BARONY_ACH_BUGGAR_BARON");
-		steamUnsetAchievement("BARONY_ACH_TIME_TO_PLAN");
-		steamUnsetAchievement("BARONY_ACH_WONDERFUL_TOYS");
-		steamUnsetAchievement("BARONY_ACH_SUPER_SHREDDER");
-		steamUnsetAchievement("BARONY_ACH_UTILITY_BELT");
-		steamUnsetAchievement("BARONY_ACH_FIXER_UPPER");
-		steamUnsetAchievement("BARONY_ACH_TORCHERER");
-		steamUnsetAchievement("BARONY_ACH_LEVITANT_LACKEY");
-		steamUnsetAchievement("BARONY_ACH_GOODNIGHT_SWEET_PRINCE");
-		steamUnsetAchievement("BARONY_ACH_MANY_PEDI_PALP");
-		steamUnsetAchievement("BARONY_ACH_5000_SECOND_RULE");
-		steamUnsetAchievement("BARONY_ACH_FORUM_TROLL");
-		steamUnsetAchievement("BARONY_ACH_SOCIAL_BUTTERFLY");
-		steamUnsetAchievement("BARONY_ACH_ROLL_THE_BONES");
-		steamUnsetAchievement("BARONY_ACH_COWBOY_FROM_HELL");
-		steamUnsetAchievement("BARONY_ACH_IRONIC_PUNISHMENT");
-		steamUnsetAchievement("BARONY_ACH_SELF_FLAGELLATION");
-		steamUnsetAchievement("BARONY_ACH_OHAI_MARK");
-		steamUnsetAchievement("BARONY_ACH_CHOPPING_BLOCK");
-		steamUnsetAchievement("BARONY_ACH_ITS_A_LIVING");
-		steamUnsetAchievement("BARONY_ACH_ARSENAL");
-		steamUnsetAchievement("BARONY_ACH_IF_YOU_LOVE_SOMETHING");
-		steamUnsetAchievement("BARONY_ACH_GUDIPARIAN_BAZI");
-		steamUnsetAchievement("BARONY_ACH_STRUNG_OUT");
-		steamUnsetAchievement("BARONY_ACH_FELL_BEAST");
-		steamUnsetAchievement("BARONY_ACH_PLEASE_HOLD");
-		steamUnsetAchievement("BARONY_ACH_SWINGERS");
-		steamUnsetAchievement("BARONY_ACH_COLD_BLOODED");
-		steamUnsetAchievement("BARONY_ACH_SOULLESS");
-		steamUnsetAchievement("BARONY_ACH_TRIBAL");
-		steamUnsetAchievement("BARONY_ACH_MANAGEMENT_TEAM");
-		steamUnsetAchievement("BARONY_ACH_SOCIOPATHS");
-		steamUnsetAchievement("BARONY_ACH_FACES_OF_DEATH");
-		steamUnsetAchievement("BARONY_ACH_SURVIVALISTS");
-		steamUnsetAchievement("BARONY_ACH_I_WANT_IT_ALL");
-		steamUnsetAchievement("BARONY_ACH_RUST_IN_PEACE");
-		steamUnsetAchievement("BARONY_ACH_MACHINE_HEAD");
-		steamUnsetAchievement("BARONY_ACH_RAGE_AGAINST");
-		steamUnsetAchievement("BARONY_ACH_GUERILLA_RADIO");
-		steamUnsetAchievement("BARONY_ACH_BOMBTRACK");
-		steamUnsetAchievement("BARONY_ACH_CALM_LIKE_A_BOMB");
-		steamUnsetAchievement("BARONY_ACH_CAUGHT_IN_A_MOSH");
-		steamUnsetAchievement("BARONY_ACH_SPICY");
-		for (int i = STEAM_STAT_TRASH_COMPACTOR; i < 43; ++i)
-		{
-			g_SteamStats[i].m_iValue = 0;
-			SteamUserStats()->SetStat(g_SteamStats[i].m_pchStatName, 0);
-		}
-		SteamUserStats()->StoreStats();
-#endif // STEAMWORKS
+
 		});
 
 	static ConsoleCommand ccmd_gimmebombs("/gimmebombs", "give the player some bombs (cheat)", []CCMD{
@@ -3635,9 +3553,7 @@ namespace ConsoleCommands {
 		});
 
 	static ConsoleCommand ccmd_crossplay("/crossplay", "", []CCMD{
-#if (defined STEAMWORKS && defined USE_EOS)
-		EOS.CrossplayAccountManager.autologin = true;
-#endif // USE_EOS
+
 		});
 #if (defined SOUND)
 	static ConsoleCommand ccmd_sfxambientvolume("/sfxambientvolume", "set ambient sfx volume", []CCMD{
@@ -4229,9 +4145,8 @@ namespace ConsoleCommands {
 			return;
 		}
 
-		/*rapidjson::Document d;
-		d.SetObject();
-		CustomHelpers::addMemberToRoot(d, "item_names", rapidjson::Value(rapidjson::kObjectType));*/
+		/*cJSON* d = cJSON_CreateObject();
+		CustomHelpers::addMemberToRoot(d, "item_names", cJSON_CreateObject());*/
 
 		for ( int i = SPELL_NONE + 50; i < NUM_SPELLS; ++i )
 		{
@@ -4247,12 +4162,12 @@ namespace ConsoleCommands {
 					/*int spellbookId = getSpellbookFromSpellID(spell->ID);
 					if ( items[spellbookId].category == SPELLBOOK )
 					{
-						d["item_names"].AddMember(rapidjson::Value(ItemTooltips.tmpItems[spellbookId].internalName.c_str(), d.GetAllocator()), rapidjson::Value(rapidjson::kObjectType),
-							d.GetAllocator());
+						cJSON* entry = cJSON_CreateObject();
 						std::string str = "spellbook of ";
 						str += spell->getSpellName(true);
-						d["item_names"][ItemTooltips.tmpItems[spellbookId].internalName.c_str()].AddMember("name_identified", rapidjson::Value(str.c_str(), d.GetAllocator()), d.GetAllocator());
-						d["item_names"][ItemTooltips.tmpItems[spellbookId].internalName.c_str()].AddMember("name_unidentified", rapidjson::Value("spellbook", d.GetAllocator()), d.GetAllocator());
+						cJSON_AddStringToObject(entry, "name_identified", str.c_str());
+						cJSON_AddStringToObject(entry, "name_unidentified", "spellbook");
+						cJSON_AddItemToObject(cJSON_GetObjectItem(d, "item_names"), ItemTooltips.tmpItems[spellbookId].internalName.c_str(), entry);
 					}*/
 				}
 			}
@@ -4261,13 +4176,14 @@ namespace ConsoleCommands {
 		/*File* fp = FileIO::open("lang/stuff.json", "wb");
 		if ( !fp )
 		{
+			if (d) cJSON_Delete(d);
 			return;
 		}
-		rapidjson::StringBuffer os;
-		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-		d.Accept(writer);
-		fp->write(os.GetString(), sizeof(char), os.GetSize());
-		FileIO::close(fp);*/
+		char* json = cJSON_Print(d);
+		fp->write(json, sizeof(char), strlen(json));
+		free(json);
+		FileIO::close(fp);
+		cJSON_Delete(d);*/
 
 		return;
 		});
@@ -5452,27 +5368,27 @@ namespace ConsoleCommands {
 	static ConsoleCommand ccmd_exportitemlang("/exportitemlang", "", []CCMD{
 #ifndef EDITOR
 #ifndef NINTENDO
-		/*rapidjson::Document d;
-		d.SetObject();
-		CustomHelpers::addMemberToRoot(d, "version", rapidjson::Value(1));
-		CustomHelpers::addMemberToRoot(d, "items", rapidjson::Value(rapidjson::kObjectType));
+		/*cJSON* d = cJSON_CreateObject();
+		CustomHelpers::addMemberToRoot(d, "version", cJSON_CreateNumber(1));
+		CustomHelpers::addMemberToRoot(d, "item_names", cJSON_CreateObject());
 		for ( int i = 0; i < NUMITEMS; ++i )
 		{
-			d["item_names"].AddMember(rapidjson::Value(ItemTooltips.tmpItems[i].itemName.c_str(), d.GetAllocator()), rapidjson::Value(rapidjson::kObjectType),
-				d.GetAllocator());
-			d["item_names"][ItemTooltips.tmpItems[i].itemName.c_str()].AddMember("name_identified", rapidjson::Value(items[i].name_identified, d.GetAllocator()), d.GetAllocator());
-			d["item_names"][ItemTooltips.tmpItems[i].itemName.c_str()].AddMember("name_unidentified", rapidjson::Value(items[i].name_unidentified, d.GetAllocator()), d.GetAllocator());
+			cJSON* entry = cJSON_CreateObject();
+			cJSON_AddStringToObject(entry, "name_identified", items[i].name_identified);
+			cJSON_AddStringToObject(entry, "name_unidentified", items[i].name_unidentified);
+			cJSON_AddItemToObject(cJSON_GetObjectItem(d, "item_names"), ItemTooltips.tmpItems[i].itemName.c_str(), entry);
 		}
 		File* fp = FileIO::open("lang/item_names.json", "wb");
 		if ( !fp )
 		{
+			cJSON_Delete(d);
 			return;
 		}
-		rapidjson::StringBuffer os;
-		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-		d.Accept(writer);
-		fp->write(os.GetString(), sizeof(char), os.GetSize());
-		FileIO::close(fp);*/
+		char* json = cJSON_Print(d);
+		fp->write(json, sizeof(char), strlen(json));
+		free(json);
+		FileIO::close(fp);
+		cJSON_Delete(d);*/
 #endif
 #endif
 	});
@@ -5480,29 +5396,29 @@ namespace ConsoleCommands {
 	static ConsoleCommand ccmd_exportspelllang("/exportspelllang", "", []CCMD{
 #ifndef EDITOR
 #ifndef NINTENDO
-		/*rapidjson::Document d;
-		d.SetObject();
-		CustomHelpers::addMemberToRoot(d, "version", rapidjson::Value(1));
-		CustomHelpers::addMemberToRoot(d, "spells", rapidjson::Value(rapidjson::kObjectType));
+		/*cJSON* d = cJSON_CreateObject();
+		CustomHelpers::addMemberToRoot(d, "version", cJSON_CreateNumber(1));
+		CustomHelpers::addMemberToRoot(d, "spell_names", cJSON_CreateObject());
 		for ( int i = 0; i < NUM_SPELLS; ++i )
 		{
 			if ( spell_t* spell = getSpellFromID(i) )
 			{
-				d["spell_names"].AddMember(rapidjson::Value(ItemTooltips.spellItems[i].internalName.c_str(), d.GetAllocator()), rapidjson::Value(rapidjson::kObjectType),
-					d.GetAllocator());
-				d["spell_names"][ItemTooltips.spellItems[i].internalName.c_str()].AddMember("name", rapidjson::Value(spell->getSpellName(), d.GetAllocator()), d.GetAllocator());
+				cJSON* entry = cJSON_CreateObject();
+				cJSON_AddStringToObject(entry, "name", spell->getSpellName());
+				cJSON_AddItemToObject(cJSON_GetObjectItem(d, "spell_names"), ItemTooltips.spellItems[i].internalName.c_str(), entry);
 			}
 		}
 		File* fp = FileIO::open("lang/spell_names.json", "wb");
 		if ( !fp )
 		{
+			cJSON_Delete(d);
 			return;
 		}
-		rapidjson::StringBuffer os;
-		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-		d.Accept(writer);
-		fp->write(os.GetString(), sizeof(char), os.GetSize());
-		FileIO::close(fp);*/
+		char* json = cJSON_Print(d);
+		fp->write(json, sizeof(char), strlen(json));
+		free(json);
+		FileIO::close(fp);
+		cJSON_Delete(d);*/
 #endif
 #endif
 	});
@@ -6569,37 +6485,57 @@ namespace ConsoleCommands {
 				char buf[65536];
 				int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 				buf[count] = '\0';
-				rapidjson::StringStream is(buf);
 				FileIO::close(fp);
 
-				rapidjson::Document d;
-				d.ParseStream(is);
+				cJSON* d = cJSON_Parse(buf);
 
-				if ( !d.IsObject() || !d.HasMember("version") )
+				if ( !d || d->type != cJSON_Object || !cJSON_HasObjectItem(d, "version") )
 				{
 					printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+					if (d) cJSON_Delete(d);
 					return;
 				}
 
 				std::string vertex;
 				std::string fragment;
 
-				for ( auto itr = d["vertex"].Begin(); itr != d["vertex"].End(); ++itr )
 				{
-					if ( vertex.size() != 0 )
+					cJSON* arr = cJSON_GetObjectItem(d, "vertex");
+					if ( arr && arr->type == cJSON_Array )
 					{
-						vertex += '\n';
+						cJSON* itr;
+						cJSON_ArrayForEach(itr, arr)
+						{
+							if ( itr->type == cJSON_String )
+							{
+								if ( vertex.size() != 0 )
+								{
+									vertex += '\n';
+								}
+								vertex += itr->valuestring;
+							}
+						}
 					}
-					vertex += itr->GetString();
 				}
-				for ( auto itr = d["fragment"].Begin(); itr != d["fragment"].End(); ++itr )
 				{
-					if ( fragment.size() != 0 )
+					cJSON* arr = cJSON_GetObjectItem(d, "fragment");
+					if ( arr && arr->type == cJSON_Array )
 					{
-						fragment += '\n';
+						cJSON* itr;
+						cJSON_ArrayForEach(itr, arr)
+						{
+							if ( itr->type == cJSON_String )
+							{
+								if ( fragment.size() != 0 )
+								{
+									fragment += '\n';
+								}
+								fragment += itr->valuestring;
+							}
+						}
 					}
-					fragment += itr->GetString();
 				}
+				cJSON_Delete(d);
 
 				auto& shader = spriteBrightShader;
 				shader.destroy();
@@ -6638,37 +6574,57 @@ namespace ConsoleCommands {
 				char buf[65536];
 				int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 				buf[count] = '\0';
-				rapidjson::StringStream is(buf);
 				FileIO::close(fp);
 
-				rapidjson::Document d;
-				d.ParseStream(is);
+				cJSON* d = cJSON_Parse(buf);
 
-				if ( !d.IsObject() || !d.HasMember("version") )
+				if ( !d || d->type != cJSON_Object || !cJSON_HasObjectItem(d, "version") )
 				{
 					printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+					if (d) cJSON_Delete(d);
 					return;
 				}
 
 				std::string vertex;
 				std::string fragment;
 
-				for ( auto itr = d["vertex"].Begin(); itr != d["vertex"].End(); ++itr )
 				{
-					if ( vertex.size() != 0 )
+					cJSON* arr = cJSON_GetObjectItem(d, "vertex");
+					if ( arr && arr->type == cJSON_Array )
 					{
-						vertex += '\n';
+						cJSON* itr;
+						cJSON_ArrayForEach(itr, arr)
+						{
+							if ( itr->type == cJSON_String )
+							{
+								if ( vertex.size() != 0 )
+								{
+									vertex += '\n';
+								}
+								vertex += itr->valuestring;
+							}
+						}
 					}
-					vertex += itr->GetString();
 				}
-				for ( auto itr = d["fragment"].Begin(); itr != d["fragment"].End(); ++itr )
 				{
-					if ( fragment.size() != 0 )
+					cJSON* arr = cJSON_GetObjectItem(d, "fragment");
+					if ( arr && arr->type == cJSON_Array )
 					{
-						fragment += '\n';
+						cJSON* itr;
+						cJSON_ArrayForEach(itr, arr)
+						{
+							if ( itr->type == cJSON_String )
+							{
+								if ( fragment.size() != 0 )
+								{
+									fragment += '\n';
+								}
+								fragment += itr->valuestring;
+							}
+						}
 					}
-					fragment += itr->GetString();
 				}
+				cJSON_Delete(d);
 
 				auto& shader = voxelShader;
 				shader.destroy();

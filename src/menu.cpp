@@ -2487,14 +2487,6 @@ static void handleMainMenu(bool mode)
 				if (inputstr != stats[0]->name) //TODO: NX PORT: Not sure if this portion is correct...the PC version of this chunk has changed significantly in the interleaving time.
 				{
 					inputstr = stats[0]->name;
-#ifdef NINTENDO
-					auto result = nxKeyboard("Enter your character's name");
-					if (result.success)
-					{
-						strncpy(inputstr, result.str.c_str(), 21);
-						inputstr[21] = '\0';
-					}
-#endif
 				}
 				SDL_StartTextInput();
 			}
@@ -2683,14 +2675,6 @@ static void handleMainMenu(bool mode)
 			if (inputstr != serialInputText)
 			{
 				inputstr = serialInputText;
-#ifdef NINTENDO
-				auto result = nxKeyboard("Enter your character's name");
-				if (result.success)
-				{
-					strncpy(inputstr, result.str.c_str(), 21);
-					inputstr[21] = '\0'; //TODO: NX Port: The inputlen below names 63...? Should this be modified to match? Everywhere else, we operate on inputstr[21] when inputlen = 22.
-				}
-#endif
 			}
 			SDL_StartTextInput();
 		}
@@ -4206,18 +4190,10 @@ static void handleMainMenu(bool mode)
 			if ( !SDL_IsTextInputActive() )
 			{
 				SDL_StartTextInput(); //TODO: NX PORT: Why is the order different in some of these chunks? For example, some of them start text input first, others start it after the below chunk of code.
-				if (inputstr != portnumber_char)
-				{
-					inputstr = portnumber_char;
-#ifdef NINTENDO
-					auto result = nxKeyboard("Enter port number");
-					if (result.success)
-					{
-						strncpy(inputstr, result.str.c_str(), 21);
-						inputstr[21] = '\0'; //TODO: NX PORT: Why 21? inputlen = 5 down there, shouldn't this be inputstr[4]?
-					}
-#endif
-				}
+			if (inputstr != portnumber_char)
+			{
+				inputstr = portnumber_char;
+			}
 			}
 			//strncpy(portnumber_char,inputstr,5);
 			inputlen = 5;
@@ -4249,18 +4225,10 @@ static void handleMainMenu(bool mode)
 			{
 				SDL_StartTextInput();
 
-				if (inputstr != connectaddress)
-				{
-					inputstr = connectaddress;
-#ifdef NINTENDO
-					auto result = nxKeyboard("Enter address");
-					if (result.success)
-					{
-						strncpy(inputstr, result.str.c_str(), 21);
-						inputstr[21] = '\0'; //TODO: NX PORT: Why not inputstr[30], since inputlen = 31?
-					}
-#endif
-				}
+			if (inputstr != connectaddress)
+			{
+				inputstr = connectaddress;
+			}
 			}
 			//strncpy(connectaddress,inputstr,31);
 			inputlen = 31;
@@ -8326,18 +8294,6 @@ void doEndgame(bool saveHighscore, bool onServerDisconnect) {
 		intro = true;
 	}
 	splitscreen = false;
-
-#ifdef NINTENDO
-	fpsLimit = 60; // revert to 60 for the main menu
-	nxEnableAutoSleep();
-	nxEndParentalControls();
-	if (directConnect) {
-		// cleanse wireless connection state
-		nxShutdownWireless();
-	} else {
-		MainMenu::logoutOfEpic();
-	}
-#endif
 
     // this is done so that save game screenshots get
     // reloaded after the game is done.

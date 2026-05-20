@@ -162,6 +162,8 @@ pub fn build(b: *std.Build) void {
 
     // Add source files
     game_mod.addCSourceFiles(.{ .files = game_sources, .flags = cxx_flags });
+    game_mod.addCSourceFile(.{ .file = b.path("src/cJSON.c"), .flags = &.{} });
+    editor_mod.addCSourceFile(.{ .file = b.path("src/cJSON.c"), .flags = &.{} });
 
     const editor_flags = b.allocator.alloc([]const u8, cxx_flags.len + 1) catch @panic("OOM");
     for (cxx_flags, 0..) |flag, i| editor_flags[i] = flag;
@@ -269,3 +271,4 @@ pub fn build(b: *std.Build) void {
         run_editor_step.dependOn(&run_editor.step);
     }
 }
+ 

@@ -22,6 +22,7 @@
 #include "prng.hpp"
 #include "hash.hpp"
 #include "init.hpp"
+#include "cJSON.h"
 #include "light.hpp"
 #include "net.hpp"
 #ifdef EDITOR
@@ -1009,15 +1010,16 @@ void readTilesJson()
 	char buf[1024];
 	int count = (int)fp->read(buf, sizeof(buf[0]), sizeof(buf));
 	buf[count] = '\0';
-	rapidjson::StringStream is(buf);
 	FileIO::close(fp);
 
-	rapidjson::Document d;
-	d.ParseStream(is);
-
-	if ( d.HasMember("tile_texture_size") )
+	cJSON* d = cJSON_Parse(buf);
+	if ( d )
 	{
-		*cvar_tileTextureSize = d["tile_texture_size"].GetInt();
+		if ( cJSON_HasObjectItem(d, "tile_texture_size") )
+		{
+			*cvar_tileTextureSize = cJSON_GetObjectItem(d, "tile_texture_size")->valueint;
+		}
+		cJSON_Delete(d);
 	}
 	printlog("[JSON]: Tile texture size is: %d", *cvar_tileTextureSize);
 }

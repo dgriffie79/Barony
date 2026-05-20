@@ -10,6 +10,10 @@
 -------------------------------------------------------------------------------*/
 
 #include "../main.hpp"
+#include "../rapidjson/document.h"
+#include "../rapidjson/filereadstream.h"
+#include "../rapidjson/filewritestream.h"
+#include "../rapidjson/prettywriter.h"
 #include "../files.hpp"
 #include "../game.hpp"
 #include "../stat.hpp"

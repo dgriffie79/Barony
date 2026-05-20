@@ -2121,13 +2121,6 @@ bool completePath(char *dest, const char * const filename, const char *base) {
 		return true;
 	}
 
-#ifdef NINTENDO
-	// Already absolute on nintendo
-	if (strncmp(filename, base, strlen(base)) == 0) {
-		strcpy(dest, filename);
-		return true;
-	}
-#endif
 
 #ifdef WINDOWS
 	// Already absolute (drive letter in path)
@@ -2183,9 +2176,6 @@ bool dataPathExists(const char * const path, bool complete) {
 }
 
 void openLogFile() {
-#ifdef NINTENDO
-	return;
-#endif
 	char path[PATH_MAX];
 	completePath(path, "log.txt", outputdir);
 
@@ -3694,13 +3684,9 @@ std::list<std::string> directoryContents(const char* directory, bool includeSubd
 std::vector<std::string> getLinesFromDataFile(std::string filename)
 {
 	std::vector<std::string> lines;
-#ifdef NINTENDO
-	std::string filepath(filename);
-#else
 	std::string filepath(datadir);
 	filepath += "/";
 	filepath += filename;
-#endif
 	std::ifstream file(filepath);
 	if ( !file )
 	{

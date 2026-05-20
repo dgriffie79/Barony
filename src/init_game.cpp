@@ -31,6 +31,7 @@
 #include "cppfuncs.hpp"
 #include "Directory.hpp"
 #include "mod_tools.hpp"
+#include "cJSON.h"
 #include "ui/LoadingScreen.hpp"
 #include "ui/GameUI.hpp"
 #include "ui/Text.hpp"
@@ -153,27 +154,8 @@ int initGame()
 	lobbyChatboxMessages.first = NULL;
 	lobbyChatboxMessages.last = NULL;
 
-	// steam stuff
-#ifdef STEAMWORKS
-	cpp_SteamServerWrapper_Instantiate(); //TODO: Remove these wrappers.
-	cpp_SteamServerClientWrapper_Instantiate();
 
-	cpp_SteamServerClientWrapper_OnP2PSessionRequest = &steam_OnP2PSessionRequest;
-	//cpp_SteamServerClientWrapper_OnGameOverlayActivated = &steam_OnGameOverlayActivated;
-	cpp_SteamServerClientWrapper_OnLobbyCreated = &steam_OnLobbyCreated;
-	cpp_SteamServerClientWrapper_OnGameJoinRequested = &steam_OnGameJoinRequested;
-	cpp_SteamServerClientWrapper_OnLobbyEntered = &steam_OnLobbyEntered;
-	cpp_SteamServerClientWrapper_GameServerPingOnServerResponded = &steam_GameServerPingOnServerResponded;
-	cpp_SteamServerClientWrapper_OnLobbyMatchListCallback = &steam_OnLobbyMatchListCallback;
-	cpp_SteamServerClientWrapper_OnP2PSessionConnectFail = &steam_OnP2PSessionConnectFail;
-	cpp_SteamServerClientWrapper_OnLobbyDataUpdate = &steam_OnLobbyDataUpdatedCallback;
- #ifdef USE_EOS
-	cpp_SteamServerClientWrapper_OnRequestEncryptedAppTicket = &steam_OnRequestEncryptedAppTicket;
- #endif //USE_EOS
-#endif
-#ifdef USE_PLAYFAB
-	playfabUser.init();
-#endif
+
 
 	initGameControllers();
 
@@ -188,16 +170,7 @@ int initGame()
 	auto loading_task = std::async(std::launch::async, [&loading_done](){
 		updateLoadingScreen(92);
 		initGameDatafilesAsync(false);
-#ifdef NINTENDO
-		const auto playerMaleNames = BASE_DATA_DIR + std::string("/") + PLAYERNAMES_MALE_FILE;
-		const auto playerFemaleNames = BASE_DATA_DIR + std::string("/") + PLAYERNAMES_FEMALE_FILE;
-        const auto npcMaleNames = BASE_DATA_DIR + std::string("/") + NPCNAMES_MALE_FILE;
-        const auto npcFemaleNames = BASE_DATA_DIR + std::string("/") + NPCNAMES_FEMALE_FILE;
-		randomPlayerNamesMale = getLinesFromDataFile(playerMaleNames);
-		randomPlayerNamesFemale = getLinesFromDataFile(playerFemaleNames);
-        randomNPCNamesMale = getLinesFromDataFile(npcMaleNames);
-        randomNPCNamesFemale = getLinesFromDataFile(npcFemaleNames);
-#endif // NINTENDO
+
 
 		updateLoadingScreen(94);
 
@@ -206,9 +179,7 @@ int initGame()
 		//enabledDLCPack2 = true;
 //#endif
 
-#if defined(USE_EOS) || defined(STEAMWORKS)
-#else
-#ifndef NINTENDO
+
 		if ( PHYSFS_getRealDir("mythsandoutcasts.key") != NULL )
 		{
 			std::string serial = PHYSFS_getRealDir("mythsandoutcasts.key");
@@ -287,8 +258,7 @@ int initGame()
 				FileIO::close(fp);
 			}
 		}
-#endif // !NINTENDO
-#endif
+
 
 		removedEntities.first = NULL;
 		removedEntities.last = NULL;
@@ -442,9 +412,7 @@ int initGame()
 		VoiceChat.init();
 #endif
 #endif
-#ifdef NINTENDO
-		nxPostSDLInit();
-#endif
+
 	}
 
 	return result;
@@ -775,36 +743,6 @@ void deinitGame()
 	list_FreeAll(&lobbyChatboxMessages);
 
 	// steam stuff
-#ifdef STEAMWORKS
-	cpp_SteamServerWrapper_Destroy();
-	cpp_SteamServerClientWrapper_Destroy();
-	if ( currentLobby )
-	{
-		SteamMatchmaking()->LeaveLobby(*static_cast<CSteamID*>(currentLobby));
-		cpp_Free_CSteamID(currentLobby); //TODO: Remove these bodges.
-		currentLobby = NULL;
-	}
-	for ( int c = 0; c < MAXPLAYERS; c++ )
-	{
-		if ( steamIDRemote[c] )
-		{
-			cpp_Free_CSteamID(steamIDRemote[c]);
-			steamIDRemote[c] = NULL;
-		}
-	}
-	for ( int c = 0; c < MAX_STEAM_LOBBIES; c++ )
-	{
-		if ( lobbyIDs[c] )
-		{
-			cpp_Free_CSteamID(lobbyIDs[c]);
-			lobbyIDs[c] = NULL;
-		}
-	}
-#endif
-#if defined USE_EOS
-	EOS.stop();
-	EOS.quit();
-#endif
 
 	//Close game controller
 	/*if (game_controller)
@@ -848,9 +786,6 @@ void deinitGame()
 	}
 
 
-#ifdef USE_PLAYFAB
-	playfabUser.postScoreHandler.deinit();
-#endif
 }
 
 void loadAchievementData(const char* path) {
@@ -872,37 +807,25 @@ void loadAchievementData(const char* path) {
 	static char buf[120000];
 	int count = (int)fp->read(buf, sizeof(buf[0]), sizeof(buf));
 	buf[count] = '\0';
-	rapidjson::StringStream is(buf);
 	FileIO::close(fp);
 
-	rapidjson::Document d;
-	d.ParseStream(is);
+	cJSON* d = cJSON_Parse(buf);
 
-	if (!d.HasMember("achievements") || !d["achievements"].IsObject()) {
+	if (!d || !cJSON_HasObjectItem(d, "achievements") || !cJSON_IsObject(cJSON_GetObjectItem(d, "achievements"))) {
 		printlog("[JSON]: Error: could not parse %s", path);
+		if (d) cJSON_Delete(d);
 		return;
 	}
-	const auto& achievements = d["achievements"].GetObject();
+	cJSON* achievements = cJSON_GetObjectItem(d, "achievements");
 
-	for (const auto& it : achievements) {
-		if (!it.name.IsString()) {
-			printlog("[JSON]: Error: could not parse %s", path);
-			return;
-		}
-		auto achName = it.name.GetString();
-#ifdef NINTENDO
-		if ( !strcmp(achName, "BARONY_ACH_LOCAL_CUSTOMS") )
-		{
-			continue;
-		}
-#endif
-#ifndef STEAMWORKS
+	cJSON* it = nullptr;
+	cJSON_ArrayForEach(it, achievements) {
+		auto achName = it->string;
+
 		if ( !strcmp(achName, "BARONY_ACH_CARTOGRAPHER") )
 		{
 			continue;
 		}
-#endif
-#ifndef USE_PLAYFAB
 		if ( !strcmp(achName, "BARONY_ACH_BLOOM_PLANTED") )
 		{
 			continue;
@@ -923,52 +846,52 @@ void loadAchievementData(const char* path) {
 		{
 			continue;
 		}
-#endif
-		const auto& ach = it.value.GetObject();
 		auto& achData = Compendium_t::achievements[achName];
-		if (ach.HasMember("name") && ach["name"].IsString()) {
-			achData.name = ach["name"].GetString();
+		if (cJSON_HasObjectItem(it, "name") && cJSON_IsString(cJSON_GetObjectItem(it, "name"))) {
+			achData.name = cJSON_GetObjectItem(it, "name")->valuestring;
 		}
-		if (ach.HasMember("description") && ach["description"].IsString()) {
-			achData.desc = ach["description"].GetString();
+		if (cJSON_HasObjectItem(it, "description") && cJSON_IsString(cJSON_GetObjectItem(it, "description"))) {
+			achData.desc = cJSON_GetObjectItem(it, "description")->valuestring;
 		}
-		if (ach.HasMember("hidden") && ach["hidden"].IsBool()) {
-			achData.hidden = ach["hidden"].GetBool();
+		if (cJSON_HasObjectItem(it, "hidden") && cJSON_IsBool(cJSON_GetObjectItem(it, "hidden"))) {
+			achData.hidden = cJSON_IsTrue(cJSON_GetObjectItem(it, "hidden"));
 		}
-		if ( ach.HasMember("category") )
+		if ( cJSON_HasObjectItem(it, "category") )
 		{
-			achData.category = ach["category"].GetString();
+			achData.category = cJSON_GetObjectItem(it, "category")->valuestring;
 		}
-		if ( ach.HasMember("lore_points") )
+		if ( cJSON_HasObjectItem(it, "lore_points") )
 		{
-			achData.lorePoints = ach["lore_points"].GetInt();
+			achData.lorePoints = cJSON_GetObjectItem(it, "lore_points")->valueint;
 		}
 
 		achData.dlcType = Compendium_t::AchievementData_t::ACH_TYPE_NORMAL;
-		if ( ach.HasMember("dlc") )
+		if ( cJSON_HasObjectItem(it, "dlc") )
 		{
-			if ( ach["dlc"].IsString() )
+			cJSON* dlc = cJSON_GetObjectItem(it, "dlc");
+			if ( cJSON_IsString(dlc) )
 			{
-				if ( !strcmp(ach["dlc"].GetString(), "myths_outcasts") )
+				if ( !strcmp(dlc->valuestring, "myths_outcasts") )
 				{
 					achData.dlcType = Compendium_t::AchievementData_t::ACH_TYPE_DLC1;
 				}
-				else if ( !strcmp(ach["dlc"].GetString(), "legends_pariahs") )
+				else if ( !strcmp(dlc->valuestring, "legends_pariahs") )
 				{
 					achData.dlcType = Compendium_t::AchievementData_t::ACH_TYPE_DLC2;
 				}
-				else if ( !strcmp(ach["dlc"].GetString(), "deserters_disciples") )
+				else if ( !strcmp(dlc->valuestring, "deserters_disciples") )
 				{
 					achData.dlcType = Compendium_t::AchievementData_t::ACH_TYPE_DLC3;
 				}
 			}
-			else if ( ach["dlc"].IsArray() )
+			else if ( cJSON_IsArray(dlc) )
 			{
-				for ( auto it = ach["dlc"].Begin(); it != ach["dlc"].End(); ++it )
+				cJSON* dlcItr = nullptr;
+				cJSON_ArrayForEach(dlcItr, dlc)
 				{
-					if ( it->IsString() )
+					if ( cJSON_IsString(dlcItr) )
 					{
-						if ( !strcmp(it->GetString(), "myths_outcasts") )
+						if ( !strcmp(dlcItr->valuestring, "myths_outcasts") )
 						{
 							if ( achData.dlcType == Compendium_t::AchievementData_t::ACH_TYPE_DLC2 )
 							{
@@ -979,7 +902,7 @@ void loadAchievementData(const char* path) {
 								achData.dlcType = Compendium_t::AchievementData_t::ACH_TYPE_DLC1;
 							}
 						}
-						else if ( !strcmp(it->GetString(), "legends_pariahs") )
+						else if ( !strcmp(dlcItr->valuestring, "legends_pariahs") )
 						{
 							if ( achData.dlcType == Compendium_t::AchievementData_t::ACH_TYPE_DLC1 )
 							{
@@ -990,7 +913,7 @@ void loadAchievementData(const char* path) {
 								achData.dlcType = Compendium_t::AchievementData_t::ACH_TYPE_DLC2;
 							}
 						}
-						else if ( !strcmp(it->GetString(), "deserters_disciples") )
+						else if ( !strcmp(dlcItr->valuestring, "deserters_disciples") )
 						{
 							if ( achData.dlcType == Compendium_t::AchievementData_t::ACH_TYPE_DLC1_DLC2 )
 							{
@@ -1006,6 +929,7 @@ void loadAchievementData(const char* path) {
 			}
 		}
 	}
+	cJSON_Delete(d);
 
 	for ( int statNum = 0; statNum < NUM_STEAM_STATISTICS; ++statNum )
 	{
@@ -1025,27 +949,6 @@ void loadAchievementData(const char* path) {
 
 void sortAchievementsForDisplay()
 {
-#ifdef STEAMWORKS
-	if ( Compendium_t::AchievementData_t::achievementsNeedFirstData )
-	{
-		//if ( SteamUser()->BLoggedOn() )
-		{
-			Compendium_t::AchievementData_t::achievementsNeedFirstData = false;
-
-			for ( auto& achData : Compendium_t::achievements )
-			{
-				Uint32 time = 0;
-				bool unlocked = false;
-				SteamUserStats()->GetAchievementAndUnlockTime(achData.first.c_str(), &achData.second.unlocked, &time);
-				if ( achData.second.unlocked )
-				{
-					achData.second.unlockTime = time;
-				}
-			}
-		}
-	}
-#endif
-
 	Compendium_t::AchievementData_t::achievementsNeedResort = false;
 
 	// sort achievements list

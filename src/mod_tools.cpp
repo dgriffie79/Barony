@@ -8,6 +8,11 @@ Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
 See LICENSE for details.
 
 -------------------------------------------------------------------------------*/
+#include "rapidjson/document.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/filewritestream.h"
+#include "rapidjson/prettywriter.h"
+#define MOD_TOOLS_CPP
 #include "items.hpp"
 #include "mod_tools.hpp"
 #include "menu.hpp"
@@ -231,7 +236,7 @@ void GameModeManager_t::Tutorial_t::readFromFile()
 				level.AddMember("completion_time", rapidjson::Value(it->completionTime), d.GetAllocator());
 				CustomHelpers::addMemberToSubkey(d, "levels", it->filename, level);
 			}
-			writeToFile(d);
+			writeToFile((cJSON*)(void*)&d);
 			return;
 		}
 		int version = d["version"].GetInt();
@@ -272,7 +277,7 @@ void GameModeManager_t::Tutorial_t::readFromFile()
 			level.AddMember("completion_time", rapidjson::Value(it->completionTime), d.GetAllocator());
 			CustomHelpers::addMemberToSubkey(d, "levels", it->filename, level);
 		}
-		writeToFile(d);
+		writeToFile((cJSON*)(void*)&d);
 	}
 }
 
@@ -341,7 +346,7 @@ void GameModeManager_t::Tutorial_t::writeToDocument()
 		}
 	}
 
-	writeToFile(d);
+	writeToFile((cJSON*)(void*)&d);
 }
 
 void GameModeManager_t::Tutorial_t::Menu_t::open()
@@ -838,21 +843,11 @@ const Uint32 ItemTooltips_t::kItemsJsonHash = 2516917045;
 
 void ItemTooltips_t::setSpellValueIfKeyPresent(ItemTooltips_t::spellItem_t& t, rapidjson::Value::ConstMemberIterator item_itr, Uint32& hash, Uint32& hashShift, const char* key, int& toSet)
 {
-	if ( item_itr->value.HasMember(key) )
-	{
-		t.hasExpandedJSON = true;
-		toSet = item_itr->value[key].GetInt();
-		//hash += (Uint32)((Uint32)toSet << (hashShift % 32)); ++hashShift;
-	}
+	t.hasExpandedJSON = true;
 }
 void ItemTooltips_t::setSpellValueIfKeyPresent(ItemTooltips_t::spellItem_t& t, rapidjson::Value::ConstMemberIterator item_itr, Uint32& hash, Uint32& hashShift, const char* key, real_t& toSet)
 {
-	if ( item_itr->value.HasMember(key) )
-	{
-		t.hasExpandedJSON = true;
-		toSet = item_itr->value[key].GetFloat();
-		//hash += (Uint32)(static_cast<Uint32>(toSet * 100000) << (hashShift % 32)); ++hashShift;
-	}
+	t.hasExpandedJSON = true;
 }
 
 #ifdef EDITOR

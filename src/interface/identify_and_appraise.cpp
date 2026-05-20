@@ -19,6 +19,7 @@
 #include "interface.hpp"
 #include "../scores.hpp"
 #include "../mod_tools.hpp"
+#include "../cJSON.h"
 
 //Identify GUI definitions.
 SDL_Surface* identifyGUI_img;
@@ -605,44 +606,46 @@ void Player::Inventory_t::Appraisal_t::readFromFile()
 	static char buf[32000];
 	int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	rapidjson::StringStream is(buf);
 	FileIO::close(fp);
 
-	rapidjson::Document d;
-	d.ParseStream(is);
-	if ( !d.IsObject() )
+	cJSON* d = cJSON_Parse(buf);
+	if ( !d )
 	{
 		return;
 	}
-	if ( !d.HasMember("version") 
-		|| !d.HasMember("appraisal_times") 
-		|| !d.HasMember("appraisal_tables")
-		|| !d.HasMember("fast_time_seconds") 
-		|| !d.HasMember("per_stat_mult") )
+	if ( !cJSON_HasObjectItem(d, "version") 
+		|| !cJSON_HasObjectItem(d, "appraisal_times") 
+		|| !cJSON_HasObjectItem(d, "appraisal_tables")
+		|| !cJSON_HasObjectItem(d, "fast_time_seconds") 
+		|| !cJSON_HasObjectItem(d, "per_stat_mult") )
 	{
 		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
 
 	appraisal_time_points.clear();
 	appraisal_tables.clear();
 
-	fastTimeAppraisal = d["fast_time_seconds"].GetInt() * TICKS_PER_SECOND;
-	perStatMult = d["per_stat_mult"].GetInt();
+	fastTimeAppraisal = cJSON_GetObjectItem(d, "fast_time_seconds")->valueint * TICKS_PER_SECOND;
+	perStatMult = cJSON_GetObjectItem(d, "per_stat_mult")->valueint;
 
-	for ( auto itr = d["appraisal_times"].Begin(); itr != d["appraisal_times"].End(); ++itr )
+	cJSON* appraisal_times = cJSON_GetObjectItem(d, "appraisal_times");
+	cJSON* itr = nullptr;
+	cJSON_ArrayForEach(itr, appraisal_times)
 	{
-		int value = (*itr)["value"].GetInt();
-		int slow_time = (*itr)["slow_time_seconds"].GetInt() * TICKS_PER_SECOND;
+		int value = cJSON_GetObjectItem(itr, "value")->valueint;
+		int slow_time = cJSON_GetObjectItem(itr, "slow_time_seconds")->valueint * TICKS_PER_SECOND;
 
 		appraisal_time_points.push_back(std::make_pair(value, slow_time));
 	}
 
-	for ( auto itr = d["appraisal_tables"].Begin(); itr != d["appraisal_tables"].End(); ++itr )
+	cJSON* appraisal_tables_arr = cJSON_GetObjectItem(d, "appraisal_tables");
+	cJSON_ArrayForEach(itr, appraisal_tables_arr)
 	{
-		int skill = (*itr)["skill"].GetInt();
-		int gold_value_limit = (*itr)["gold_value_limit"].GetInt();
-		int fast_time_gold = (*itr)["fast_time_gold"].GetInt();
+		int skill = cJSON_GetObjectItem(itr, "skill")->valueint;
+		int gold_value_limit = cJSON_GetObjectItem(itr, "gold_value_limit")->valueint;
+		int fast_time_gold = cJSON_GetObjectItem(itr, "fast_time_gold")->valueint;
 
 		appraisal_tables.push_back(AppraisalBreakpoint_t());
 		auto& table = appraisal_tables.back();
@@ -651,6 +654,7 @@ void Player::Inventory_t::Appraisal_t::readFromFile()
 		table.goldValueLimit = gold_value_limit;
 		table.fastTimeGold = fast_time_gold;
 	}
+	cJSON_Delete(d);
 }
 
 int Player::Inventory_t::Appraisal_t::getAppraisalTime(Item* item)

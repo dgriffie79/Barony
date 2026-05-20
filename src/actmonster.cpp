@@ -29,6 +29,7 @@
 #include "mod_tools.hpp"
 #include "ui/MainMenu.hpp"
 #include "menu.hpp"
+#include "cJSON.h"
 
 float limbs[NUMMONSTERS][30][3];
 
@@ -2525,8 +2526,7 @@ void printFollowerTableForSkillsheet(int monsterclicked, Entity* my, Stat* mySta
 
 	outputList += "}";
 
-	rapidjson::Document d;
-	d.Parse(outputList.c_str());
+	cJSON* d = cJSON_Parse(outputList.c_str());
 
 	std::string outputPath = outputdir;
 	outputPath.append(PHYSFS_getDirSeparator());
@@ -2536,12 +2536,13 @@ void printFollowerTableForSkillsheet(int monsterclicked, Entity* my, Stat* mySta
 	File* fp = FileIO::open(outputPath.c_str(), "wb");
 	if ( !fp )
 	{
+		cJSON_Delete(d);
 		return;
 	}
-	rapidjson::StringBuffer os;
-	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-	d.Accept(writer);
-	fp->write(os.GetString(), sizeof(char), os.GetSize());
+	char* json = cJSON_Print(d);
+	cJSON_Delete(d);
+	fp->write(json, sizeof(char), strlen(json));
+	free(json);
 
 	FileIO::close(fp);
 	messagePlayer(0, MESSAGE_MISC, "Exported file: %s", outputPath.c_str());

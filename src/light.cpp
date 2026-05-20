@@ -176,8 +176,7 @@ light_t* lightSphere(int index, Sint32 x, Sint32 y, Sint32 radius, float r, floa
 	return light;
 }
 
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
+#include "cJSON.h"
 #include "files.hpp"
 
 std::unordered_map<std::string, LightDef> lightDefs;
@@ -222,35 +221,51 @@ bool loadLights(bool forceLoadBaseDirectory) {
     char buf[65536];
     int count = (int)fp->read(buf, sizeof(buf[0]), sizeof(buf));
     buf[count] = '\0';
-    rapidjson::StringStream is(buf);
     FileIO::close(fp);
 
-    rapidjson::Document d;
-    d.ParseStream(is);
-    
-    const auto& lights = d["lights"];
-    if (lights.IsObject()) {
-        for (const auto& it : lights.GetObject()) {
+    cJSON* doc = cJSON_Parse(buf);
+    if (!doc) {
+        printlog("[JSON]: Error: Failed to parse lights.json: %s", cJSON_GetErrorPtr());
+        return false;
+    }
+
+    cJSON* lights = cJSON_GetObjectItem(doc, "lights");
+    if (cJSON_IsObject(lights)) {
+        cJSON* lightItem = NULL;
+        cJSON_ArrayForEach(lightItem, lights) {
             LightDef def;
-            const auto& name = it.name.GetString();
-            const auto& radius = it.value["radius"]; def.radius = radius.GetInt();
-            const auto& r = it.value["r"]; def.r = r.GetFloat();
-            const auto& g = it.value["g"]; def.g = g.GetFloat();
-            const auto& b = it.value["b"]; def.b = b.GetFloat();
-            if ( it.value.HasMember("a") )
-            {
-                def.a = it.value["a"].GetFloat();
-            }
-            else
-            {
+            const char* name = lightItem->string;
+
+            cJSON* radiusItem = cJSON_GetObjectItem(lightItem, "radius");
+            def.radius = radiusItem ? radiusItem->valueint : 0;
+
+            cJSON* rItem = cJSON_GetObjectItem(lightItem, "r");
+            def.r = rItem ? (float)rItem->valuedouble : 0.0f;
+
+            cJSON* gItem = cJSON_GetObjectItem(lightItem, "g");
+            def.g = gItem ? (float)gItem->valuedouble : 0.0f;
+
+            cJSON* bItem = cJSON_GetObjectItem(lightItem, "b");
+            def.b = bItem ? (float)bItem->valuedouble : 0.0f;
+
+            cJSON* aItem = cJSON_GetObjectItem(lightItem, "a");
+            if (cJSON_IsNumber(aItem)) {
+                def.a = (float)aItem->valuedouble;
+            } else {
                 def.a = 0.f;
             }
-            const auto& exp = it.value["falloff_exp"]; def.falloff_exp = exp.GetFloat();
-            const auto& shadows = it.value["shadows"]; def.shadows = shadows.GetBool();
+
+            cJSON* expItem = cJSON_GetObjectItem(lightItem, "falloff_exp");
+            def.falloff_exp = expItem ? (float)expItem->valuedouble : 1.0f;
+
+            cJSON* shadowsItem = cJSON_GetObjectItem(lightItem, "shadows");
+            def.shadows = cJSON_IsTrue(shadowsItem);
+
             lightDefs[name] = def;
         }
     }
-    
+
+    cJSON_Delete(doc);
     return true;
 }
 

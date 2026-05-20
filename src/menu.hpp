@@ -95,33 +95,10 @@ void buttonGamemodsOpenModifyExistingWindow(button_t* my);
 void buttonGamemodsStartModdedGame(button_t* my);
 void buttonInviteFriends(button_t* my);
 
-#ifdef STEAMWORKS
-void buttonGamemodsPrepareWorkshopItemUpload(button_t* my);
-void buttonGamemodsSetWorkshopItemFields(button_t* my);
-void buttonGamemodsStartUploadItem(button_t* my);
-void buttonGamemodsGetSubscribedItems(button_t* my);
-void buttonGamemodsOpenSubscribedWindow(button_t* my);
-void buttonGamemodsOpenUploadWindow(button_t* my);
-void buttonGamemodsGetMyWorkshopItems(button_t* my);
-void buttonGamemodsModifyExistingWorkshopItemFields(button_t* my);
-void buttonGamemodsCancelModifyFileContents(button_t* my);
-void buttonSteamLobbyBrowserJoinGame(button_t* my);
-void buttonSteamLobbyBrowserRefresh(button_t* my);
-void buttonGamemodsSubscribeToHostsModFiles(button_t* my);
-void buttonGamemodsMountHostsModFiles(button_t* my);
-void* cpp_SteamMatchmaking_GetLobbyOwner(void* steamIDLobby);
-void* cpp_SteamMatchmaking_GetLobbyMember(void* steamIDLobby, int index);
-void openSteamLobbyWaitWindow(button_t* my);
-#elif defined USE_EOS
-void buttonSteamLobbyBrowserJoinGame(button_t* my);
-void buttonSteamLobbyBrowserRefresh(button_t* my);
-void openSteamLobbyWaitWindow(button_t* my);
-#else
 void windowEnterSerialPrompt();
 void windowSerialResult(int success);
 size_t serialHash(const std::string& input);
 extern char serialInputText[64];
-#endif
 
 #define SLIDERFONT font12x12_bmp
 
@@ -174,17 +151,7 @@ bool gamemodsMountAllExistingPaths();
 //extern bool gamemods_modelsListRequiresReload;
 //extern bool gamemods_soundListRequiresReload;
 //extern bool gamemods_modPreload;
-#ifdef STEAMWORKS
-void gamemodsWorkshopPreloadMod(int fileID, std::string modTitle);
-void gamemodsWindowUploadInit(bool creatingNewItem);
-void gamemodsSubscribedItemsInit();
-void gamemodsDrawWorkshopItemTagToggle(std::string tagname, int x, int y);
-bool gamemodsCheckIfSubscribedAndDownloadedFileID(uint64 fileID);
-bool gamemodsCheckFileIDInLoadedPaths(uint64 fileID);
-bool gamemodsIsClientLoadOrderMatchingHost(std::vector<std::string> serverModList);
-extern std::vector<std::pair<std::string, uint64>> gamemods_workshopLoadedFileIDMap;
-extern std::unordered_set<uint64> betaPlayers;
-#endif // STEAMWORKS
+
 bool drawClickableButton(int padx, int pady, int padw, int padh, Uint32 btnColor);
 extern bool scoreDisplayMultiplayer;
 extern std::vector<std::tuple<int, int, int, std::string>> savegamesList; // tuple - last modified, multiplayer type, file entry, and description of save game.

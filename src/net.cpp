@@ -33,6 +33,7 @@
 #include "mod_tools.hpp"
 #include "lobbies.hpp"
 #include "ui/MainMenu.hpp"
+#include "cJSON.h"
 #include "ui/LoadingScreen.hpp"
 #include "ui/GameUI.hpp"
 #include "interface/ui.hpp"
@@ -6348,23 +6349,25 @@ static std::unordered_map<Uint32, void(*)()> clientPacketHandlers = {
 				str += Compendium_t::Events_t::clientReceiveData[clientSequence][i];
 			}
 
-			rapidjson::Document d;
-			d.Parse(str.c_str());
-			if ( !d.HasParseError() )
+			cJSON* d = cJSON_Parse(str.c_str());
+			if ( d )
 			{
-				if ( d.HasMember("seq") && d.HasMember("item") )
+				if ( cJSON_HasObjectItem(d, "seq") && cJSON_HasObjectItem(d, "item") )
 				{
-					if ( d["seq"].GetInt() == clientSequence )
+					if ( cJSON_GetObjectItem(d, "seq")->valueint == clientSequence )
 					{
-						for ( auto itr = d["item"].MemberBegin(); itr != d["item"].MemberEnd(); ++itr )
+						cJSON* item = cJSON_GetObjectItem(d, "item");
+						cJSON* itr = nullptr;
+						cJSON_ArrayForEach(itr, item)
 						{
-							int id = std::stoi(itr->name.GetString());
+							int id = std::stoi(itr->string);
 							if ( id >= 0 && id < Compendium_t::EventTags::CPDM_EVENT_TAGS_MAX )
 							{
-								for ( auto itr2 = itr->value.MemberBegin(); itr2 != itr->value.MemberEnd(); ++itr2 )
+								cJSON* itr2 = nullptr;
+								cJSON_ArrayForEach(itr2, itr)
 								{
-									int itemType = std::stoi(itr2->name.GetString());
-									Sint32 value = itr2->value.GetInt();
+									int itemType = std::stoi(itr2->string);
+									Sint32 value = itr2->valueint;
 									if ( itemType >= Compendium_t::Events_t::kEventMonsterOffset && itemType < Compendium_t::Events_t::kEventMonsterOffset + 1000 )
 									{
 										Compendium_t::Events_t::eventUpdateMonster(0, (Compendium_t::EventTags)id, nullptr, value, false, itemType);
@@ -6400,6 +6403,7 @@ static std::unordered_map<Uint32, void(*)()> clientPacketHandlers = {
 						}
 					}
 				}
+				cJSON_Delete(d);
 			}
 			Compendium_t::Events_t::clientReceiveData.erase(clientSequence);
 

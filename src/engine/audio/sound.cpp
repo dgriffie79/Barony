@@ -742,16 +742,7 @@ int initOPENAL()
 
 	initialized = 1;
 
-#ifdef NINTENDO
-	//TODO: Do we also want this on other platforms?
-	// print source limit
-	ALCint size = -1;
-	alcGetIntegerv(openal_device, ALC_MONO_SOURCES, 1, &size);
-	printlog("openAL: max mono sources: %d", size);
-	size = -1;
-	alcGetIntegerv(openal_device, ALC_STEREO_SOURCES, 1, &size);
-	printlog("openAL: max stereo sources: %d", size);
-#endif // NINTENDO
+
 
 	return 1;
 }
@@ -1734,19 +1725,12 @@ void physfsReloadMusic(bool &introMusicChanged, bool reloadAll) //TODO: This sho
 #ifndef EDITOR
 						if ( index >= 21 && index < 21 + NUMENSEMBLEMUSIC * 5 )
 						{
-#ifdef NINTENDO
-							if ( !ensembleSounds.firstTimeSetup )
-							{
-								continue;
-							}
-#endif
+
 
 							ensembleNeedsUpdate = true;
 							int c = (index - 21) % NUMENSEMBLEMUSIC;
 							FMOD_MODE flags = FMOD_3D | FMOD_LOOP_NORMAL | FMOD_NONBLOCKING;
-#ifdef NINTENDO
-							flags |= FMOD_NONBLOCKING;
-#endif
+
 							if ( index >= 21 + NUMENSEMBLEMUSIC * 0 && index < 21 + NUMENSEMBLEMUSIC * 1 )
 							{
 								fmod_result = ensembleSounds.exploreChannel[c] ? ensembleSounds.exploreChannel[c]->stop() : FMOD_OK;

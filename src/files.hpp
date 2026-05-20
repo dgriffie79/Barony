@@ -205,13 +205,8 @@ private:
 	virtual void close() = 0;
 };
 
-#ifdef NINTENDO
- #include "nintendo/filenx.hpp"
- typedef FileNX File;
-#else
  #include "engine/filepc.hpp"
  typedef FilePC File;
-#endif
 
 //Don't create a FileBase or derivative class directly, use this to get one...
 class FileIO {
@@ -238,9 +233,6 @@ public:
 		default: fileMode = FileBase::FileMode::INVALID; break;
 		}
 
-#ifdef NINTENDO
-		return FileNX::FileIO_NintendoOpen(path, mode, fileMode);
-#else
         // note: on PC, files are ALWAYS opened in binary mode
 		FILE* fp;
 		switch (fileMode) {
@@ -253,7 +245,6 @@ public:
 		} else {
 			return nullptr;
 		}
-#endif
 	}
 
 	// close the given file

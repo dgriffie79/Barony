@@ -1,38 +1,37 @@
 #include "main.hpp"
 #include "files.hpp"
 #include "json.hpp"
-
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/prettywriter.h"
-#include "rapidjson/error/en.h"
+#include "cJSON.h"
 
 #include <cassert>
+#include <vector>
 
 const Uint32 BinaryFormatTag = *"spff";
 
+struct WriterStackEntry {
+	cJSON* obj;
+	const char* name;
+};
+
 class JsonFileWriter : public FileInterface {
 public:
-
 	JsonFileWriter(EFileFormat format)
-	: buffer()
-	, writer(buffer)
+	: root(nullptr)
+	, current(nullptr)
+	, currentName(nullptr)
+	, compact(format == EFileFormat::Json_Compact)
 	{
-		if ( format == EFileFormat::Json_Compact )
-		{
-			writer.SetIndent(' ', 2);
-			writer.SetFormatOptions(rapidjson::PrettyFormatOptions::kFormatSingleLineArray);
-		}
+	}
+
+	~JsonFileWriter() {
+		if (root) cJSON_Delete(root);
 	}
 
 	static bool writeObject(File* file, const FileHelper::SerializationFunc& serialize, EFileFormat format) {
 		JsonFileWriter jfw(format);
 
-        bool result = false;
-		if (jfw.beginObject()) {
-		    result = serialize(&jfw);
-		    jfw.endObject();
-		}
+		bool result = serialize(&jfw);
+
 		jfw.save(file);
 		return result;
 	}
@@ -40,59 +39,124 @@ public:
 	virtual bool isReading() const override { return false; }
 
 	virtual bool beginObject() override {
-		return writer.StartObject();
+		cJSON* obj = cJSON_CreateObject();
+		if (!root) {
+			root = obj;
+			current = obj;
+		} else {
+			stack.push_back({current, currentName});
+			current = obj;
+		}
+		currentName = nullptr;
+		return true;
 	}
+
 	virtual void endObject() override {
-		writer.EndObject();
+		if (stack.empty()) {
+			return;
+		}
+		cJSON* parent = stack.back().obj;
+		const char* name = stack.back().name;
+		stack.pop_back();
+		if (name) {
+			cJSON_AddItemToObject(parent, name, current);
+		} else if (cJSON_IsArray(parent)) {
+			cJSON_AddItemToArray(parent, current);
+		}
+		current = parent;
+		currentName = nullptr;
 	}
 
 	virtual bool beginArray(Uint32 & size) override {
-		return writer.StartArray();
+		cJSON* arr = cJSON_CreateArray();
+		if (!root) {
+			root = arr;
+			current = arr;
+		} else {
+			stack.push_back({current, currentName});
+			current = arr;
+		}
+		currentName = nullptr;
+		return true;
 	}
+
 	virtual void endArray() override {
-		writer.EndArray();
+		if (stack.empty()) return;
+		cJSON* parent = stack.back().obj;
+		const char* name = stack.back().name;
+		stack.pop_back();
+		if (name) {
+			cJSON_AddItemToObject(parent, name, current);
+		}
+		current = parent;
+		currentName = nullptr;
 	}
 
 	virtual void propertyName(const char * fieldName) override {
-		writer.Key(fieldName);
+		currentName = fieldName;
 	}
 
 	virtual bool value(Uint32& value) override {
-		return writer.Uint(value);
+		return addItem(cJSON_CreateNumber((double)value));
 	}
 	virtual bool value(Sint32& value) override {
-		return writer.Int(value);
+		return addItem(cJSON_CreateNumber((double)value));
 	}
 	virtual bool value(float& value) override {
-		return writer.Double(value);
+		return addItem(cJSON_CreateNumber((double)value));
 	}
 	virtual bool value(double& value) override {
-		return writer.Double(value);
+		return addItem(cJSON_CreateNumber(value));
 	}
 	virtual bool value(bool& value) override {
-		return writer.Bool(value);
+		return addItem(cJSON_CreateBool((cJSON_bool)value));
 	}
 	virtual bool value(std::string& value) override {
-		return writer.String(value.c_str());
+		return addItem(cJSON_CreateString(value.c_str()));
 	}
 
 private:
 
-	void save(File* file) {
-		buffer.Flush();
-		file->puts(buffer.GetString());
-#ifdef NINTENDO
-		file->putc('\0');
-#endif
+	bool addItem(cJSON* item) {
+		if (!item || !current) return false;
+		if (currentName) {
+			cJSON_AddItemToObject(current, currentName, item);
+			currentName = nullptr;
+		} else if (cJSON_IsArray(current)) {
+			cJSON_AddItemToArray(current, item);
+		} else {
+			cJSON_Delete(item);
+			return false;
+		}
+		return true;
 	}
 
-	File * fp;
-	rapidjson::StringBuffer buffer;
-	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer;
+	void save(File* file) {
+		if (!root) return;
+		char* json = compact ? cJSON_PrintUnformatted(root) : cJSON_Print(root);
+		if (json) {
+			file->puts(json);
+			cJSON_free(json);
+		}
+	}
+
+	cJSON* root;
+	cJSON* current;
+	std::vector<WriterStackEntry> stack;
+	const char* currentName = nullptr;
+	bool compact;
+};
+
+struct ReaderStackEntry {
+	cJSON* obj;
+	int arrayIndex;
 };
 
 class JsonFileReader : public FileInterface {
 public:
+	~JsonFileReader() {
+		if (doc) cJSON_Delete(doc);
+	}
 
 	static bool readObject(File * fp, const FileHelper::SerializationFunc & serialize) {
 		JsonFileReader jfr;
@@ -101,151 +165,140 @@ public:
 			return false;
 		}
 
-		if (jfr.beginObject()) {
-		    bool result = serialize(&jfr);
-		    jfr.endObject();
-		    return result;
-		} else {
-		    return false;
-		}
+		bool result = serialize(&jfr);
+
+		return result;
 	}
 
 	virtual bool isReading() const override { return true; }
 
 	virtual bool beginObject() override {
-		auto cv = GetCurrentValue();
-		if (cv && cv->IsObject()) {
-		    DocIterator di;
-		    di.it = cv;
-		    di.index = -1;
-		    stack.push_back(di);
-		    return true;
-		} else {
-		    return false;
+		if (stack.empty()) {
+			if (doc && cJSON_IsObject(doc)) {
+				stack.push_back({doc, -1});
+				return true;
+			}
+			return false;
 		}
+		cJSON* child = getCurrentChild();
+		if (child && cJSON_IsObject(child)) {
+			stack.push_back({child, -1});
+			return true;
+		}
+		return false;
 	}
 
 	virtual void endObject() override {
-	    if (!stack.empty()) {
-		    stack.pop_back();
+		if (!stack.empty()) {
+			stack.pop_back();
 		}
 	}
 
 	virtual bool beginArray(Uint32 & size) override {
-		auto cv = GetCurrentValue();
-		if (cv && cv->IsArray()) {
-		    DocIterator di;
-		    di.it = cv;
-		    di.index = 0;
-		    stack.push_back(di);
-		    size = di.it->GetArray().Size();
-		    return true;
-		} else {
-		    return false;
+		cJSON* arr = getCurrentChild();
+		if (arr && cJSON_IsArray(arr)) {
+			stack.push_back({arr, 0});
+			size = cJSON_GetArraySize(arr);
+			return true;
 		}
+		return false;
 	}
 
 	virtual void endArray() override {
-	    if (!stack.empty()) {
-		    stack.pop_back();
+		if (!stack.empty()) {
+			stack.pop_back();
 		}
 	}
+
 	virtual void propertyName(const char * fieldName) override {
 		propName = fieldName;
 	}
+
 	virtual bool value(Uint32& value) override {
-		auto cv = GetCurrentValue();
-		if (cv && cv->IsUint()) {
-		    value = cv->GetUint();
-		    return true;
-		} else {
-		    return false;
-		}
-	}
-	virtual bool value(Sint32& value) override {
-		auto cv = GetCurrentValue();
-		if (cv && cv->IsInt()) {
-		    value = cv->GetInt();
-		    return true;
-		} else {
-		    return false;
-		}
-	}
-	virtual bool value(float& value) override {
-		auto cv = GetCurrentValue();
-		if (cv && cv->IsFloat()) {
-		    value = cv->GetFloat();
-		    return true;
-		} else {
-		    return false;
-		}
-	}
-	virtual bool value(double& value) override {
-		auto cv = GetCurrentValue();
-		if (cv && cv->IsDouble()) {
-		    value = cv->GetDouble();
-		    return true;
-		} else {
-		    return false;
-		}
-	}
-	virtual bool value(bool& value) override {
-		auto cv = GetCurrentValue();
-		if (cv && cv->IsBool()) {
-		    value = cv->GetBool();
-		    return true;
-		} else {
-		    return false;
-		}
-	}
-	virtual bool value(std::string& value) override {
-		auto cv = GetCurrentValue();
-		if (cv && cv->IsString()) {
-			value = cv->GetString();
+		cJSON* item = getCurrentChild();
+		if (item && cJSON_IsNumber(item)) {
+			value = (Uint32)item->valuedouble;
 			return true;
-		} else {
-		    return false;
 		}
+		return false;
+	}
+
+	virtual bool value(Sint32& value) override {
+		cJSON* item = getCurrentChild();
+		if (item && cJSON_IsNumber(item)) {
+			value = (Sint32)item->valuedouble;
+			return true;
+		}
+		return false;
+	}
+
+	virtual bool value(float& value) override {
+		cJSON* item = getCurrentChild();
+		if (item && cJSON_IsNumber(item)) {
+			value = (float)item->valuedouble;
+			return true;
+		}
+		return false;
+	}
+
+	virtual bool value(double& value) override {
+		cJSON* item = getCurrentChild();
+		if (item && cJSON_IsNumber(item)) {
+			value = item->valuedouble;
+			return true;
+		}
+		return false;
+	}
+
+	virtual bool value(bool& value) override {
+		cJSON* item = getCurrentChild();
+		if (item && cJSON_IsBool(item)) {
+			value = cJSON_IsTrue(item) ? true : false;
+			return true;
+		}
+		return false;
+	}
+
+	virtual bool value(std::string& value) override {
+		cJSON* item = getCurrentChild();
+		if (item && cJSON_IsString(item)) {
+			value = item->valuestring;
+			return true;
+		}
+		return false;
 	}
 
 protected:
 
-	rapidjson::Value::ConstValueIterator GetCurrentValue() {
+	cJSON* getCurrentChild() {
 		if (stack.empty()) {
-		    if (propName == nullptr) {
-			    return &doc;
-		    } else {
-		        return nullptr;
-		    }
-		}
-
-		DocIterator& di = stack.back();
-		if (di.it->IsArray()) {
-			if (di.index >= 0) {
-			    return &di.it->GetArray()[di.index++];
-			} else {
-			    return nullptr;
+			if (propName && doc) {
+				cJSON* result = cJSON_GetObjectItem(doc, propName);
+				propName = nullptr;
+				return result;
 			}
+			return doc;
 		}
 
-		if (propName != nullptr) {
-		    rapidjson::Value::ConstValueIterator result;
-		    if ((*di.it).HasMember(propName)) {
-		        result = &(*di.it)[propName];
-		    } else {
-		        result = nullptr;
-		    }
-		    propName = nullptr;
-		    return result;
-		} else {
-		    return nullptr;
+		ReaderStackEntry& top = stack.back();
+		if (cJSON_IsArray(top.obj)) {
+			if (top.arrayIndex >= 0) {
+				return cJSON_GetArrayItem(top.obj, top.arrayIndex++);
+			}
+			return nullptr;
 		}
+
+		if (propName) {
+			cJSON* result = cJSON_GetObjectItem(top.obj, propName);
+			propName = nullptr;
+			return result;
+		}
+
+		return top.obj;
 	}
 
 	bool readAllFileData(File * fp) {
 		long size = fp->size();
-
-		// reserve an extra byte for the null terminator
 		char * data = (char *)calloc(sizeof(char), size + 1);
 		assert(data);
 
@@ -256,29 +309,21 @@ protected:
 			return false;
 		}
 
-		// null terminate
 		data[size] = 0;
-
-		rapidjson::ParseResult result = doc.Parse(data);
-
+		doc = cJSON_Parse(data);
 		free(data);
 
-		if (!result) {
-			printlog("JsonFileReader: parse error: %s (%d)", rapidjson::GetParseError_En(result.Code()), result.Offset());
+		if (!doc) {
+			printlog("JsonFileReader: parse error: %s", cJSON_GetErrorPtr());
 			return false;
 		}
 
 		return true;
 	}
 
-	struct DocIterator {
-		rapidjson::Value::ConstValueIterator it;
-		Uint32 index;
-	};
-
-	rapidjson::Document doc;
-	const char * propName = nullptr;
-	std::vector<DocIterator> stack;
+	cJSON* doc = nullptr;
+	const char* propName = nullptr;
+	std::vector<ReaderStackEntry> stack;
 };
 
 class BinaryFileWriter : public FileInterface {
@@ -298,18 +343,18 @@ public:
 		bfw.writeHeader();
 
 		if (bfw.beginObject()) {
-		    bool result = serialize(&bfw);
-		    bfw.endObject();
-		    return result;
+			bool result = serialize(&bfw);
+			bfw.endObject();
+			return result;
 		} else {
-		    return false;
+			return false;
 		}
 	}
 
 	virtual bool isReading() const override { return false; }
 
 	virtual bool beginObject() override {
-	    return true;
+		return true;
 	}
 
 	virtual void endObject() override {
@@ -356,7 +401,7 @@ private:
 		result = fp->write(&len, sizeof(len), 1) == 1 ? result : false;
 		if (len) {
 			result = fp->write(v.c_str(), sizeof(char), len) == len ?
-			    result : false;
+				result : false;
 		}
 		return result;
 	}
@@ -389,7 +434,7 @@ public:
 	virtual bool isReading() const override { return true; }
 
 	virtual bool beginObject() override {
-	    return true;
+		return true;
 	}
 
 	virtual void endObject() override {
@@ -457,7 +502,7 @@ private:
 		if (len) {
 			v.reserve(len);
 			read = fp->read(&v[0u], sizeof(char), len);
-		    result = read == len ? result : false;
+			result = read == len ? result : false;
 		}
 
 		return result;
@@ -479,7 +524,6 @@ static EFileFormat GetFileFormat(File * file) {
 	}
 }
 
-//TODO: NX PORT: Update for the Switch?
 bool FileHelper::writeObjectInternal(const char * filename, EFileFormat format, const SerializationFunc& serialize) {
 	File * file = FileIO::open(filename, "wb");
 #ifndef NDEBUG

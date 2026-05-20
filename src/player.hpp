@@ -95,11 +95,6 @@ class GameController
 	std::string name;
 	static const int BUTTON_HELD_TICKS = TICKS_PER_SECOND / 4;
 
-#ifdef NINTENDO
-	using time_unit = std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds>;
-	time_unit timeNow;
-	time_unit timeStart = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now());
-#endif
 
 public:
 	GameController();

@@ -26,10 +26,6 @@
 #include "lobbies.hpp"
 #include "ui/MainMenu.hpp"
 
-#ifdef NINTENDO
-#include "nintendo/baronynx.hpp"
-#endif
-
 Player* players[MAXPLAYERS] = { nullptr };
 PlayerSettings_t playerSettings[MAXPLAYERS];
 Entity* selectedEntity[MAXPLAYERS] = { nullptr };
@@ -134,10 +130,6 @@ void GameController::reinitHaptic()
 
 bool GameController::open(int sdl_which, int index)
 {
-#ifdef NINTENDO
-	id = index;
-	return true;
-#else
 	if (sdl_device)
 	{
 		close();
@@ -197,7 +189,6 @@ bool GameController::open(int sdl_which, int index)
 
 
 	return (sdl_device != nullptr);
-#endif
 }
 
 void GameController::initBindings() 
@@ -241,11 +232,7 @@ void GameController::initBindings()
 
 const bool GameController::isActive()
 {
-#ifdef NINTENDO
-	return nxIsControllerConnected(id);
-#else
 	return (sdl_device != nullptr);
-#endif
 }
 
 real_t getGamepadMenuXSensitivity(int player)
@@ -590,11 +577,7 @@ int GameController::getRawLeftXMove(int player) // no sensitivity
 	{
 		return 0;
 	}
-#ifdef NINTENDO
-	int x = nxGetControllerState(id, nxInput::LeftStickX);
-#else
 	int x = SDL_GameControllerGetAxis(sdl_device, SDL_CONTROLLER_AXIS_LEFTX);
-#endif
 	auto& leftStickDeadzone = playerSettings[multiplayer ? 0 : player].leftStickDeadzone;
 	if ( leftStickDeadzoneType == DEADZONE_PER_AXIS )
 	{
@@ -620,11 +603,7 @@ int GameController::getRawLeftYMove(int player) // no sensitivity
 	{
 		return 0;
 	}
-#ifdef NINTENDO
-	int y = nxGetControllerState(id, nxInput::LeftStickY);
-#else
 	int y = SDL_GameControllerGetAxis(sdl_device, SDL_CONTROLLER_AXIS_LEFTY);
-#endif
 	auto& leftStickDeadzone = playerSettings[multiplayer ? 0 : player].leftStickDeadzone;
 	if ( leftStickDeadzoneType == DEADZONE_PER_AXIS )
 	{
@@ -650,11 +629,7 @@ int GameController::getRawRightXMove(int player) // no sensitivity
 	{
 		return 0;
 	}
-#ifdef NINTENDO
-	int x = nxGetControllerState(id, nxInput::RightStickX);
-#else
 	int x = SDL_GameControllerGetAxis(sdl_device, SDL_CONTROLLER_AXIS_RIGHTX);
-#endif
 	auto& rightStickDeadzone = playerSettings[multiplayer ? 0 : player].rightStickDeadzone;
 	if ( rightStickDeadzoneType == DEADZONE_PER_AXIS )
 	{
@@ -680,11 +655,7 @@ int GameController::getRawRightYMove(int player) // no sensitivity
 	{
 		return 0;
 	}
-#ifdef NINTENDO
-	int y = nxGetControllerState(id, nxInput::RightStickY);
-#else
 	int y = SDL_GameControllerGetAxis(sdl_device, SDL_CONTROLLER_AXIS_RIGHTY);
-#endif
 	auto& rightStickDeadzone = playerSettings[multiplayer ? 0 : player].rightStickDeadzone;
 	if ( rightStickDeadzoneType == DEADZONE_PER_AXIS )
 	{
@@ -710,11 +681,7 @@ int GameController::getRawLeftTrigger()
 	{
 		return 0;
 	}
-#ifdef NINTENDO
-	int n = nxGetControllerState(id, nxInput::ButtonZL) * INT16_MAX;
-#else
 	int n = SDL_GameControllerGetAxis(sdl_device, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
-#endif
 	if (n < gamepad_trigger_deadzone)
 	{
 		return 0;
@@ -729,11 +696,7 @@ int GameController::getRawRightTrigger()
 	{
 		return 0;
 	}
-#ifdef NINTENDO
-	int n = nxGetControllerState(id, nxInput::ButtonZR) * INT16_MAX;
-#else
 	int n = SDL_GameControllerGetAxis(sdl_device, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
-#endif
 	if (n < gamepad_trigger_deadzone)
 	{
 		return 0;
@@ -2793,49 +2756,13 @@ GameController::Haptic_t::HapticEffect* GameController::handleRumble()
 	}
 	else
 	{
-#ifdef NINTENDO
-		timeNow = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now());
-		auto elapsed = (timeNow - timeStart).count();
-		if (elapsed > 500 / TICKS_PER_SECOND) {
-			timeStart = timeNow;
-			++haptics.oscillatorTick;
-			if ( haptics.oscillatorTick % 2 == 0 )
-			{
-				++haptics.hapticTick;
-			}
-		}
-#else
 		++haptics.hapticTick;
-#endif
 	}
 	size_t size = haptics.activeRumbles.size();
 	if ( size == 0 )
 	{
 		return nullptr;
 	}
-
-#ifdef NINTENDO
-	// unbound controllers are rumbling on nintendo. stop that
-	int player = -1;
-	for (int c = 0; c < MAXPLAYERS; ++c) {
-		if (inputs.getController(c) == this) {
-			player = c;
-			break;
-		}
-	}
-	if (multiplayer == SINGLE) {
-		if (player >= 0 && player < MAXPLAYERS) {
-			if (client_disconnected[player]) {
-				return nullptr;
-			}
-		}
-	}
-	else {
-		if (player != clientnum) {
-			return nullptr;
-		}
-	}
-#endif
 
 	Uint32 highestPriority = 0;
 	Uint32 earliestTick = std::numeric_limits<Uint32>::max();
@@ -2881,16 +2808,12 @@ GameController::Haptic_t::HapticEffect* GameController::handleRumble()
 	}
 
 	if ( rumbleToPlay != haptics.activeRumbles.end() 
-#ifdef NINTENDO
-		/*constantly update for all patterns*/ )
-#else
 		&& (!rumbleToPlay->second.isPlaying 
 			|| rumbleToPlay->second.pattern == Haptic_t::RUMBLE_BOULDER 
 			|| rumbleToPlay->second.pattern == Haptic_t::RUMBLE_BOULDER_BOUNCE
 			|| rumbleToPlay->second.pattern == Haptic_t::RUMBLE_DEATH
 			|| rumbleToPlay->second.pattern == Haptic_t::RUMBLE_TMP
 			|| rumbleToPlay->second.pattern == Haptic_t::RUMBLE_SPELL))
-#endif
 	{
 		Uint32 newStartTime = (haptics.hapticTick - rumbleToPlay->second.startTick);
 		rumbleToPlay->second.startTime = newStartTime; // move the playhead forward.
@@ -2954,9 +2877,6 @@ void Inputs::addRumbleForPlayerHPLoss(const int player, Sint32 damageAmount)
 		}
 
 		real_t durationMult = 1.0;
-#ifdef NINTENDO
-		durationMult = 0.5;
-#endif // NINTENDO
 
 
 		real_t percentHPLost = std::min(1.0, (stats[player]->OLDHP - stats[player]->HP) / static_cast<real_t>(std::max(1, stats[player]->MAXHP)));
@@ -3154,9 +3074,6 @@ GameController::Haptic_t::HapticEffect* GameController::doRumble(Haptic_t::Rumbl
 	}
 	haptics.hapticEffect.length = ((r->length - r->startTime) * 1000 / TICKS_PER_SECOND); // convert to ms
 	haptics.hapticEffect.type = r->pattern;
-#ifdef NINTENDO
-	return &haptics.hapticEffect;
-#else
 	if ( sdl_device )
 	{
 		SDL_GameControllerRumble(sdl_device, haptics.hapticEffect.large_magnitude * 2, haptics.hapticEffect.small_magnitude * 2,
@@ -3183,7 +3100,6 @@ GameController::Haptic_t::HapticEffect* GameController::doRumble(Haptic_t::Rumbl
 			printlog("SDL_HapticUpdateEffect error: %s", SDL_GetError());
 		}*/
 	}
-#endif
 	return nullptr;
 }
 void GameController::stopRumble()
@@ -4645,9 +4561,6 @@ void Player::WorldUI_t::handleTooltips()
 
 		Entity* playerEntity = Player::getPlayerInteractEntity(player);
 
-#ifdef NINTENDO
-		players[player]->worldUI.bEnabled = true;
-#else
 		if ( inputs.hasController(player) )
 		{
 			players[player]->worldUI.bEnabled = true;
@@ -4669,7 +4582,6 @@ void Player::WorldUI_t::handleTooltips()
 				}
 			}
 		}
-#endif // NINTENDO
 
 		if ( !players[player]->worldUI.bEnabled )
 		{
@@ -5963,27 +5875,6 @@ std::vector<std::pair<std::string, std::string>> Player::Minimap_t::mapDetails;
 
 void Inputs::setMouse(const int player, MouseInputs input, Sint32 value)
 {
-#ifdef NINTENDO
-	if (fingerdown) {
-		switch (input) {
-		case X: fingerx = value; break;
-		case Y: fingery = value; break;
-		case OX: ofingerx = value; break;
-		case OY: ofingery = value; break;
-		}
-	}
-	if (hasController(player)) {
-		switch (input) {
-		case OX: getVirtualMouse(player)->ox = value; return;
-		case OY: getVirtualMouse(player)->oy = value; return;
-		case X: getVirtualMouse(player)->x = value; return;
-		case Y: getVirtualMouse(player)->y = value; return;
-		case XREL: getVirtualMouse(player)->xrel = value; return;
-		case YREL: getVirtualMouse(player)->yrel = value; return;
-		default: return;
-		}
-	}
-#else
 	// todo: add condition like getMouse()? && (!getVirtualMouse(player)->lastMovementFromController 
 	// || (players[player]->shootmode && !gamePaused && !intro))
 	if ( bPlayerUsingKeyboardControl(player) && (!getVirtualMouse(player)->lastMovementFromController
@@ -6039,33 +5930,10 @@ void Inputs::setMouse(const int player, MouseInputs input, Sint32 value)
 				return;
 		}
 	}
-#endif
 }
 
 const Sint32 Inputs::getMouse(const int player, MouseInputs input)
 {
-#ifdef NINTENDO
-	if (fingerdown) {
-		switch (input) {
-		case OX: return fingerx;
-		case OY: return fingery;
-		case X: return ofingerx;
-		case Y: return ofingery;
-		}
-	}
-	else if (hasController(player)) {
-		switch (input) {
-		case OX: return getVirtualMouse(player)->ox;
-		case OY: return getVirtualMouse(player)->oy;
-		case X: return getVirtualMouse(player)->x;
-		case Y: return getVirtualMouse(player)->y;
-		case XREL: return getVirtualMouse(player)->xrel;
-		case YREL: return getVirtualMouse(player)->yrel;
-		default: return 0;
-		}
-	}
-	return 0;
-#else
 	if ( bPlayerUsingKeyboardControl(player) &&
 		(!getVirtualMouse(player)->lastMovementFromController || (players[player]->shootmode && !gamePaused && !intro) || gamePaused || intro) )
 	{
@@ -6119,7 +5987,6 @@ const Sint32 Inputs::getMouse(const int player, MouseInputs input)
 		}
 	}
 	return 0;
-#endif
 }
 
 const real_t Inputs::getMouseFloat(const int player, MouseInputs input)
@@ -6724,28 +6591,8 @@ bool GameController::binaryOf(Binding_t& binding)
 	{
 		if ( binding.type == Binding_t::CONTROLLER_BUTTON ) 
 		{
-#ifdef NINTENDO
-			switch (binding.padButton) {
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_A: return nxGetControllerState(id, nxInput::ButtonB) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_B: return nxGetControllerState(id, nxInput::ButtonA) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_X: return nxGetControllerState(id, nxInput::ButtonY) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_Y: return nxGetControllerState(id, nxInput::ButtonX) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_DPAD_UP: return nxGetControllerState(id, nxInput::ButtonUp) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_DPAD_RIGHT: return nxGetControllerState(id, nxInput::ButtonRight) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_DPAD_DOWN: return nxGetControllerState(id, nxInput::ButtonDown) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_DPAD_LEFT: return nxGetControllerState(id, nxInput::ButtonLeft) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_START: return nxGetControllerState(id, nxInput::ButtonPlus) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_BACK: return nxGetControllerState(id, nxInput::ButtonMinus) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_LEFTSTICK: return nxGetControllerState(id, nxInput::LeftStickClick) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_RIGHTSTICK: return nxGetControllerState(id, nxInput::RightStickClick) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_LEFTSHOULDER: return nxGetControllerState(id, nxInput::ButtonL) == 1;
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: return nxGetControllerState(id, nxInput::ButtonR) == 1;
-			default: return false;
-			}
-#else
 			SDL_GameController* pad = sdl_device;
 			return SDL_GameControllerGetButton(pad, binding.padButton) == 1;
-#endif
 		}
 		else if ( binding.type == Binding_t::VIRTUAL_DPAD )
 		{
@@ -6753,40 +6600,6 @@ bool GameController::binaryOf(Binding_t& binding)
 		}
 		else 
 		{
-#ifdef NINTENDO
-			if (binding.padAxisNegative) {
-				switch (binding.padAxis) {
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_LEFTX:
-					return nxGetControllerState(id, nxInput::LeftStickX) < (INT16_MIN / 2);
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_LEFTY:
-					return nxGetControllerState(id, nxInput::LeftStickY) < (INT16_MIN / 2);
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_RIGHTX:
-					return nxGetControllerState(id, nxInput::RightStickX) < (INT16_MIN / 2);
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_RIGHTY:
-					return nxGetControllerState(id, nxInput::RightStickY) < (INT16_MIN / 2);
-				default:
-					return false;
-				}
-			}
-			else {
-				switch (binding.padAxis) {
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_LEFTX:
-					return nxGetControllerState(id, nxInput::LeftStickX) > (INT16_MAX / 2);
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_LEFTY:
-					return nxGetControllerState(id, nxInput::LeftStickY) > (INT16_MAX / 2);
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_RIGHTX:
-					return nxGetControllerState(id, nxInput::RightStickX) > (INT16_MAX / 2);
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_RIGHTY:
-					return nxGetControllerState(id, nxInput::RightStickY) > (INT16_MAX / 2);
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_TRIGGERLEFT:
-					return nxGetControllerState(id, nxInput::ButtonZL) == 1;
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
-					return nxGetControllerState(id, nxInput::ButtonZR) == 1;
-				default:
-					return false;
-				}
-			}
-#else
 			SDL_GameController* pad = sdl_device;
 			if ( binding.padAxisNegative ) 
 			{
@@ -6796,7 +6609,6 @@ bool GameController::binaryOf(Binding_t& binding)
 			{
 				return SDL_GameControllerGetAxis(pad, binding.padAxis) > 16384;
 			}
-#endif
 		}
 	}
 
@@ -6809,63 +6621,11 @@ float GameController::analogOf(Binding_t& binding)
 	{
 		if ( binding.type == Binding_t::CONTROLLER_BUTTON ) 
 		{
-#ifdef NINTENDO
-			switch (binding.padButton) {
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_A: return (float)nxGetControllerState(id, nxInput::ButtonB);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_B: return (float)nxGetControllerState(id, nxInput::ButtonA);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_X: return (float)nxGetControllerState(id, nxInput::ButtonY);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_Y: return (float)nxGetControllerState(id, nxInput::ButtonX);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_DPAD_UP: return (float)nxGetControllerState(id, nxInput::ButtonUp);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_DPAD_RIGHT: return (float)nxGetControllerState(id, nxInput::ButtonRight);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_DPAD_DOWN: return (float)nxGetControllerState(id, nxInput::ButtonDown);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_DPAD_LEFT: return (float)nxGetControllerState(id, nxInput::ButtonLeft);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_START: return (float)nxGetControllerState(id, nxInput::ButtonPlus);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_BACK: return (float)nxGetControllerState(id, nxInput::ButtonMinus);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_LEFTSTICK: return (float)nxGetControllerState(id, nxInput::LeftStickClick);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_RIGHTSTICK: return (float)nxGetControllerState(id, nxInput::RightStickClick);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_LEFTSHOULDER: return (float)nxGetControllerState(id, nxInput::ButtonL);
-			case SDL_GameControllerButton::SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: return (float)nxGetControllerState(id, nxInput::ButtonR);
-			default: return 0.f;
-			}
-#else
 			SDL_GameController* pad = sdl_device;
 			return SDL_GameControllerGetButton(pad, binding.padButton) ? 1.f : 0.f;
-#endif
 		}
 		else 
 		{
-#ifdef NINTENDO
-			float result = 0.f;
-			if (binding.padAxisNegative) {
-				switch (binding.padAxis) {
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_LEFTX:
-					result = std::max((float)nxGetControllerState(id, nxInput::LeftStickX) / INT16_MIN, 0.f); break;
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_LEFTY:
-					result = std::max((float)nxGetControllerState(id, nxInput::LeftStickY) / INT16_MIN, 0.f); break;
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_RIGHTX:
-					result = std::max((float)nxGetControllerState(id, nxInput::RightStickX) / INT16_MIN, 0.f); break;
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_RIGHTY:
-					result = std::max((float)nxGetControllerState(id, nxInput::RightStickY) / INT16_MIN, 0.f); break;
-				}
-			}
-			else {
-				switch (binding.padAxis) {
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_LEFTX:
-					result = std::max((float)nxGetControllerState(id, nxInput::LeftStickX) / INT16_MAX, 0.f); break;
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_LEFTY:
-					result = std::max((float)nxGetControllerState(id, nxInput::LeftStickY) / INT16_MAX, 0.f); break;
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_RIGHTX:
-					result = std::max((float)nxGetControllerState(id, nxInput::RightStickX) / INT16_MAX, 0.f); break;
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_RIGHTY:
-					result = std::max((float)nxGetControllerState(id, nxInput::RightStickY) / INT16_MAX, 0.f); break;
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_TRIGGERLEFT:
-					result = nxGetControllerState(id, nxInput::ButtonZL); break;
-				case SDL_GameControllerAxis::SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
-					result = nxGetControllerState(id, nxInput::ButtonZR); break;
-				}
-			}
-			return (fabs(result) > binding.deadzone) ? result : 0.f;
-#else
 			SDL_GameController* pad = sdl_device;
 			if ( binding.padAxisNegative )
 			{
@@ -6877,7 +6637,6 @@ float GameController::analogOf(Binding_t& binding)
 				float result = std::max(SDL_GameControllerGetAxis(pad, binding.padAxis) / 32767.f, 0.f);
 				return (fabs(result) > binding.deadzone) ? result : 0.f;
 			}
-#endif
 		}
 	}
 
@@ -7286,47 +7045,7 @@ const char* Player::getAccountName() const {
 	    case 3: return "Player 4";
 	    default: return unknown;
 	    }
-    } else {
-		if (LobbyHandler.getP2PType() == LobbyHandler_t::LobbyServiceType::LOBBY_STEAM) {
-#ifdef STEAMWORKS
-			if (isLocalPlayer()) {
-				return SteamFriends()->GetPersonaName();
-			} else {
-				for (int remoteIDIndex = 0; remoteIDIndex < MAXPLAYERS; ++remoteIDIndex) {
-					if (steamIDRemote[remoteIDIndex]) {
-						const char* memberNumChar = SteamMatchmaking()->GetLobbyMemberData(
-						    *static_cast<CSteamID*>(currentLobby),
-						    *static_cast<CSteamID*>(steamIDRemote[remoteIDIndex]),
-						    "clientnum");
-						if (memberNumChar) {
-							std::string str = memberNumChar;
-							if (!str.empty()) {
-								int memberNum = std::stoi(str);
-								if (memberNum >= 0 && memberNum < MAXPLAYERS && memberNum == playernum) {
-									return SteamFriends()->GetFriendPersonaName(
-									    *static_cast<CSteamID*>(steamIDRemote[remoteIDIndex]));
-								}
-							}
-						}
-					}
-				}
-			}
-#endif
-		}
-		else if (LobbyHandler.getP2PType() == LobbyHandler_t::LobbyServiceType::LOBBY_CROSSPLAY) {
-#if defined USE_EOS
-			if (isLocalPlayer()) {
-				return EOS.CurrentUserInfo.Name.c_str();
-			} else {
-				for (auto& player : EOS.CurrentLobbyData.playersInLobby) {
-					if (player.clientNumber == playernum) {
-						return player.name.c_str();
-					}
-				}
-			}
-#endif
-		}
-	}
+    }
     return unknown;
 }
 
