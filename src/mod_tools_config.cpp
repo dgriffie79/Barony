@@ -871,8 +871,6 @@ void GameplayPreferences_t::process()
 							&& VoiceChat.getAudioSettingBool(VoiceChat_t::AudioSettingBool::VOICE_SETTING_LOOPBACK_LOCAL_RECORD))
 						|| !VoiceChat.getAudioSettingBool(VoiceChat_t::AudioSettingBool::VOICE_SETTING_ENABLE_VOICE_INPUT) 
 							|| !VoiceChat.getAudioSettingBool(VoiceChat_t::AudioSettingBool::VOICE_SETTING_ENABLE_VOICE_RECEIVE)) ? 1 : 0) << player);
-#elif defined(NINTENDO)
-					pref.set(1 << player);
 #else				
 					pref.set(1 << player);
 #endif

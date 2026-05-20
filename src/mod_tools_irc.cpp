@@ -11,7 +11,6 @@ See LICENSE for details.
 
 #include "mod_tools_private.hpp"
 
-#ifndef NINTENDO
 bool IRCHandler_t::readFromFile()
 {
 	if ( PHYSFS_getRealDir("/data/twitchchat.json") )
@@ -196,4 +195,3 @@ void IRCHandler_t::handleMessage(std::string& msg)
 		return;
 	}
 }
-#endif // !NINTENDO

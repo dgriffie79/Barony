@@ -57,54 +57,6 @@ void Mods::updateModCounts()
 		}
 	}
 }
-#ifdef STEAMWORKS
-std::vector<SteamUGCDetails_t*> Mods::workshopSubscribedItemList;
-std::vector<std::pair<std::string, uint64>> Mods::workshopLoadedFileIDMap;
-std::vector<Mods::WorkshopTags_t> Mods::tag_settings = {
-	Mods::WorkshopTags_t("dungeons", "Dungeons"),
-	Mods::WorkshopTags_t("textures", "Textures"),
-	Mods::WorkshopTags_t("models", "Models"),
-	Mods::WorkshopTags_t("gameplay", "Gameplay"),
-	Mods::WorkshopTags_t("audio", "Audio"),
-	Mods::WorkshopTags_t("misc", "Misc"),
-	Mods::WorkshopTags_t("translations", "Translations")
-};
-int Mods::uploadStatus = 0;
-int Mods::uploadErrorStatus = 0;
-Uint32 Mods::uploadTicks = 0;
-Uint32 Mods::processedOnTick = 0;
-PublishedFileId_t Mods::uploadingExistingItem = 0;
-int Mods::uploadNumRetries = 3;
-bool Mods::forceDownloadCachedImages = false;
-
-std::string Mods::getFolderFullPath(std::string input)
-{
-	if ( input == "" ) { return ""; }
-#ifdef WINDOWS
-#ifdef _UNICODE
-	wchar_t pathbuffer[PATH_MAX];
-	const int len1 = MultiByteToWideChar(CP_ACP, 0, input.c_str(), input.size() + 1, 0, 0);
-	auto buf1 = new wchar_t[len1];
-	MultiByteToWideChar(CP_ACP, 0, input.c_str(), input.size() + 1, buf1, len1);
-	const int pathlen = GetFullPathNameW(buf1, PATH_MAX, pathbuffer, NULL);
-	delete[] buf1;
-	const int len2 = WideCharToMultiByte(CP_ACP, 0, pathbuffer, pathlen, 0, 0, 0, 0);
-	auto buf2 = new char[len2];
-	WideCharToMultiByte(CP_ACP, 0, pathbuffer, pathlen, buf2, len2, 0, 0);
-	std::string fullpath = buf2;
-#else
-	char pathbuffer[PATH_MAX];
-	GetFullPathNameA(input.c_str(), PATH_MAX, pathbuffer, NULL);
-	std::string fullpath = pathbuffer;
-#endif
-#else
-	char pathbuffer[PATH_MAX];
-	realpath(input.c_str(), pathbuffer);
-	std::string fullpath = pathbuffer;
-#endif
-	return fullpath;
-}
-#endif
 
 
 
@@ -229,17 +181,6 @@ bool Mods::removePathFromMountedFiles(std::string findStr)
 		if ( line.first.compare(findStr) == 0 )
 		{
 			// found entry, remove from list.
-#ifdef STEAMWORKS
-			for ( std::vector<std::pair<std::string, uint64>>::iterator itId = Mods::workshopLoadedFileIDMap.begin();
-				itId != Mods::workshopLoadedFileIDMap.end(); ++itId )
-			{
-				if ( itId->first.compare(line.second) == 0 )
-				{
-					Mods::workshopLoadedFileIDMap.erase(itId);
-					break;
-				}
-			}
-#endif // STEAMWORKS
 			Mods::mountedFilepaths.erase(it);
 			return true;
 		}

@@ -1035,28 +1035,6 @@ static void handleMainMenu(bool mode)
 				ttfPrintText(ttf16, text.x, text.y, menuOptions.at(menuIndex).first.c_str());
 			}
 
-#if (defined USE_EOS && !defined STEAMWORKS)
-			++menuIndex;
-			text.y = yres / 4 + 80 + (menuOptions.at(menuIndex).second - 1) * 24;
-			menuOptionSize = std::max(static_cast<Uint32>(menuOptions.at(menuIndex).first.size()), static_cast<Uint32>(4));
-
-			//"Achievements" Button.
-			if ( ((omousex >= text.x && omousex < text.x + menuOptionSize * text.w && omousey >= text.y && omousey < text.y + text.h) || (menuselect == menuOptions.at(menuIndex).second)) && subwindow == 0 && introstage == 1 )
-			{
-				menuselect = menuOptions.at(menuIndex).second;
-				ttfPrintTextFormattedColor(ttf16, text.x, text.y, colorGray, "%s", menuOptions.at(menuIndex).first.c_str());
-				if ( mainMenuSelectInputIsPressed )
-				{
-					pauseMenuOnInputPressed();
-
-					openAchievementsWindow();
-				}
-			}
-			else
-			{
-				ttfPrintText(ttf16, text.x, text.y, menuOptions.at(menuIndex).first.c_str());
-			}
-#endif 
 
 			++menuIndex;
 			text.y = yres / 4 + 80 + (menuOptions.at(menuIndex).second - 1) * 24;
@@ -1822,22 +1800,6 @@ static void handleMainMenu(bool mode)
 								tooltip.x = omousex + 16;
 								tooltip.y = omousey + 16;
 								tooltip.h = TTF12_HEIGHT + 8;
-#if (defined STEAMWORKS || defined USE_EOS)
-								if ( c > RACE_GOATMAN && c <= RACE_INSECTOID && !skipFirstDLC )
-								{
-									tooltip.h = TTF12_HEIGHT * 2 + 8;
-									tooltip.w = longestline(Language::get(3917)) * TTF12_WIDTH + 8;
-									drawTooltip(&tooltip);
-									ttfPrintTextFormattedColor(ttf12, tooltip.x + 4, tooltip.y + 6, uint32ColorOrange, Language::get(3917));
-								}
-								else
-								{
-									tooltip.h = TTF12_HEIGHT * 2 + 8;
-									tooltip.w = longestline(Language::get(3200)) * TTF12_WIDTH + 8;
-									drawTooltip(&tooltip);
-									ttfPrintTextFormattedColor(ttf12, tooltip.x + 4, tooltip.y + 6, uint32ColorOrange, Language::get(3200));
-								}
-#else
 								if ( c > RACE_GOATMAN && c <= RACE_INSECTOID )
 								{
 									tooltip.w = longestline(Language::get(3372)) * TTF12_WIDTH + 8;
@@ -1850,7 +1812,6 @@ static void handleMainMenu(bool mode)
 									drawTooltip(&tooltip);
 									ttfPrintTextFormattedColor(ttf12, tooltip.x + 4, tooltip.y + 6, uint32ColorOrange, Language::get(3199));
 								}
-#endif // STEAMWORKS
 							}
 						}
 						pady += 17;
@@ -2315,17 +2276,6 @@ static void handleMainMenu(bool mode)
 
 						if ( mouseInBounds(clientnum, subx1 + 40, subx1 + 72, pady, pady + 16) )
 						{
-#if (defined STEAMWORKS || defined USE_EOS)
-							tooltip.x = omousex + 16;
-							tooltip.y = omousey + 16;
-							tooltip.h = TTF12_HEIGHT + 8;
-							if ( classToPick > CLASS_MONK )
-							{
-								int langline = 3927 + classToPick - CLASS_CONJURER;
-								tooltip.w = longestline(Language::get(langline)) * TTF12_WIDTH + 8;
-								drawLockedTooltip = langline;
-							}
-#endif
 						}
 					}
 					else
@@ -2518,39 +2468,11 @@ static void handleMainMenu(bool mode)
 			std::vector<Uint32> displayedOptionToGamemode;
 			Uint32 optionHeight = TTF12_HEIGHT + 2;
 			int nummodes = 3;
-#if (defined USE_EOS && defined STEAMWORKS)
-			nummodes += 2;
-			if ( LobbyHandler.crossplayEnabled )
-			{
-				nummodes += 1;
-				optionY.insert(optionY.end(), { suby1 + 56, suby1 + 86, suby1 + 128, suby1 + 178, suby1 + 216, suby1 + 256 });
-				optionTexts.insert(optionTexts.end(), { Language::get(1328), Language::get(1330), Language::get(1330), Language::get(1332), Language::get(1330), Language::get(1332) });
-				optionDescriptions.insert(optionDescriptions.end(), { Language::get(1329), Language::get(3946), Language::get(3947), Language::get(3945), Language::get(1538), Language::get(1539) });
-				optionSubtexts.insert(optionSubtexts.end(), { nullptr, Language::get(3943), Language::get(3944), nullptr, Language::get(1537), Language::get(1537) });
-				displayedOptionToGamemode.insert(displayedOptionToGamemode.end(), { SINGLE, SERVER, SERVERCROSSPLAY, CLIENT, DIRECTSERVER, DIRECTCLIENT});
-			}
-			else
-			{
-				optionY.insert(optionY.end(), { suby1 + 56, suby1 + 76, suby1 + 96, suby1 + 136, suby1 + 176, 0 });
-				optionTexts.insert(optionTexts.end(), { Language::get(1328), Language::get(1330), Language::get(1332), Language::get(1330), Language::get(1332), nullptr });
-				optionDescriptions.insert(optionDescriptions.end(), { Language::get(1329), Language::get(1331), Language::get(1333), Language::get(1538), Language::get(1539), nullptr });
-				optionSubtexts.insert(optionSubtexts.end(), { nullptr, nullptr, nullptr, Language::get(1537), Language::get(1537), nullptr });
-				displayedOptionToGamemode.insert(displayedOptionToGamemode.end(), { SINGLE, SERVER, CLIENT, DIRECTSERVER, DIRECTCLIENT, 0 });
-			}
-#elif (defined(USE_EOS) || defined(STEAMWORKS))
-			nummodes += 2;
 			optionY.insert(optionY.end(), { suby1 + 56, suby1 + 76, suby1 + 96, suby1 + 136, suby1 + 176, 0 });
 			optionTexts.insert(optionTexts.end(), { Language::get(1328), Language::get(1330), Language::get(1332), Language::get(1330), Language::get(1332), nullptr });
 			optionDescriptions.insert(optionDescriptions.end(), { Language::get(1329), Language::get(1331), Language::get(1333), Language::get(1538), Language::get(1539), nullptr });
 			optionSubtexts.insert(optionSubtexts.end(), { nullptr, nullptr, nullptr, Language::get(1537), Language::get(1537) });
 			displayedOptionToGamemode.insert(displayedOptionToGamemode.end(), { SINGLE, SERVER, CLIENT, DIRECTSERVER, DIRECTCLIENT, 0 });
-#else
-			optionY.insert(optionY.end(), { suby1 + 56, suby1 + 76, suby1 + 96, suby1 + 136, suby1 + 176, 0 });
-			optionTexts.insert(optionTexts.end(), { Language::get(1328), Language::get(1330), Language::get(1332), Language::get(1330), Language::get(1332), nullptr });
-			optionDescriptions.insert(optionDescriptions.end(), { Language::get(1329), Language::get(1331), Language::get(1333), Language::get(1538), Language::get(1539), nullptr });
-			optionSubtexts.insert(optionSubtexts.end(), { nullptr, nullptr, nullptr, Language::get(1537), Language::get(1537) });
-			displayedOptionToGamemode.insert(displayedOptionToGamemode.end(), { SINGLE, SERVER, CLIENT, DIRECTSERVER, DIRECTCLIENT, 0 });
-#endif
 			for ( int mode = 0; mode < nummodes; mode++ )
 			{
 				char selected = ' ';
@@ -2663,7 +2585,6 @@ static void handleMainMenu(bool mode)
 	}
 
 	// serial window.
-#if (!defined STEAMWORKS && !defined USE_EOS)
 	if ( intro && introstage == 1 && subwindow && !strcmp(subtext, Language::get(3403)) && serialEnterWindow )
 	{
 		drawDepressed(subx1 + 8, suby1 + 32, subx2 - 8, suby1 + 56);
@@ -2742,7 +2663,6 @@ static void handleMainMenu(bool mode)
 			ttfPrintText(ttf12, subx1 + 16 + x, suby1 + 40, "_");
 		}
 	}
-#endif
 
 	// settings window
 	if ( settings_window == true )
@@ -3668,12 +3588,10 @@ static void handleMainMenu(bool mode)
 					if (strlen(flagStringBuffer) > 0)   //Don't bother drawing a tooltip if the file doesn't say anything.
 					{
 						hovering_selection = i;
-#if (!defined STEAMWORKS && !defined USE_EOS)
 						if ( hovering_selection == 0 )
 						{
 							hovering_selection = -1; // don't show cheats tooltip about disabling achievements.
 						}
-#endif // STEAMWORKS
 						tooltip_box.x = omousex + 16;
 						tooltip_box.y = omousey + 8; //I hate magic numbers :|. These should probably be replaced with omousex + mousecursorsprite->width, omousey + mousecursorsprite->height, respectively.
 						if ( i == 2 || i == 3 || i == 5 || i == 6 || i == 7 )
@@ -6984,7 +6902,6 @@ void doNewGame(bool makeHighscore) {
 
 		if ( players[c]->isLocalPlayer() )
 		{
-#ifndef NINTENDO
 			if ( inputs.hasController(c) )
 			{
 				players[c]->hotbar.useHotbarFaceMenu = playerSettings[c].gamepad_facehotbar;
@@ -6993,9 +6910,6 @@ void doNewGame(bool makeHighscore) {
 			{
 				players[c]->hotbar.useHotbarFaceMenu = false;
 			}
-#else
-			players[c]->hotbar.useHotbarFaceMenu = playerSettings[c].gamepad_facehotbar;
-#endif // NINTENDO
 		}
 	}
 

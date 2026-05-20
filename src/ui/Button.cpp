@@ -371,26 +371,14 @@ Button::result_t Button::process(SDL_Rect _size, SDL_Rect _actualSize, const boo
 		return result;
 	}
 
-#if defined(NINTENDO)
-	const bool clicking = fingerdown;
-	Sint32 mousex = (::fingerx / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 mousey = (::fingery / (float)yres) * (float)Frame::virtualScreenY;
-	Sint32 omousex = (::ofingerx / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 omousey = (::ofingery / (float)yres) * (float)Frame::virtualScreenY;
-#else
 	const bool clicking = mousestatus[SDL_BUTTON_LEFT];
 	const int mouseowner = intro || gamePaused ? inputs.getPlayerIDAllowedKeyboard() : owner;
 	Sint32 mousex = (inputs.getMouse(mouseowner, Inputs::X) / (float)xres) * (float)Frame::virtualScreenX;
 	Sint32 mousey = (inputs.getMouse(mouseowner, Inputs::Y) / (float)yres) * (float)Frame::virtualScreenY;
 	Sint32 omousex = (inputs.getMouse(mouseowner, Inputs::OX) / (float)xres) * (float)Frame::virtualScreenX;
 	Sint32 omousey = (inputs.getMouse(mouseowner, Inputs::OY) / (float)yres) * (float)Frame::virtualScreenY;
-#endif
 
-#ifndef NINTENDO
 	if (rectContainsPoint(_size, omousex, omousey) && inputs.getVirtualMouse(mouseowner)->draw_cursor) {
-#else
-	if (rectContainsPoint(_size, omousex, omousey)) {
-#endif
 		result.highlighted = highlighted = true;
 		result.highlightTime = highlightTime;
 		result.tooltip = tooltip.c_str();

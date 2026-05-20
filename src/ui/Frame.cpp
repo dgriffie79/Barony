@@ -106,18 +106,14 @@ void Frame::fboInit() {
     } else {
         gui_fb.init(Frame::virtualScreenX, Frame::virtualScreenY, GL_NEAREST, GL_NEAREST);
     }
-#ifndef NINTENDO
     gui_fb_upscaled.init(Frame::virtualScreenX * 3, Frame::virtualScreenY * 3, GL_LINEAR, GL_NEAREST); // 4k resolution
     gui_fb_downscaled.init(Frame::virtualScreenX / 2, Frame::virtualScreenY / 2, GL_LINEAR, GL_NEAREST); // 360p resolution
-#endif
 }
 
 void Frame::fboDestroy() {
 	gui_fb.destroy();
-#ifndef NINTENDO
 	gui_fb_upscaled.destroy();
 	gui_fb_downscaled.destroy();
-#endif
 }
 
 #include "../interface/ui.hpp"
@@ -510,12 +506,6 @@ void Frame::draw(SDL_Rect _size, SDL_Rect _actualSize, const std::vector<const W
 		}
 	}
 
-#if defined(NINTENDO)
-	Sint32 mousex = (::fingerx / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 mousey = (::fingery / (float)yres) * (float)Frame::virtualScreenY;
-	Sint32 omousex = (::ofingerx / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 omousey = (::ofingery / (float)yres) * (float)Frame::virtualScreenY;
-#else
 	const int mouseowner = intro || gamePaused ? inputs.getPlayerIDAllowedKeyboard() : owner;
 	//Sint32 mousex = (inputs.getMouse(mouseowner, Inputs::X) / (float)xres) * (float)Frame::virtualScreenX;
 	//Sint32 mousey = (inputs.getMouse(mouseowner, Inputs::Y) / (float)yres) * (float)Frame::virtualScreenY;
@@ -523,7 +513,6 @@ void Frame::draw(SDL_Rect _size, SDL_Rect _actualSize, const std::vector<const W
 	Sint32 omousey = (inputs.getMouse(mouseowner, Inputs::OY) / (float)yres) * (float)Frame::virtualScreenY;
 	//Sint32 mousexrel = (inputs.getMouse(mouseowner, Inputs::XREL) / (float)xres) * (float)Frame::virtualScreenX;
 	//Sint32 mouseyrel = (inputs.getMouse(mouseowner, Inputs::YREL) / (float)yres) * (float)Frame::virtualScreenY;
-#endif
 
 	// horizontal slider
 	if (actualSize.w > size.w && scrollbars) {
@@ -997,12 +986,6 @@ Frame::result_t Frame::process(SDL_Rect _size, SDL_Rect _actualSize, bool usable
 	fullSize.h += (actualSize.w > size.w) ? sliderSize : 0;
 	fullSize.w += (actualSize.h > size.h) ? sliderSize : 0;
 
-#if defined(NINTENDO)
-	Sint32 mousex = (::fingerx / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 mousey = (::fingery / (float)yres) * (float)Frame::virtualScreenY;
-	Sint32 omousex = (::ofingerx / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 omousey = (::ofingery / (float)yres) * (float)Frame::virtualScreenY;
-#else
 	const int mouseowner = intro || gamePaused ? inputs.getPlayerIDAllowedKeyboard() : owner;
 	Sint32 mousex = (inputs.getMouse(mouseowner, Inputs::X) / (float)xres) * (float)Frame::virtualScreenX;
 	Sint32 mousey = (inputs.getMouse(mouseowner, Inputs::Y) / (float)yres) * (float)Frame::virtualScreenY;
@@ -1010,7 +993,6 @@ Frame::result_t Frame::process(SDL_Rect _size, SDL_Rect _actualSize, bool usable
 	Sint32 omousey = (inputs.getMouse(mouseowner, Inputs::OY) / (float)yres) * (float)Frame::virtualScreenY;
 	//Sint32 mousexrel = (inputs.getMouse(mouseowner, Inputs::XREL) / (float)xres) * (float)Frame::virtualScreenX;
 	//Sint32 mouseyrel = (inputs.getMouse(mouseowner, Inputs::YREL) / (float)yres) * (float)Frame::virtualScreenY;
-#endif
 
 	Input& input = Input::inputs[owner];
 

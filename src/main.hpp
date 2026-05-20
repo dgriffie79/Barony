@@ -122,14 +122,12 @@ extern bool autoLimbReload;
 #undef max
 #endif
 
- #ifndef NINTENDO
   #define GL_GLEXT_PROTOTYPES
   #ifdef WINDOWS
     #include <GL/glew.h>
   #endif
   #include <GL/gl.h>
   #include <GL/glu.h>
- #endif
 #ifndef WINDOWS
  #include <GL/glext.h>
 #endif
@@ -607,11 +605,7 @@ typedef struct door_t
 #define CLIPFAR 4000
 #define TEXTURESIZE 32
 #define TEXTUREPOWER 5 // power of 2 that texture size is, ie pow(2,TEXTUREPOWER) = TEXTURESIZE
-#ifdef BARONY_SUPER_MULTIPLAYER
-#define MAXPLAYERS 8
-#else
 #define MAXPLAYERS 4
-#endif
 
 // shaking/bobbing, that sort of thing
 struct cameravars_t {

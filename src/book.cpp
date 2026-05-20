@@ -244,7 +244,6 @@ std::list<std::string> BookParser_t::getListOfBooksAfterFiltering()
 {
 	std::list<std::string> discoveredbooks = getListOfBooks();
 
-#ifndef NINTENDO
 	//TODO: We will need to enable this on NINTENDO if we want mod support. Realistically, that just means adding JSON support and making ignoreBooksPath a static const definition in a header somewhere. (2 headers, actually: define it once for PC, definite it differently for Switch) ...we'll probably also need to update thet PHYSFS_getRealDir() call as well, something akin to the getListOfBooks() function. I.e. NINTENDO ROM reading or whatever.
 	std::string ignoreBooksPath = "books/ignored_books.json";
 	std::unordered_set<std::string> ignoredBooks;
@@ -292,14 +291,12 @@ std::list<std::string> BookParser_t::getListOfBooksAfterFiltering()
 			}
 		}
 	}
-#endif //ifndef NINTENDO
 
 	if ( !discoveredbooks.empty() )
 	{
 		printlog("[Books]: Loading books...\n");
 
 		int numSkipBooks = 0;
-#ifndef NINTENDO
 		if ( foundIgnoreBookFile )
 		{
 			for ( auto& filename : discoveredbooks )
@@ -316,7 +313,6 @@ std::list<std::string> BookParser_t::getListOfBooksAfterFiltering()
 				}
 			}
 		}
-#endif
 		// sort books alphabetically
 		discoveredbooks.sort();
 
@@ -324,12 +320,10 @@ std::list<std::string> BookParser_t::getListOfBooksAfterFiltering()
 		// read books
 		for ( const auto& filename : discoveredbooks )
 		{
-#ifndef NINTENDO
 			if ( ignoredBooks.find(filename) != ignoredBooks.end() )
 			{
 				continue;
 			}
-#endif
 			filteredBooks.push_back(filename);
 		}
 		return filteredBooks;

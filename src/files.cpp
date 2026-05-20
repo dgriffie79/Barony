@@ -4057,7 +4057,6 @@ void generatePolyModels(int start, int end, bool forceCacheRebuild)
         memset(polymodels, 0, sizeof(polymodel_t) * nummodels);
 		if ( useModelCache && !forceCacheRebuild )
 		{
-#ifndef NINTENDO
             std::string cache_path;
             if (isCurrentHoliday()) {
                 const auto holiday = getCurrentHoliday();
@@ -4072,9 +4071,6 @@ void generatePolyModels(int start, int end, bool forceCacheRebuild)
             } else {
                 cache_path = std::string(outputdir) + "/models.cache";
             }
-#else
-			std::string cache_path = "models.cache";
-#endif
 			auto model_cache = openDataFile(cache_path.c_str(), "rb");
 			if ( model_cache )
 			{
@@ -5085,11 +5081,9 @@ void generatePolyModels(int start, int end, bool forceCacheRebuild)
 		// free up quads for the next model
 		list_FreeAll(&quads);
 	}
-#ifndef NINTENDO
     if (!isCurrentHoliday() && useModelCache) {
 		saveModelCache();
     }
-#endif
 
     uint64_t greatest = 0;
     for (uint32_t c = 0; c < nummodels; ++c) {

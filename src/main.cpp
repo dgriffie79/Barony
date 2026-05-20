@@ -610,11 +610,9 @@ void printlog(const char* str, ...)
 		newstr[c] = '\n';
 		newstr[c + 1] = 0;
 	}
-#ifndef NINTENDO
 	//fprintf( stderr, "%s", newstr );
 	fprintf( stderr, "[%s] %s", buffer, newstr );
 	fflush( stderr );
-#endif
 	//fprintf( stdout, "%s", newstr );
 	fprintf( stdout, "[%s] %s", buffer, newstr );
 	fflush( stdout );

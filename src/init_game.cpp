@@ -118,7 +118,6 @@ void initGameDatafilesAsync(bool moddedReload)
 {
 	physfsReloadMonsterLimbFiles();
 	GlyphHelper.readFromFile();
-#ifndef NINTENDO
 	if ( PHYSFS_getRealDir(PLAYERNAMES_MALE_FILE.c_str()) )
 	{
 		std::string namesDirectory = PHYSFS_getRealDir(PLAYERNAMES_MALE_FILE.c_str());
@@ -143,7 +142,6 @@ void initGameDatafilesAsync(bool moddedReload)
 		namesDirectory.append(PHYSFS_getDirSeparator()).append(NPCNAMES_FEMALE_FILE);
 		randomNPCNamesFemale = getLinesFromDataFile(namesDirectory);
 	}
-#endif
 }
 
 int initGame()
@@ -749,9 +747,7 @@ void deinitGame()
 		delete game_controller;
 	}*/
 
-#ifndef NINTENDO
 	IRCHandler.disconnect();
-#endif // !NINTENDO
 
 	if ( shoparea )
 	{

@@ -524,11 +524,7 @@ Field::result_t Field::process(SDL_Rect _size, SDL_Rect _actualSize, const bool 
 	Sint32 omousex = (inputs.getMouse(mouseowner, Inputs::OX) / (float)xres) * (float)Frame::virtualScreenX;
 	Sint32 omousey = (inputs.getMouse(mouseowner, Inputs::OY) / (float)yres) * (float)Frame::virtualScreenY;
 
-#ifndef NINTENDO
 	if (rectContainsPoint(_size, omousex, omousey) && inputs.getVirtualMouse(mouseowner)->draw_cursor) {
-#else
-	if (rectContainsPoint(_size, omousex, omousey)) {
-#endif
 		result.highlighted = highlighted = true;
 		result.highlightTime = highlightTime;
 	    result.tooltip = tooltip.c_str();

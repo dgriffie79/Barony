@@ -61,28 +61,10 @@ std::string LobbyHandler_t::getLobbyJoinFailedConnectString(int result)
 			break;
 
 		case EResult_LobbyFailures::LOBBY_JOIN_TIMEOUT:
-#ifndef NINTENDO
 			snprintf(buf, 1023, "Unable to join lobby:\nTimeout waiting for host.");
-#else
-			nxErrorPrompt(
-				"Unable to join lobby. Timeout waiting for host.",
-				"Unable to join lobby.\n\nTimeout waiting for host.\n\nPlease try again later.",
-				result);
-			snprintf(buf, 1023, "Unable to join lobby.");
-#endif
 			break;
 		default:
-#ifndef NINTENDO
 			snprintf(buf, 1023, "Unable to join lobby:\nError code: %d.", result);
-#else
-			nxErrorPrompt(
-				"Unable to join lobby. Invalid game version.",
-				"Unable to join lobby. Invalid game version.\n\n"
-				"Please check that your game version is up-to-date.\n\n"
-				"If the error persists, please try again later.",
-				result);
-			snprintf(buf, 1023, "Unable to join lobby.");
-#endif
 			break;
 	}
 	printlog("[Lobbies Error]: %s", buf);

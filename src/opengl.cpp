@@ -969,13 +969,8 @@ const float defaultLimitLow = 0.1f;         // your aperture can decrease to see
 constexpr float defaultLumaRed = 0.2126f;       // how much to weigh red light for luma (ITU 709)
 constexpr float defaultLumaGreen = 0.7152f;     // how much to weigh green light for luma (ITU 709)
 constexpr float defaultLumaBlue = 0.0722f;      // how much to weigh blue light for luma (ITU 709)
-#ifndef NINTENDO
 constexpr bool defaultMultithread = true;       // use multiple workers to collect luminance samples
 constexpr float defaultSamples = 16384;         // how many samples (pixels) to gather from the framebuffer for average scene luminance
-#else
-constexpr bool defaultMultithread = false;
-constexpr float defaultSamples = 4096;
-#endif
 ConsoleVariable<Vector4> cvar_hdrBrightness("/hdr_brightness", defaultBrightness);
 static ConsoleVariable<bool> cvar_hdrMultithread("/hdr_multithread", defaultMultithread);
 ConsoleVariable<float> cvar_hdrExposure("/hdr_exposure", defaultExposure);

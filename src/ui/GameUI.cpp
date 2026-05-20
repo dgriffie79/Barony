@@ -284,11 +284,7 @@ bool bUsePreciseFieldTextReflow = true;
 bool bUseSelectedSlotCycleAnimation = false; // probably not gonna use, but can enable
 CustomColors_t hudColors;
 EnemyBarSettings_t enemyBarSettings;
-#ifdef BARONY_SUPER_MULTIPLAYER
-StatusEffectQueue_t StatusEffectQueue[MAXPLAYERS] = { {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7} };
-#else
 StatusEffectQueue_t StatusEffectQueue[MAXPLAYERS] = { {0}, {1}, {2}, {3} };
-#endif
 std::unordered_map<int, StatusEffectQueue_t::EffectDefinitionEntry_t> StatusEffectQueue_t::StatusEffectDefinitions_t::allEffects;
 std::unordered_map<int, StatusEffectQueue_t::EffectDefinitionEntry_t> StatusEffectQueue_t::StatusEffectDefinitions_t::allSustainedSpells;
 Uint32 StatusEffectQueue_t::StatusEffectDefinitions_t::tooltipDescColor = 0xFFFFFFFF;
@@ -12652,7 +12648,6 @@ void Player::HUD_t::processHUD()
 	offsetHUDAboveHotbarHeight = 0;
 	if ( player.bUseCompactGUIWidth() )
 	{
-#ifndef NINTENDO
 		if ( inputs.hasController(player.playernum) )
 		{
 			if ( !playerSettings[multiplayer ? 0 : player.playernum].gamepad_facehotbar || *cvar_hotbar_compact_disable )
@@ -12664,12 +12659,6 @@ void Player::HUD_t::processHUD()
 		{
             offsetHUDAboveHotbarHeight = *cvar_ui_above_hotbar_y;
 		}
-#else
-		if ( !playerSettings[multiplayer ? 0 : player.playernum].gamepad_facehotbar || *cvar_hotbar_compact_disable )
-		{
-			offsetHUDAboveHotbarHeight = *cvar_ui_above_hotbar_y;
-		}
-#endif // NINTENDO
 	}
 
 	if ( !gamePaused && (player.entity || player.ghost.isActive()) && player.shootmode)
@@ -22434,7 +22423,6 @@ void Player::CharacterSheet_t::updateAttributes()
 
 void Player::Hotbar_t::processHotbar()
 {
-#ifndef NINTENDO
 	if ( inputs.hasController(player.playernum) )
 	{
 		useHotbarFaceMenu = playerSettings[multiplayer ? 0 : player.playernum].gamepad_facehotbar;
@@ -22443,9 +22431,6 @@ void Player::Hotbar_t::processHotbar()
 	{
 		useHotbarFaceMenu = false;
 	}
-#else
-	useHotbarFaceMenu = playerSettings[multiplayer ? 0 : player.playernum].gamepad_facehotbar;
-#endif // NINTENDO
 
 	if ( !hotbarFrame )
 	{

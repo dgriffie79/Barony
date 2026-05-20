@@ -175,10 +175,8 @@ int initApp(char const * const title, int fullscreen)
 	}
 
 	// init PHYSFS
-#ifndef NINTENDO
 	PHYSFS_init("/");
 	PHYSFS_permitSymbolicLinks(1);
-#endif
 
 	if ( !PHYSFS_isInit() )
 	{
@@ -1219,9 +1217,7 @@ int deinitApp()
 
 	// shutdown SDL subsystems
 	printlog("shutting down SDL and its subsystems...\n");
-#ifndef NINTENDO
 	SDLNet_Quit();
-#endif
 	IMG_Quit();
 	//Mix_HaltChannel(-1);
 	//Mix_CloseAudio();
@@ -1239,7 +1235,6 @@ int deinitApp()
 	TTF_Quit();
 	SDL_Quit();
 
-#ifndef NINTENDO
 	int numLogFilesToKeepInArchive = 30;
 	// archive logfiles.
 	char lognamewithTimestamp[128];
@@ -1330,14 +1325,11 @@ int deinitApp()
 	completePath(logToArchive, "log.txt", outputdir);
 #ifdef WINDOWS
 	CopyFileA(logToArchive, logarchiveFilePath.c_str(), false);
-#elif defined NINTENDO
-	// TODO?
 #else //LINUX & APPLE
 	std::stringstream ss;
 	ss << "cp " << logToArchive << " " << logarchiveFilePath.c_str();
 	system(ss.str().c_str());
 #endif // WINDOWS
-#endif //ndef NINTENDO
 	return 0;
 }
 
@@ -1439,7 +1431,6 @@ bool initVideo()
             return false;
         }
         
-#ifndef NINTENDO
         // make sure that we actually got the window size we wanted
         SDL_GL_GetDrawableSize(screen, &xres, &yres);
         SDL_DestroyWindow(screen);
@@ -1451,7 +1442,6 @@ bool initVideo()
             printlog("failed to set video mode.\n");
             return false;
         }
-#endif
 	}
 	else
 	{

@@ -234,7 +234,6 @@ Entity* newEntity(Sint32 sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 		printlog( "failed to allocate memory for new entity!\n" );
 		exit(1);
 	}*/
-#ifndef NINTENDO
 	bool failedToAllocate = false;
 	try
 	{
@@ -250,9 +249,6 @@ Entity* newEntity(Sint32 sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 		printlog("failed to allocate memory for new entity!\n");
 		exit(1);
 	}
-#else
-	entity = new Entity(sprite, pos, entlist, creaturelist);
-#endif
 
 	return entity;
 }

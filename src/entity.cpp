@@ -31271,7 +31271,6 @@ void Entity::createWorldUITooltip()
 			continue;
 		}
 		Entity* worldTooltip = nullptr;
-#ifndef NINTENDO
 		bool failedToAllocate = false;
 		try
 		{
@@ -31287,9 +31286,6 @@ void Entity::createWorldUITooltip()
 			printlog("failed to allocate memory for new entity!\n");
 			exit(1);
 		}
-#else
-		worldTooltip = new Entity(-1, 1, map.worldUI, nullptr);
-#endif
 
 		worldTooltip->x = this->x;
 		worldTooltip->y = this->y;
