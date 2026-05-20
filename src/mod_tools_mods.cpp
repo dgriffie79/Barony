@@ -309,9 +309,7 @@ void Mods::loadModels(int start, int end) {
 	}
 
 	//messagePlayer(clientnum, Language::get(2354));
-#ifndef EDITOR
 	printlog(Language::get(2355), start, end);
-#endif
 
 	loading = true;
 	//createLoadingScreen(5);
@@ -382,7 +380,6 @@ void Mods::loadModels(int start, int end) {
 
 void Mods::unloadMods(bool force)
 {
-#ifndef EDITOR
 	isLoading = true;
 	loading = true;
 	createLoadingScreen(5);
@@ -575,12 +572,10 @@ void Mods::unloadMods(bool force)
 	destroyLoadingScreen();
 	loading = false;
 	isLoading = false;
-#endif
 }
 
 void Mods::loadMods()
 {
-#ifndef EDITOR
 	Mods::disableSteamAchievements = false;
 	Mods::verifyAchievements(nullptr, false);
 
@@ -792,7 +787,6 @@ void Mods::loadMods()
 
 	loading = false;
 	isLoading = false;
-#endif
 }
 
 void Mods::writeLevelsTxtAndPreview(std::string modFolder)

@@ -22,12 +22,10 @@ See LICENSE for details.
 #include "scores.hpp"
 #include "ui/Field.hpp"
 #include "ui/Image.hpp"
-#ifndef EDITOR
 #include "ui/MainMenu.hpp"
 #include "shops.hpp"
 #include "interface/ui.hpp"
 #include "ui/GameUI.hpp"
-#endif
 #include "init.hpp"
 #include "ui/LoadingScreen.hpp"
 #include <thread>

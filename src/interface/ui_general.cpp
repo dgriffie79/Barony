@@ -249,12 +249,6 @@ void UIToastNotification::drawDockedCard()
 	Sint32 mousey = (::fingery / (float)yres) * (float)Frame::virtualScreenY;
 	Sint32 omousex = (::ofingerx / (float)xres) * (float)Frame::virtualScreenX;
 	Sint32 omousey = (::ofingery / (float)yres) * (float)Frame::virtualScreenY;
-#elif defined(EDITOR)
-	const bool clicking = mousestatus[SDL_BUTTON_LEFT];
-	Sint32 mousex = (::mousex / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 mousey = (::mousey / (float)yres) * (float)Frame::virtualScreenY;
-	Sint32 omousex = (::omousex / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 omousey = (::omousey / (float)yres) * (float)Frame::virtualScreenY;
 #else
 	const bool clicking = mousestatus[SDL_BUTTON_LEFT];
 	const int mouseowner = intro || gamePaused ? inputs.getPlayerIDAllowedKeyboard() : clientnum;

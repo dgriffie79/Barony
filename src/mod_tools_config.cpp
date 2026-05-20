@@ -11,7 +11,6 @@ See LICENSE for details.
 
 #include "mod_tools_private.hpp"
 
-#ifndef EDITOR
 ClassHotbarConfig_t::ClassHotbar_t ClassHotbarConfig_t::ClassHotbarsDefault[NUMCLASSES];
 ClassHotbarConfig_t::ClassHotbar_t ClassHotbarConfig_t::ClassHotbars[NUMCLASSES];
 
@@ -1267,4 +1266,3 @@ void GameplayPreferences_t::serverProcessGameConfig()
 		lastGameConfigUpdateTick = ticks;
 	}
 }
-#endif // !EDITOR

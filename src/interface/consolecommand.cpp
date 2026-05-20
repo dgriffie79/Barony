@@ -4913,14 +4913,11 @@ namespace ConsoleCommands {
 	});
 
 	static ConsoleCommand ccmd_loadshopkeeperconsumables("/loadshopconsumables", "", []CCMD{
-#ifndef EDITOR
 		ShopkeeperConsumables_t::readFromFile();
-#endif
 	});
 
 	static ConsoleCommand ccmd_writedefaultclasshotbars("/writedefaultclasshotbars", "", []CCMD{
 #ifndef NINTENDO
-#ifndef EDITOR
 		if ( !(svFlags & SV_FLAG_CHEATS) )
 		{
 			messagePlayer(clientnum, MESSAGE_MISC, Language::get(277));
@@ -4932,33 +4929,24 @@ namespace ConsoleCommands {
 		intro = oldIntro;
 		ClassHotbarConfig_t::init();
 #endif
-#endif
 	});
 
 	static ConsoleCommand ccmd_saveclasshotbar("/saveclasshotbar", "", []CCMD{
-#ifndef EDITOR
 		ClassHotbarConfig_t::writeToFile(ClassHotbarConfig_t::HOTBAR_LAYOUT_CUSTOM_CONFIG, ClassHotbarConfig_t::HOTBAR_CONFIG_WRITE);
 	ClassHotbarConfig_t::init();
-#endif
 	});
 
 	static ConsoleCommand ccmd_deleteclasshotbar("/deleteclasshotbar", "", []CCMD{
-#ifndef EDITOR
 		ClassHotbarConfig_t::writeToFile(ClassHotbarConfig_t::HOTBAR_LAYOUT_CUSTOM_CONFIG, ClassHotbarConfig_t::HOTBAR_CONFIG_DELETE);
 	ClassHotbarConfig_t::init();
-#endif
 	});
 
 	static ConsoleCommand ccmd_loadclasshotbars("/loadclasshotbars", "", []CCMD{
-#ifndef EDITOR
 		ClassHotbarConfig_t::init();
-#endif
 	});
 
 	static ConsoleCommand ccmd_assignclasshotbars("/assignhotbarslots", "", []CCMD{
-#ifndef EDITOR
 		ClassHotbarConfig_t::assignHotbarSlots(clientnum);
-#endif
 	});
 
 	static ConsoleCommand ccmd_maphashcheck("/maphashcheck", "", []CCMD{
@@ -5366,7 +5354,6 @@ namespace ConsoleCommands {
 		});
 
 	static ConsoleCommand ccmd_exportitemlang("/exportitemlang", "", []CCMD{
-#ifndef EDITOR
 #ifndef NINTENDO
 		/*cJSON* d = cJSON_CreateObject();
 		CustomHelpers::addMemberToRoot(d, "version", cJSON_CreateNumber(1));
@@ -5390,11 +5377,9 @@ namespace ConsoleCommands {
 		FileIO::close(fp);
 		cJSON_Delete(d);*/
 #endif
-#endif
 	});
 
 	static ConsoleCommand ccmd_exportspelllang("/exportspelllang", "", []CCMD{
-#ifndef EDITOR
 #ifndef NINTENDO
 		/*cJSON* d = cJSON_CreateObject();
 		CustomHelpers::addMemberToRoot(d, "version", cJSON_CreateNumber(1));
@@ -5419,7 +5404,6 @@ namespace ConsoleCommands {
 		free(json);
 		FileIO::close(fp);
 		cJSON_Delete(d);*/
-#endif
 #endif
 	});
 

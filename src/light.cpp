@@ -269,13 +269,11 @@ bool loadLights(bool forceLoadBaseDirectory) {
     return true;
 }
 
-#ifndef EDITOR
 #include "interface/consolecommand.hpp"
 static ConsoleCommand ccmd_reloadLights("/reloadlights", "reload light json",
     [](int argc, const char* argv[]){
     loadLights();
     });
-#endif
 
 light_t* addLight(Sint32 x, Sint32 y, const char* name, int range_bonus, int index) {
     if (!name || !name[0]) {

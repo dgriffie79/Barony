@@ -58,7 +58,6 @@ void list_RemoveNode(node_t* node)
 	{
 		Entity* entity = ((Entity*)node->element);
 		map.entities_map.erase(entity->getUID());
-#ifndef EDITOR
 		for ( int i = 0; i < MAXPLAYERS; ++i )
 		{
 			if ( FollowerMenu[i].recentEntity == entity )
@@ -74,10 +73,8 @@ void list_RemoveNode(node_t* node)
 				FollowerMenu[i].entityToInteractWith = nullptr;
 			}
 		}
-#endif // !EDITOR
 	}
 
-#ifndef EDITOR
 	for ( int i = 0; i < MAXPLAYERS; ++i )
 	{
 		if ( !players[i] || !players[i]->isLocalPlayer() )
@@ -134,7 +131,6 @@ void list_RemoveNode(node_t* node)
 			}
 		}
 	}
-#endif // !EDITOR
 	if ( node->list && node->list->first )
 	{
 		// if this is the first node...

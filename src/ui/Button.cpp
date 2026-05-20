@@ -9,9 +9,7 @@
 #include "Text.hpp"
 #include <cassert>
 
-#ifndef EDITOR
 #include "MainMenu.hpp"
-#endif
 
 Button::Button() {
 	size.x = 0; size.w = 32;
@@ -76,12 +74,8 @@ void Button::draw(SDL_Rect _size, SDL_Rect _actualSize, const std::vector<const 
 		return;
 	}
 
-#if defined(EDITOR) || defined(NINTENDO)
-	const bool focused = (fingerdown && highlighted) || selected;
-#else
 	const int mouseowner = intro || gamePaused ? inputs.getPlayerIDAllowedKeyboard() : owner;
 	const bool focused = highlighted || (selected && !inputs.getVirtualMouse(mouseowner)->draw_cursor && (intro || !players[owner]->shootmode));
-#endif
 
 	SDL_Rect scaledSize;
 	scaledSize.x = _size.x;
@@ -383,12 +377,6 @@ Button::result_t Button::process(SDL_Rect _size, SDL_Rect _actualSize, const boo
 	Sint32 mousey = (::fingery / (float)yres) * (float)Frame::virtualScreenY;
 	Sint32 omousex = (::ofingerx / (float)xres) * (float)Frame::virtualScreenX;
 	Sint32 omousey = (::ofingery / (float)yres) * (float)Frame::virtualScreenY;
-#elif defined(EDITOR)
-	const bool clicking = mousestatus[SDL_BUTTON_LEFT];
-	Sint32 mousex = (::mousex / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 mousey = (::mousey / (float)yres) * (float)Frame::virtualScreenY;
-	Sint32 omousex = (::omousex / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 omousey = (::omousey / (float)yres) * (float)Frame::virtualScreenY;
 #else
 	const bool clicking = mousestatus[SDL_BUTTON_LEFT];
 	const int mouseowner = intro || gamePaused ? inputs.getPlayerIDAllowedKeyboard() : owner;
@@ -398,7 +386,6 @@ Button::result_t Button::process(SDL_Rect _size, SDL_Rect _actualSize, const boo
 	Sint32 omousey = (inputs.getMouse(mouseowner, Inputs::OY) / (float)yres) * (float)Frame::virtualScreenY;
 #endif
 
-#ifndef EDITOR
 #ifndef NINTENDO
 	if (rectContainsPoint(_size, omousex, omousey) && inputs.getVirtualMouse(mouseowner)->draw_cursor) {
 #else
@@ -412,11 +399,6 @@ Button::result_t Button::process(SDL_Rect _size, SDL_Rect _actualSize, const boo
 		result.highlightTime = highlightTime = SDL_GetTicks();
 		result.tooltip = nullptr;
 	}
-#else
-	result.highlighted = highlighted = false;
-	result.highlightTime = highlightTime = SDL_GetTicks();
-	result.tooltip = nullptr;
-#endif
 
 	result.clicked = false;
 	if (highlighted) {

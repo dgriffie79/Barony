@@ -187,25 +187,13 @@ char* stringStr(char* str1, const char* str2, size_t str1_size, size_t str2_size
     return nullptr;
 }
 
-#ifdef EDITOR
-struct cvar_thingy {
-    bool data = false;
-} cvar_enableDebugKeys;
-#else
 #include "interface/consolecommand.hpp"
 static ConsoleVariable<bool> cvar_enableDebugKeys("/enabledebugkeys", false, "if true, certain special keys can be used for debugging");
-#endif
 
 // main definitions
 Sint32 display_id = 0;
-#if defined(APPLE) && !defined(EDITOR)
-// retina displays have higher DPI so we need a higher display resolution
-Sint32 xres = 2560;
-Sint32 yres = 1440;
-#else
 Sint32 xres = 1280;
 Sint32 yres = 720;
-#endif
 int mainloop = 1;
 bool initialized = false;
 Uint32 ticks = 0;
@@ -670,13 +658,11 @@ void finishStackTraceUnique() {
 #endif
 }
 
-#ifndef EDITOR
 #include "interface/consolecommand.hpp"
 static ConsoleCommand purgeStackTraces("/purge_stack_traces", "purge stack traces",
     [](int argc, const char* argv[]){
     finishStackTraceUnique();
     });
-#endif
 
 time_t getTime() {
     return time(nullptr);

@@ -26,11 +26,9 @@ void GameModeManager_t::Tutorial_t::startTutorial(std::string mapToSet)
 		}
 		setTutorialMap(mapToSet);
 	}
-#ifndef EDITOR
 	gameModeManager.setMode(gameModeManager.GameModes::GAME_MODE_TUTORIAL);
 	GameplayPreferences_t::reset();
 	gameplayPreferences[0].process();
-#endif
 	stats[0]->clearStats();
 	strcpy(stats[0]->name, "Player");
 	stats[0]->sex = static_cast<sex_t>(local_rng.rand() % 2);
@@ -70,16 +68,6 @@ void GameModeManager_t::Tutorial_t::buttonRestartTrial(button_t* my)
 	buttonReturnToTutorialHub(nullptr);
 }
 
-#ifdef EDITOR
-void GameModeManager_t::Tutorial_t::openGameoverWindow()
-{
-	return;
-}
-void GameModeManager_t::Tutorial_t::createFirstTutorialCompletedPrompt()
-{
-	return;
-}
-#else
 void GameModeManager_t::Tutorial_t::openGameoverWindow()
 {
 	MainMenu::openGameoverWindow(0, true);
@@ -89,7 +77,6 @@ void GameModeManager_t::Tutorial_t::createFirstTutorialCompletedPrompt()
 {
 	MainMenu::tutorialFirstTimeCompleted();
 }
-#endif
 
 //TODO: NX PORT: Update for the Switch?
 void GameModeManager_t::Tutorial_t::readFromFile()
@@ -590,7 +577,6 @@ void GameModeManager_t::CurrentSession_t::SeededRun_t::readSeedNamesFromFile()
 	}
 }
 
-#ifndef EDITOR
 void GameModeManager_t::CurrentSession_t::ChallengeRun_t::updateKillEvent(Entity* entity)
 {
 	if ( multiplayer == CLIENT || !isActive() || !entity )
@@ -1018,5 +1004,4 @@ bool GameModeManager_t::CurrentSession_t::ChallengeRun_t::loadScenario()
 
 	return true;
 }
-#endif
 

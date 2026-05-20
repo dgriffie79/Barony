@@ -100,11 +100,9 @@ extern FMOD::ChannelGroup* music_ensemble_global_send_group;
 extern FMOD::ChannelGroup* music_ensemble_global_recv_group;
 extern FMOD::ChannelGroup* music_ensemble_local_recv_player[MAXPLAYERS];
 extern FMOD::ChannelGroup* music_ensemble_local_recv_group;
-#ifndef EDITOR
 extern ConsoleVariable<float> cvar_ensemble_vol_bg;
 extern ConsoleVariable<int> cvar_ensemble_explore_seek;
 extern ConsoleVariable<int> cvar_ensemble_combat_seek;
-#endif
 struct EnsembleSounds_t
 {
     float ensemble_recv_global_volume = 0.f;
@@ -191,7 +189,6 @@ void handleLevelMusic(); //Manages and updates the level music.
 extern float fadein_increment, fadeout_increment, default_fadein_increment, default_fadeout_increment, dynamicAmbientVolume, dynamicEnvironmentVolume;
 extern bool sfxUseDynamicAmbientVolume, sfxUseDynamicEnvironmentVolume;
 
-#ifndef EDITOR
 class VoiceChat_t
 {
     static int packetVoiceDataIdx; // index start of voice data in VOIP packet
@@ -365,7 +362,6 @@ public:
 	static RingBuffer ringBufferRecord;
 };
 extern VoiceChat_t VoiceChat;
-#endif
 
 
 #else

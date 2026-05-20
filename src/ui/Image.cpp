@@ -482,7 +482,6 @@ void Image::dumpCache() {
     shader.destroy();
 }
 
-#ifndef EDITOR
 #include "../net.hpp"
 #include "../interface/consolecommand.hpp"
 static ConsoleCommand size("/images_cache_size", "measure image cache",
@@ -494,4 +493,3 @@ static ConsoleCommand dump("/images_cache_dump", "dump image cache",
     Image::dumpCache();
     messagePlayer(clientnum, MESSAGE_MISC, "dumped cache");
     });
-#endif

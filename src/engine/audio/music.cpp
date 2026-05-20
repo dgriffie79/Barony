@@ -20,9 +20,6 @@
 
 bool loadMusic()
 {
-#ifdef EDITOR
-	return true;
-#endif
 #ifdef USE_FMOD
     if ( NUMMINESMUSIC > 0 )
     {

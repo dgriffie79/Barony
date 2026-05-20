@@ -25,13 +25,8 @@
 #include "cJSON.h"
 #include "light.hpp"
 #include "net.hpp"
-#ifdef EDITOR
- #include "editor.hpp"
-#endif // NINTENDO
 #include "menu.hpp"
-#ifndef EDITOR
 #include "player.hpp"
-#endif
 #include "items.hpp"
 #include "cppfuncs.hpp"
 #include "ui/Text.hpp"
@@ -40,12 +35,10 @@
 #include "ui/Frame.hpp"
 #include "ui/Button.hpp"
 #include "ui/LoadingScreen.hpp"
-#ifndef EDITOR
 #include "mod_tools.hpp"
 #include "ui/MainMenu.hpp"
 #include "interface/consolecommand.hpp"
 static ConsoleVariable<bool> cvar_sdl_disablejoystickrawinput("/sdl_joystick_rawinput_disable", false, "disable SDL rawinput for gamepads (helps SDL_HapticOpen())");
-#endif
 
 #include <thread>
 #include <future>
@@ -111,9 +104,6 @@ bool mountBaseDataFolders() {
 }
 
 bool remountBaseDataFolders() {
-#ifdef EDITOR
-    return false; // don't do anything
-#else
     // first unmount everything.
     bool success = true;
 	char** i;
@@ -134,7 +124,6 @@ bool remountBaseDataFolders() {
     Mods::unloadMods(true);
     
     return success;
-#endif
 }
 
 /*-------------------------------------------------------------------------------
@@ -223,13 +212,11 @@ int initApp(char const * const title, int fullscreen)
 	window_title = title;
 	printlog("initializing SDL...\n");
 #ifdef WINDOWS
-#ifndef EDITOR
 	if ((*cvar_sdl_disablejoystickrawinput) == true)
 	{
 		SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT, "0"); // prefer XINPUT devices, helps making SDL_HapticOpen() work on my wireless xbox controllers
 		printlog("SDL_HINT_JOYSTICK_RAWINPUT set to 0");
 	}
-#endif
 #endif
     // do this in main() now.
 	/*Uint32 init_flags = SDL_INIT_VIDEO | SDL_INIT_EVENTS;
@@ -240,12 +227,10 @@ int initApp(char const * const title, int fullscreen)
 		return 1;
 	}*/
 
-#ifndef EDITOR
 	for ( int i = 0; i < MAXPLAYERS; ++i )
 	{
 		playerSettings->init(i);
 	}
-#endif
 
 	// I'm not sure when we'd need the following block.
 	// mobile ports????
@@ -318,9 +303,7 @@ int initApp(char const * const title, int fullscreen)
 		return 2;
 	}*/
 
-#ifndef EDITOR
 	initSoundEngine(); //Yes, this silently ignores the return value...(which is not good, but not important either)
-#endif
 
 	printlog("initializing SDL_net...\n");
 	if ( SDLNet_Init() < 0 )
@@ -439,12 +422,10 @@ int initApp(char const * const title, int fullscreen)
 
 	// create player classes
 	// TODO/FIXME: why isn't this in initGame? why is it in init.cpp?
-#ifndef EDITOR
 	for ( int c = 0; c < MAXPLAYERS; c++ )
 	{
 		players[c] = new Player(c, true);
 	}
-#endif
 
 	createLoadingScreen(10);
 	doLoadingScreen();
@@ -453,12 +434,10 @@ int initApp(char const * const title, int fullscreen)
 	auto loading_music_task = std::async(std::launch::async, [&loading_music_done]() {
 		File* fp;
 		updateLoadingScreen(10);
-#ifndef EDITOR
 		if ( !loadMusic() )
 		{
 			printlog("WARN: loadMusic() from initApp() failed!");
 		}
-#endif
 		loading_music_done = true;
 	});
 	while ( !loading_music_done )
@@ -632,9 +611,6 @@ int initApp(char const * const title, int fullscreen)
 			return 11;
 		}
 
-#ifdef EDITOR
-		modelFileNames.clear();
-#endif
 
 		models = (voxel_t**) malloc(sizeof(voxel_t*)*nummodels);
 		fp = openDataFile(modelsDirectory.c_str(), "rb");
@@ -667,28 +643,18 @@ int initApp(char const * const title, int fullscreen)
 					models[c] = model;
 				}
 			}
-#ifdef EDITOR
-			std::string filename = name;
-			if ( filename.find("models/") != std::string::npos )
-			{
-				filename = filename.substr(strlen("models/"));
-			}
-			modelFileNames[c] = filename;
-#endif
 		}
 		updateLoadingScreen(30);
 		generatePolyModels(0, nummodels, false);
 		FileIO::close(fp);
 		updateLoadingScreen(60);
 
-#ifndef EDITOR
 		int soundStatus = loadSoundResources(60, 20); // start at 60% loading, progress to 80%
 		if ( 0 != soundStatus )
 		{
 		    loading_done = true;
 			return soundStatus;
 		}
-#endif
 
 		updateLoadingScreen(80);
 
@@ -709,11 +675,6 @@ int initApp(char const * const title, int fullscreen)
 		loadLights();
 	}
 
-#ifdef EDITOR
-	// Don't destroy the loading screen in the game.
-	// It will be used later.
-	destroyLoadingScreen();
-#endif
 
 	//createTestUI();
 
@@ -986,7 +947,6 @@ int Language::reloadLanguage()
 static constexpr int numTileAtlases = sizeof(AnimatedTile::indices) / sizeof(AnimatedTile::indices[0]);
 static GLuint tileTextures[numTileAtlases] = { 0 };
 
-#ifndef EDITOR
 static ConsoleVariable<int> cvar_tileTextureSize("/tile_texture_size", 32, "the size of a tile texture");
 void readTilesJson()
 {
@@ -1023,17 +983,12 @@ void readTilesJson()
 	}
 	printlog("[JSON]: Tile texture size is: %d", *cvar_tileTextureSize);
 }
-#endif
 
 void generateTileTextures() {
     destroyTileTextures();
     
-#ifdef EDITOR
-    constexpr int size = 32;
-#else
 	readTilesJson();
     const int size = *cvar_tileTextureSize;
-#endif
     
     const int w = size; // width of a tile texture
     const int h = size; // height of a tile texture
@@ -1160,12 +1115,6 @@ int deinitApp()
 	if (map.tiles != nullptr) {
 		free(map.tiles);
 	}
-#ifdef EDITOR
-	if (camera.vismap != nullptr) {
-		free(camera.vismap);
-		camera.vismap = nullptr;
-	}
-#endif
 	if (menucam.vismap != nullptr) {
 		free(menucam.vismap);
 		menucam.vismap = nullptr;
@@ -1254,9 +1203,7 @@ int deinitApp()
 		polymodels = nullptr;
 	}
 
-#ifndef EDITOR
 	freeSoundResources();
-#endif
 
 	// delete opengl buffers
 	if (allsurfaces != nullptr) {
@@ -1278,9 +1225,7 @@ int deinitApp()
 	IMG_Quit();
 	//Mix_HaltChannel(-1);
 	//Mix_CloseAudio();
-#ifndef EDITOR
 	exitSoundEngine();
-#endif
 	destroyCommonDrawResources();
 	main_framebuffer.destroy();
 	if (renderer) {
@@ -1473,9 +1418,7 @@ bool initVideo()
         Uint32 flags = 0;
         flags |= SDL_WINDOW_OPENGL;
         
-#ifndef EDITOR
         flags |= SDL_WINDOW_ALLOW_HIGHDPI;
-#endif
         
         flags |= SDL_WINDOW_RESIZABLE;
         
@@ -1621,13 +1564,8 @@ bool changeVideoMode(int new_xres, int new_yres)
 	int result = initVideo();
 	if ( !result )
 	{
-#if defined(APPLE) && !defined(EDITOR)
-        xres = 2560;
-        yres = 1440;
-#else
         xres = 1280;
 		yres = 720;
-#endif
 		fullscreen = 0;
 		borderless = false;
 		printlog("defaulting to safe video mode...\n");
@@ -1670,11 +1608,9 @@ bool resizeWindow(int new_xres, int new_yres)
 	main_framebuffer.destroy();
 	Frame::fboDestroy();
 
-#ifndef EDITOR
     if (!intro) {
         MainMenu::setupSplitscreen();
     }
-#endif
 
 	// create new framebuffers
 	Frame::fboInit();

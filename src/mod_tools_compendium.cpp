@@ -33,7 +33,6 @@ void jsonVecToVec(rapidjson::Value& val, std::vector<Sint32>& vec)
 	}
 }
 
-#ifndef EDITOR
 Compendium_t CompendiumEntries;
 Item Compendium_t::compendiumItem;
 Compendium_t::CompendiumEntityCurrent Compendium_t::compendiumEntityCurrent;
@@ -6620,7 +6619,6 @@ std::vector<Sint32> Compendium_t::CompendiumMonsters_t::Monster_t::getDisplaySta
 
 	return retVal;
 }
-#endif
 
 std::unordered_map<std::string, Compendium_t::AchievementData_t> Compendium_t::achievements;
 bool Compendium_t::AchievementData_t::achievementsNeedResort = true;

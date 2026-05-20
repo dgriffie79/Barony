@@ -377,7 +377,6 @@ string_t* newString(list_t* list, Uint32 color, Uint32 time, int player, char co
 	string->player = player;
 	if ( content != NULL )
 	{
-#ifndef EDITOR
 		if ( list && list == &messages )
 		{
 			std::string sanitizedStr = messageSanitizePercentSign(content, nullptr).c_str();
@@ -388,7 +387,6 @@ string_t* newString(list_t* list, Uint32 color, Uint32 time, int player, char co
 			va_end( argptr );
 		}
 		else
-#endif
 		{
 			// format the content
 			va_start(argptr, content);

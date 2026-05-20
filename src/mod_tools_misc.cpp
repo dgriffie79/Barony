@@ -144,7 +144,6 @@ void StatueManager_t::resetStatueEditor()
 
 void StatueManager_t::refreshAllStatues()
 {
-#ifndef EDITOR
 	node_t* nextnode = nullptr;
 	for ( node_t* node = map.entities->first; node; node = nextnode )
 	{
@@ -163,7 +162,6 @@ void StatueManager_t::refreshAllStatues()
 			}
 		}
 	}
-#endif // !EDITOR
 }
 
 void StatueManager_t::readAllStatues()
@@ -491,9 +489,6 @@ bool GlyphRenderer_t::readFromFile()
 
 void GlyphRenderer_t::renderGlyphsToPNGs()
 {
-#if defined(EDITOR) || defined(NINTENDO)
-	return;
-#else
 	printlog("[Glyph Export]: Starting export...");
 	int errors = 0;
 	for ( auto& keyValue : allGlyphs )
@@ -638,7 +633,6 @@ void GlyphRenderer_t::renderGlyphsToPNGs()
 	}
 
 	printlog("[Glyph Export]: Completed export of %d glyphs with %d errors.", allGlyphs.size(), errors);
-#endif
 }
 
 void ScriptTextParser_t::readAllScripts()
@@ -1092,7 +1086,6 @@ bool ScriptTextParser_t::readFromFile(const std::string& filename)
 
 void ScriptTextParser_t::writeWorldSignsToFile()
 {
-#ifndef EDITOR
 	rapidjson::Document exportDocument;
 	exportDocument.SetObject();
 	CustomHelpers::addMemberToRoot(exportDocument, "version", rapidjson::Value(1));
@@ -1256,12 +1249,10 @@ void ScriptTextParser_t::writeWorldSignsToFile()
 	exportDocument.Accept(writer);
 	fp->write(os.GetString(), sizeof(char), os.GetSize());
 	FileIO::close(fp);
-#endif
 }
 
 
 
-#ifndef EDITOR
 void MonsterData_t::loadMonsterDataJSON()
 {
 	if ( PHYSFS_getRealDir("/data/monster_data.json") )
@@ -1457,11 +1448,9 @@ void MonsterData_t::loadMonsterDataJSON()
 	}
 	printlog("[JSON]: Error: Could not locate json file %s", "/data/monster_data.json");
 }
-#endif
 
 
 
-#ifndef EDITOR
 std::map<int, std::vector<ShopkeeperConsumables_t::StoreSlots_t>> ShopkeeperConsumables_t::entries;
 int ShopkeeperConsumables_t::consumableBuyValueMult = 100;
 void ShopkeeperConsumables_t::readFromFile()
@@ -1745,5 +1734,4 @@ void ShopkeeperConsumables_t::readFromFile()
 
 	printlog("[JSON]: Successfully read json file %s, processed %d shop consumables", inputPath.c_str(), entries.size());
 }
-#endif
 

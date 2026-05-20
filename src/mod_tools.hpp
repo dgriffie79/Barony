@@ -1340,10 +1340,8 @@ public:
 		void openGameoverWindow();
 		void onMapRestart(int levelNum)
 		{
-#ifndef EDITOR
 			achievementObserver.updateGlobalStat(
 				std::min(STEAM_GSTAT_TUTORIAL1_ATTEMPTS - 1 + levelNum, static_cast<int>(STEAM_GSTAT_TUTORIAL10_ATTEMPTS)), -1);
-#endif // !EDITOR
 		}
 
 		class Menu_t
@@ -1842,14 +1840,11 @@ public:
 };
 extern ScriptTextParser_t ScriptTextParser;
 
-#ifndef EDITOR
 //#define USE_THEORA_VIDEO
-#endif // !EDITOR
 
 
 
 
-#ifndef EDITOR
 struct ShopkeeperConsumables_t
 {
 	struct ItemEntry
@@ -2006,7 +2001,6 @@ public:
 };
 
 extern GameplayPreferences_t gameplayPreferences[MAXPLAYERS];
-#endif
 
 struct EditorEntityData_t
 {

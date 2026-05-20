@@ -1,12 +1,6 @@
 #include "main.hpp"
 #include "input.hpp"
-#ifdef EDITOR
-#ifndef TICKS_PER_SECOND
-#define TICKS_PER_SECOND 50
-#endif
-#else
 #include "player.hpp"
-#endif
 #include "mod_tools.hpp"
 #include "ui/MainMenu.hpp"
 
@@ -257,7 +251,6 @@ const char* Input::binding(const char* binding) const {
 void Input::refresh() {
 	bindings.clear();
 	defaultBindings();
-#ifndef EDITOR
 	for ( auto& binding : kb_system_bindings )
 	{
 		bind(binding.first.c_str(), binding.second.c_str());
@@ -318,7 +311,6 @@ void Input::refresh() {
 		    bind(binding.first.c_str(), (prefix + binding.second).c_str());
 		}
 	}
-#endif // !EDITOR
 }
 
 Input::binding_t Input::input(const char* binding) const {
@@ -333,21 +325,9 @@ Input::ControllerType Input::getControllerType() const {
     return getControllerType(player);
 }
 
-#ifndef EDITOR
 static ConsoleVariable<int> cvar_forceGlyphs("/forceglyphs", -1, "Force use of specific controller glyphs");
-#endif
 
 Input::ControllerType Input::getControllerType(int index) {
-#if defined(EDITOR)
-    return ControllerType::Xbox;
-#elif defined(NINTENDO)
-    // nintendo switch joycons
-    if (*cvar_forceGlyphs >= 0) {
-        return (ControllerType)*cvar_forceGlyphs;
-    } else {
-        return ControllerType::NintendoSwitch;
-    }
-#else
     if (*cvar_forceGlyphs >= 0) {
         return (ControllerType)*cvar_forceGlyphs;
     } else {
@@ -368,7 +348,6 @@ Input::ControllerType Input::getControllerType(int index) {
         //case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_JOYCON_PAIR: return ControllerType::NintendoSwitch;
         }
     }
-#endif
 }
 
 const char* Input::getKeyboardGlyph(int index) {
@@ -397,11 +376,9 @@ const char* Input::getControllerGlyph() const {
 
 std::string Input::getGlyphPathForInput(const char* input, bool pressed, ControllerType type)
 {
-#ifndef EDITOR
     if (*cvar_hideGlyphs) {
         return "";
     }
-#endif
     if (!input || !input[0]) {
         return "";
     }
@@ -587,11 +564,9 @@ std::string Input::getGlyphPathForInput(const char* input, bool pressed, Control
 
 std::string Input::getGlyphPathForBinding(const char* binding, bool pressed) const
 {
-#ifndef EDITOR
 	if (*cvar_hideGlyphs) {
 		return "";
 	}
-#endif
 	return getGlyphPathForBinding(input(binding), pressed);
 }
 
@@ -626,13 +601,11 @@ void Input::bind(const char* binding, const char* input) {
 		Uint32 index = (Uint32)strtol((const char*)(input + 3), &type, 10);
 		bool foundControllerForPlayer = false;
 		SDL_GameController* pad = nullptr;
-#ifndef EDITOR
 		if ( auto controller = ::inputs.getController(player) )
 		{
 			foundControllerForPlayer = true;
 			pad = controller->getControllerDevice();
 		}
-#endif
 		if ( foundControllerForPlayer ) {
 			(*b).second.pad = pad;
 			(*b).second.padIndex = index;
@@ -987,7 +960,6 @@ Input::playerControlType_t Input::getPlayerControlType()
 	if (multiplayer != SINGLE && player != 0) {
 		return inputs[0].getPlayerControlType();
 	}
-#ifndef EDITOR
 	if ( ::inputs.hasController(player) )
 	{
 		return Input::PLAYER_CONTROLLED_BY_CONTROLLER;
@@ -996,7 +968,6 @@ Input::playerControlType_t Input::getPlayerControlType()
 	{
 		return Input::PLAYER_CONTROLLED_BY_KEYBOARD;
 	}
-#endif // !EDITOR
 	return Input::PLAYER_CONTROLLED_BY_INVALID;
 }
 
@@ -1024,7 +995,6 @@ bool Input::bindingIsSharedWithKeyboardSystemBinding(const char* binding)
 	if ( multiplayer != SINGLE && player != 0 ) {
 		return inputs[0].bindingIsSharedWithKeyboardSystemBinding(binding);
 	}
-#ifndef EDITOR
 	if ( disabled )
 	{
 		return false;
@@ -1058,7 +1028,6 @@ bool Input::bindingIsSharedWithKeyboardSystemBinding(const char* binding)
 	{
 		return true;
 	}
-#endif
 	return false;
 }
 
@@ -1068,7 +1037,6 @@ void Input::consumeBindingsSharedWithBinding(const char* binding)
 		inputs[0].consumeBindingsSharedWithBinding(binding);
 		return;
 	}
-#ifndef EDITOR
 	if ( disabled )
 	{
 		return;
@@ -1152,7 +1120,6 @@ void Input::consumeBindingsSharedWithBinding(const char* binding)
 			}
 		}
 	}
-#endif
 }
 
 void Input::consumeBindingsSharedWithFaceHotbar()
@@ -1161,7 +1128,6 @@ void Input::consumeBindingsSharedWithFaceHotbar()
 		inputs[0].consumeBindingsSharedWithFaceHotbar();
 		return;
 	}
-#ifndef EDITOR
 	if ( disabled )
 	{
 		return;
@@ -1261,5 +1227,4 @@ void Input::consumeBindingsSharedWithFaceHotbar()
 			}
 		}
 	}
-#endif
 }

@@ -14,9 +14,7 @@
 #include "../../ui/LoadingScreen.hpp"
 #include "sound.hpp"
 
-#ifndef EDITOR
 #include "../../ui/MainMenu.hpp"
-#endif
 
 #ifdef USE_FMOD
 
@@ -98,7 +96,6 @@ bool initSoundEngine()
             printlog("[FMOD] Audio device found: %d %s | %08x %04x %04x | rate: %d | mode: %s | channels: %d",
                 i, driverName, guid.Data1, guid.Data2, guid.Data3, rate, fmod_speakermode_strings[mode], channels);
 
-#ifndef EDITOR
 			uint32_t _1; memcpy(&_1, &guid.Data1, sizeof(_1));
 			uint64_t _2; memcpy(&_2, &guid.Data4, sizeof(_2));
 			char guid_string[25];
@@ -107,7 +104,6 @@ bool initSoundEngine()
 			{
 				selected_driver = i;
 			}
-#endif
 		}
 
 		fmod_system->setDriver(selected_driver);
@@ -305,7 +301,6 @@ bool initSoundEngine()
 		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_DRYLEVEL, 0.f);
 		//}
 
-#ifndef EDITOR
 		int selected_recording_driver = 0;
 		int numRecordingDrivers = 0;
 		fmod_system->getRecordNumDrivers(&numRecordingDrivers, nullptr);
@@ -345,18 +340,13 @@ bool initSoundEngine()
 				selected_recording_driver = i;
 			}
 		}
-#endif
 
-#ifndef EDITOR
 		VoiceChat.setRecordingDevice(selected_recording_driver);
-#endif
 	}
 #endif
 
-#ifndef EDITOR
 	// saves your ears getting blasted if the game starts without window focus.
 	setGlobalVolume(0.f, 0.f, 0.f, 0.f, 0.f, 0.f);
-#endif
 
 	return !no_sound; //No double negatives pls
 }

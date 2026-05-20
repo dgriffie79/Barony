@@ -337,9 +337,7 @@ int initGame()
 		loadAllScores(SCORESFILE_MULTIPLAYER);
 
 #ifdef USE_FMOD
-#ifndef EDITOR
 		ensembleSounds.setup();
-#endif
 #endif
 
 		updateLoadingScreen(98);
@@ -407,10 +405,8 @@ int initGame()
 		LocalAchievements.readFromFile();
 #endif
 
-#ifndef EDITOR
 #ifdef USE_FMOD
 		VoiceChat.init();
-#endif
 #endif
 
 	}
@@ -698,9 +694,7 @@ void deinitGame()
 #endif
 
 #ifdef USE_FMOD
-#ifndef EDITOR
 	VoiceChat.deinit();
-#endif
 #endif
 
 	// free items

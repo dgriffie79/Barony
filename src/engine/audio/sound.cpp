@@ -13,9 +13,7 @@
 #include "../../files.hpp"
 #include "../../game.hpp"
 #include "sound.hpp"
-#ifndef EDITOR
 #include "../../player.hpp"
-#endif
 
 #ifdef USE_FMOD
 #include "fmod_errors.h"
@@ -71,7 +69,6 @@ void setAudioDevice(const std::string& device) {
 
 void setRecordDevice(const std::string& device)
 {
-#ifndef EDITOR
 	int selected_driver = 0;
 	int numDrivers = 0;
 	fmod_system->getRecordNumDrivers(&numDrivers, nullptr);
@@ -93,7 +90,6 @@ void setRecordDevice(const std::string& device)
 		}
 	}
 	VoiceChat.setRecordingDevice(selected_driver);
-#endif
 }
 
 void setGlobalVolume(real_t master, real_t music, real_t gameplay, real_t ambient, real_t environment, real_t notification) {
@@ -112,20 +108,16 @@ void setGlobalVolume(real_t master, real_t music, real_t gameplay, real_t ambien
 	soundNotification_group->setVolume(master * notification);
 	music_ensemble_global_send_group->setVolume(1.f);
 
-#ifndef EDITOR
 	ensembleSounds.ensemble_recv_global_volume = master * (music * 4);
 	ensembleSounds.ensemble_recv_player_volume = master * gameplay;
 	if ( VoiceChat.outChannelGroup )
 	{
 		VoiceChat.outChannelGroup->setVolume(master);
 	}
-#endif
 }
 
-#ifndef EDITOR
 	static ConsoleVariable<float> cvar_sfx_notification_music_fade("/sfx_notification_music_fade", 0.5f);
 	static ConsoleVariable<float> cvar_sfx_ensemble_music_fade("/sfx_ensemble_music_fade", 0.f);
-#endif // !EDITOR
 
 void sound_update(int player, int index, int numplayers)
 {
@@ -199,7 +191,6 @@ void sound_update(int player, int index, int numplayers)
 #endif
 
 	if (player == 0) {
-#ifndef EDITOR
 		//Fade in the currently playing music.
 		bool notificationPlaying = false;
 		if ( music_notification_group )
@@ -243,7 +234,6 @@ void sound_update(int player, int index, int numplayers)
 				}
 			}
 		}
-#endif
 
 #ifdef DEBUG_EVENT_TIMERS
 		time2 = std::chrono::high_resolution_clock::now();
@@ -273,17 +263,6 @@ void sound_update(int player, int index, int numplayers)
 				}
 				time1 = std::chrono::high_resolution_clock::now();
 #endif
-#ifdef EDITOR
-				if ( volume < 1.0f )
-				{
-					volume += fadein_increment * 2;
-					if ( volume > 1.0f )
-					{
-						volume = 1.0f;
-					}
-					music_channel->setVolume(volume);
-				}
-#else
 				if ( notificationPlaying && volume > 0.0f )
 				{
 					volume -= fadeout_increment * 5;
@@ -311,7 +290,6 @@ void sound_update(int player, int index, int numplayers)
 					}
 					music_channel->setVolume(volume);
 				}
-#endif
 #ifdef DEBUG_EVENT_TIMERS
 				time2 = std::chrono::high_resolution_clock::now();
 				accum = 1000 * std::chrono::duration_cast<std::chrono::duration<double>>(time2 - time1).count();
@@ -389,9 +367,7 @@ void sound_update(int player, int index, int numplayers)
 #endif
 
 	if (player == numplayers - 1) {
-#ifndef EDITOR
 		VoiceChat.update();
-#endif
 		fmod_system->update();
 	}
 
@@ -1722,7 +1698,6 @@ void physfsReloadMusic(bool &introMusicChanged, bool reloadAll) //TODO: This sho
 						break;
 					default:
 #ifdef USE_FMOD
-#ifndef EDITOR
 						if ( index >= 21 && index < 21 + NUMENSEMBLEMUSIC * 5 )
 						{
 
@@ -1810,7 +1785,6 @@ void physfsReloadMusic(bool &introMusicChanged, bool reloadAll) //TODO: This sho
 								fmod_result = fmod_system->createSound(musicDir.c_str(), FMOD_3D | FMOD_LOOP_NORMAL, nullptr, &ensembleSounds.exploreTransSound[3][c]);
 							}*/
 						}
-#endif
 #endif
 						break;
 				}
@@ -1912,12 +1886,10 @@ void physfsReloadMusic(bool &introMusicChanged, bool reloadAll) //TODO: This sho
 	}
 
 #ifdef USE_FMOD
-#ifndef EDITOR
 	if ( ensembleNeedsUpdate && !ensembleSounds.firstTimeSetup ) // only setup here on modded reloads
 	{
 		ensembleSounds.setup();
 	}
-#endif
 #endif
 
 	introMusicChanged = introChanged; // use this variable outside of this function to start playing a new fresh list of tracks in the main menu.

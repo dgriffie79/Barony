@@ -7,9 +7,8 @@ pub fn build(b: *std.Build) void {
     // -----------------------------------------------------------------------
     // Build options
     // -----------------------------------------------------------------------
-    const deps_root = b.option([]const u8, "deps_root", "Path to dependency root (e.g. C:\\dev\\barony-deps)") orelse "C:\\dev\\barony-deps";
+    const deps_root = b.option([]const u8, "deps_root", "Path to dependency root (e.g. C:\\dev\\barony-deps") orelse "C:\\dev\\barony-deps";
     const fmod_enabled = b.option(bool, "fmod", "Enable FMOD audio") orelse false;
-    const editor_enabled = b.option(bool, "editor", "Build editor executable") orelse true;
     const game_enabled = b.option(bool, "game", "Build game executable") orelse true;
     const datadir = b.option([]const u8, "datadir", "Base data directory path");
 
@@ -45,13 +44,13 @@ pub fn build(b: *std.Build) void {
         "-Wno-pointer-to-int-cast",
         "-Wno-date-time",
         "-Wno-format",
-
     };
 
     // -----------------------------------------------------------------------
-    // Source file lists
+    // Source file list
     // -----------------------------------------------------------------------
-    const game_sources = &.{ "src/main.cpp", "src/init.cpp", "src/collision.cpp", "src/light.cpp",
+    const sources = &.{
+        "src/main.cpp", "src/init.cpp", "src/collision.cpp", "src/light.cpp",
         "src/maps.cpp", "src/cursors.cpp", "src/draw.cpp", "src/opengl.cpp",
         "src/objects.cpp", "src/list.cpp", "src/files.cpp", "src/items.cpp",
         "src/paths.cpp", "src/charclass.cpp", "src/net.cpp", "src/game.cpp",
@@ -106,27 +105,6 @@ pub fn build(b: *std.Build) void {
         "src/engine/audio/defines.cpp", "src/engine/audio/init_audio.cpp",
         "src/engine/audio/sound.cpp", "src/engine/audio/sound_game.cpp",
         "src/engine/audio/music.cpp",
-
-    };
-
-    const editor_sources = &.{
-        "src/main.cpp", "src/init.cpp", "src/light.cpp", "src/buttons.cpp",
-        "src/cursors.cpp", "src/draw.cpp", "src/opengl.cpp", "src/objects.cpp",
-        "src/entity_editor.cpp", "src/input.cpp", "src/list.cpp", "src/hash.cpp",
-        "src/files.cpp", "src/editor.cpp", "src/entity_shared.cpp",
-        "src/stat_editor.cpp", "src/stat_shared.cpp", "src/items_editor.cpp",
-        "src/json.cpp",
-        "src/mod_tools_tooltips.cpp", "src/mod_tools_compendium.cpp",
-        "src/mod_tools_gamemode.cpp", "src/mod_tools_misc.cpp",
-        "src/mod_tools_config.cpp", "src/mod_tools_mods.cpp",
-        "src/mod_tools_equip.cpp", "src/mod_tools_irc.cpp",
-        "src/mod_tools_editor.cpp", "src/prng.cpp", "src/shader.cpp",
-        "src/mod_tools.cpp",
-        "src/ui/Button.cpp", "src/ui/Field.cpp", "src/ui/Font.cpp",
-        "src/ui/Frame.cpp", "src/ui/Image.cpp", "src/ui/Slider.cpp",
-        "src/ui/Text.cpp", "src/ui/Widget.cpp", "src/ui/LoadingScreen.cpp",
-        "src/engine/audio/defines.cpp", "src/engine/audio/init_audio.cpp",
-        "src/engine/audio/sound.cpp",
     };
 
     // -----------------------------------------------------------------------
@@ -139,46 +117,30 @@ pub fn build(b: *std.Build) void {
     };
 
     const game_mod = b.createModule(mod_options);
-    const editor_mod = b.createModule(mod_options);
 
     // Config.hpp include path (generated header)
     game_mod.addConfigHeader(config);
-    editor_mod.addConfigHeader(config);
 
     // Local include paths
     game_mod.addIncludePath(b.path("src"));
-    editor_mod.addIncludePath(b.path("src"));
 
     // Dependency include paths (absolute path via cwd_relative)
     {
         const inc_path = b.fmt("{s}/include", .{deps_root});
         game_mod.addSystemIncludePath(.{ .cwd_relative = inc_path });
-        editor_mod.addSystemIncludePath(.{ .cwd_relative = inc_path });
-        // SDL2 headers use both <SDL.h> and <SDL2/SDL.h> patterns
         const sdl_inc = b.fmt("{s}/include/SDL2", .{deps_root});
         game_mod.addSystemIncludePath(.{ .cwd_relative = sdl_inc });
-        editor_mod.addSystemIncludePath(.{ .cwd_relative = sdl_inc });
     }
 
     // Platform defines
     game_mod.addCMacro("WINDOWS", "");
-    editor_mod.addCMacro("WINDOWS", "");
     game_mod.addCMacro("_CRT_SECURE_NO_WARNINGS", "");
-    editor_mod.addCMacro("_CRT_SECURE_NO_WARNINGS", "");
     game_mod.addCMacro("WIN32_LEAN_AND_MEAN", "");
-    editor_mod.addCMacro("WIN32_LEAN_AND_MEAN", "");
     game_mod.addCMacro("GLEW_STATIC", "");
-    editor_mod.addCMacro("GLEW_STATIC", "");
 
     // Add source files
-    game_mod.addCSourceFiles(.{ .files = game_sources, .flags = cxx_flags });
+    game_mod.addCSourceFiles(.{ .files = sources, .flags = cxx_flags });
     game_mod.addCSourceFile(.{ .file = b.path("src/cJSON.c"), .flags = &.{} });
-    editor_mod.addCSourceFile(.{ .file = b.path("src/cJSON.c"), .flags = &.{} });
-
-    const editor_flags = b.allocator.alloc([]const u8, cxx_flags.len + 1) catch @panic("OOM");
-    for (cxx_flags, 0..) |flag, i| editor_flags[i] = flag;
-    editor_flags[cxx_flags.len] = "-DEDITOR";
-    editor_mod.addCSourceFiles(.{ .files = editor_sources, .flags = editor_flags });
 
     // -----------------------------------------------------------------------
     // Library linking helper
@@ -203,17 +165,17 @@ pub fn build(b: *std.Build) void {
                 mod.linkSystemLibrary("ws2_32", .{});
                 mod.linkSystemLibrary("wsock32", .{});
                 mod.linkSystemLibrary("mingw32", .{});
-            mod.linkSystemLibrary("glew32", .{});
-            mod.linkSystemLibrary("gdi32", .{});
-            mod.linkSystemLibrary("winmm", .{});
-            mod.linkSystemLibrary("setupapi", .{});
-            mod.linkSystemLibrary("ole32", .{});
-            mod.linkSystemLibrary("oleaut32", .{});
-            mod.linkSystemLibrary("imm32", .{});
-            mod.linkSystemLibrary("version", .{});
-            mod.linkSystemLibrary("rpcrt4", .{});
-            mod.linkSystemLibrary("usp10", .{});
-            mod.linkSystemLibrary("iphlpapi", .{});
+                mod.linkSystemLibrary("glew32", .{});
+                mod.linkSystemLibrary("gdi32", .{});
+                mod.linkSystemLibrary("winmm", .{});
+                mod.linkSystemLibrary("setupapi", .{});
+                mod.linkSystemLibrary("ole32", .{});
+                mod.linkSystemLibrary("oleaut32", .{});
+                mod.linkSystemLibrary("imm32", .{});
+                mod.linkSystemLibrary("version", .{});
+                mod.linkSystemLibrary("rpcrt4", .{});
+                mod.linkSystemLibrary("usp10", .{});
+                mod.linkSystemLibrary("iphlpapi", .{});
             }
             mod.linkSystemLibrary("m", .{});
         }
@@ -231,7 +193,6 @@ pub fn build(b: *std.Build) void {
         barony.root_module.addWin32ResourceFile(.{ .file = b.path("barony.rc") });
 
         link_required(barony.root_module, deps_root, target.result.os.tag);
-        // Optional libs
         if (fmod_enabled) barony.root_module.linkSystemLibrary("fmod", .{});
 
         if (datadir) |dd| {
@@ -246,39 +207,7 @@ pub fn build(b: *std.Build) void {
         const run_step = b.step("run", "Run Barony");
         const run_barony = b.addRunArtifact(barony);
         if (datadir) |dd| run_barony.setCwd(.{ .cwd_relative = dd });
-        // Add DLL search path for SDL2/GLEW/Png
         run_barony.addPathDir(b.fmt("{s}/bin", .{deps_root}));
         run_step.dependOn(&run_barony.step);
     }
-
-    // -----------------------------------------------------------------------
-    // Editor executable
-    // -----------------------------------------------------------------------
-    if (editor_enabled) {
-        const editor = b.addExecutable(.{
-            .name = "editor",
-            .root_module = editor_mod,
-        });
-
-        editor.root_module.addWin32ResourceFile(.{ .file = b.path("editor.rc") });
-
-        link_required(editor.root_module, deps_root, target.result.os.tag);
-        // Optional libs
-        if (fmod_enabled) editor.root_module.linkSystemLibrary("fmod", .{});
-
-        if (datadir) |dd| {
-            const escaped = std.mem.replaceOwned(u8, b.allocator, dd, "\\", "\\\\") catch @panic("OOM");
-            editor.root_module.addCMacro("BASE_DATA_DIR", b.fmt("\"{s}\"", .{escaped}));
-        } else {
-            editor.root_module.addCMacro("BASE_DATA_DIR", "\"./\"");
-        }
-
-        b.installArtifact(editor);
-
-        const run_editor_step = b.step("run-editor", "Run Barony Editor");
-        const run_editor = b.addRunArtifact(editor);
-        if (datadir) |dd| run_editor.setCwd(.{ .cwd_relative = dd });
-        run_editor_step.dependOn(&run_editor.step);
-    }
 }
- 

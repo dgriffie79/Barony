@@ -106,7 +106,6 @@ void Font::dumpCache() {
 	hashed_fonts.clear();
 }
 
-#ifndef EDITOR
 #include "../net.hpp"
 #include "../interface/consolecommand.hpp"
 static ConsoleCommand size("/fonts_cache_size", "measure font cache",
@@ -118,4 +117,3 @@ static ConsoleCommand dump("/fonts_cache_dump", "dump font cache",
     Font::dumpCache();
     messagePlayer(clientnum, MESSAGE_MISC, "dumped cache");
     });
-#endif

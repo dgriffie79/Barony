@@ -435,7 +435,6 @@ unsigned int GO_GetPixelU32(int x, int y, view_t& camera);
 
 extern bool hdrEnabled;
 
-#ifndef EDITOR
 #include "interface/consolecommand.hpp"
 extern ConsoleVariable<Vector4> cvar_hdrBrightness;
 extern ConsoleVariable<float> cvar_fogDistance;
@@ -451,4 +450,3 @@ extern const float defaultExposure;
 extern const float defaultAdjustmentRate;
 extern const float defaultLimitHigh;
 extern const float defaultLimitLow;
-#endif

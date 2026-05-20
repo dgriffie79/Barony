@@ -14,9 +14,7 @@
 #include "../interface/consolecommand.hpp"
 #include <queue>
 #include "GameUI.hpp"
-#ifndef EDITOR
 #include "MainMenu.hpp"
-#endif
 
 bool drawingGui = false;
 const Sint32 Frame::sliderSize = 16;
@@ -30,7 +28,6 @@ int Frame::_virtualScreenX = 0;
 int Frame::_virtualScreenY = 0;
 
 static int getMouseOwnerPauseMenu() {
-#ifndef EDITOR
 	if (gamePaused) {
 		for (int i = 0; i < MAXPLAYERS; ++i) {
 			if (inputs.bPlayerUsingKeyboardControl(i)) {
@@ -38,11 +35,9 @@ static int getMouseOwnerPauseMenu() {
 			}
 		}
 	}
-#endif
     return clientnum;
 }
 
-#ifndef EDITOR
 #include "../net.hpp"
 ConsoleCommand myCmd("/resizegui", "change gui size",
     [](int argc, const char** argv){
@@ -54,7 +49,6 @@ ConsoleCommand myCmd("/resizegui", "change gui size",
     const int y = (int)strtol(argv[2], nullptr, 10);
     Frame::guiResize(x, y);
     });
-#endif
 
 static const Uint32 tooltip_background = makeColor(0, 0, 0, 191);
 static const Uint32 tooltip_border_color = makeColor(51, 33, 26, 255);
@@ -99,25 +93,19 @@ void Frame::listener_t::onChangeName(const char* name) {
 	entryCast->text = name;
 }
 
-#ifndef EDITOR
 ConsoleVariable<bool> ui_filter("/ui_filter", false);
 static ConsoleCommand ui_filter_refresh("/ui_filter_refresh", "refresh ui filter state",
     [](int argc, const char** argv){
     Frame::fboDestroy();
     Frame::fboInit();
     });
-#endif
 
 void Frame::fboInit() {
-#ifdef EDITOR
-    gui_fb.init(Frame::virtualScreenX, Frame::virtualScreenY, GL_NEAREST, GL_NEAREST);
-#else
     if (*ui_filter) {
         gui_fb.init(Frame::virtualScreenX, Frame::virtualScreenY, GL_LINEAR, GL_LINEAR);
     } else {
         gui_fb.init(Frame::virtualScreenX, Frame::virtualScreenY, GL_NEAREST, GL_NEAREST);
     }
-#endif
 #ifndef NINTENDO
     gui_fb_upscaled.init(Frame::virtualScreenX * 3, Frame::virtualScreenY * 3, GL_LINEAR, GL_NEAREST); // 4k resolution
     gui_fb_downscaled.init(Frame::virtualScreenX / 2, Frame::virtualScreenY / 2, GL_LINEAR, GL_NEAREST); // 360p resolution
@@ -132,9 +120,7 @@ void Frame::fboDestroy() {
 #endif
 }
 
-#ifndef EDITOR
 #include "../interface/ui.hpp"
-#endif
 
 void Frame::guiInit() {
 	if ( _virtualScreenX == 0 && _virtualScreenY == 0 ) {
@@ -170,7 +156,6 @@ void Frame::guiInit() {
 	gui->setActualSize(guiRect);
 	gui->setHollow(true);
 
-#ifndef EDITOR
 	doSharedMinimap();
 	for ( int i = 0; i < MAXPLAYERS; ++i )
 	{
@@ -184,11 +169,9 @@ void Frame::guiInit() {
 		gameUIFrame[i]->setDisabled(true);
 	}
 	UIToastNotificationManager.init();
-#endif
 }
 
 void Frame::guiDestroy() {
-#ifndef EDITOR
 	for ( int i = 0; i < MAXPLAYERS; ++i )
 	{
 		if ( gameUIFrame[i] )
@@ -204,7 +187,6 @@ void Frame::guiDestroy() {
 	minimapFrame = nullptr; // shared minimap
 
 	UIToastNotificationManager.term(false);
-#endif
 
 	if (gui) {
 		delete gui;
@@ -284,14 +266,11 @@ Frame::~Frame() {
     clear();
 }
 
-#ifndef EDITOR
 static ConsoleVariable<bool> ui_scale_native("/ui_scale_native", false);    // if true, causes the UI to blit from a backbuffer even if it's already native res
 static ConsoleVariable<bool> ui_upscale("/ui_upscale", false);              // upscale UI layer to 4k before downscaling to native res
 static ConsoleVariable<bool> ui_downscale("/ui_downscale", false);          // downscale UI layer to 360p before upscaling to native res
 static ConsoleVariable<bool> ui_scale("/ui_scale", true);                   // scale the UI layer to native res (should always be on)
-#endif
 
-#if !defined(EDITOR)
 void Frame::predraw() {
 	drawingGui = true;
     GL_CHECK_ERR(glEnable(GL_BLEND));
@@ -351,34 +330,6 @@ void Frame::postdraw() {
     GL_CHECK_ERR(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK_ERR(glDisable(GL_BLEND));
 }
-#else
-// EDITOR ONLY DEFINITIONS:
-void Frame::predraw() {
-	drawingGui = false;
-    GL_CHECK_ERR(glEnable(GL_BLEND));
-
-	if ( xres == Frame::virtualScreenX && yres == Frame::virtualScreenY ) {
-		return;
-	}
-	gui_fb.bindForWriting();
-    GL_CHECK_ERR(glClearColor(0.f, 0.f, 0.f, 0.f));
-    GL_CHECK_ERR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-}
-
-void Frame::postdraw() {
-	if ( xres == Frame::virtualScreenX && yres == Frame::virtualScreenY ) {
-        GL_CHECK_ERR(glDisable(GL_BLEND));
-		return;
-	}
-    GL_CHECK_ERR(glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE));
-    gui_fb.unbindForWriting();
-	gui_fb.bindForReading();
-    gui_fb.draw();
-	framebuffer::unbindForReading();
-    GL_CHECK_ERR(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-    GL_CHECK_ERR(glDisable(GL_BLEND));
-}
-#endif
 
 void Frame::draw() const {
 	auto _actualSize = allowScrolling ? actualSize : SDL_Rect{0, 0, size.w, size.h};
@@ -445,19 +396,12 @@ void Frame::drawPost(SDL_Rect _size, SDL_Rect _actualSize,
 }
 
 static bool isMouseActive(int owner) {
-#if defined(EDITOR)
-	return true;
-#elif defined(NINTENDO)
-	return fingerdown;
-#else
 	const int mouseowner = intro || gamePaused ? inputs.getPlayerIDAllowedKeyboard() : owner;
 	return inputs.getVirtualMouse(mouseowner)->draw_cursor || mousexrel || mouseyrel;
-#endif
 }
 
 void frameDrawBlitSurface(const Frame* frame, SDL_Rect _size, SDL_Surface* surf, TempTexture* tex)
 {
-#ifndef EDITOR
     if (!surf || !tex || !frame) {
         return;
     }
@@ -487,7 +431,6 @@ void frameDrawBlitSurface(const Frame* frame, SDL_Rect _size, SDL_Surface* surf,
 			SDL_Rect{ 0, 0, Frame::virtualScreenX, Frame::virtualScreenY },
 			makeColor(255, 255, 255, 255 * frame->getOpacity() / 100.0));
 	}
-#endif
 }
 
 void Frame::draw(SDL_Rect _size, SDL_Rect _actualSize, const std::vector<const Widget*>& selectedWidgets) const {
@@ -572,13 +515,6 @@ void Frame::draw(SDL_Rect _size, SDL_Rect _actualSize, const std::vector<const W
 	Sint32 mousey = (::fingery / (float)yres) * (float)Frame::virtualScreenY;
 	Sint32 omousex = (::ofingerx / (float)xres) * (float)Frame::virtualScreenX;
 	Sint32 omousey = (::ofingery / (float)yres) * (float)Frame::virtualScreenY;
-#elif defined(EDITOR)
-	Sint32 mousex = (::mousex / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 mousey = (::mousey / (float)yres) * (float)Frame::virtualScreenY;
-	Sint32 omousex = (::omousex / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 omousey = (::omousey / (float)yres) * (float)Frame::virtualScreenY;
-	Sint32 mousexrel = (::mousexrel / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 mouseyrel = (::mouseyrel / (float)yres) * (float)Frame::virtualScreenY;
 #else
 	const int mouseowner = intro || gamePaused ? inputs.getPlayerIDAllowedKeyboard() : owner;
 	//Sint32 mousex = (inputs.getMouse(mouseowner, Inputs::X) / (float)xres) * (float)Frame::virtualScreenX;
@@ -1066,13 +1002,6 @@ Frame::result_t Frame::process(SDL_Rect _size, SDL_Rect _actualSize, bool usable
 	Sint32 mousey = (::fingery / (float)yres) * (float)Frame::virtualScreenY;
 	Sint32 omousex = (::ofingerx / (float)xres) * (float)Frame::virtualScreenX;
 	Sint32 omousey = (::ofingery / (float)yres) * (float)Frame::virtualScreenY;
-#elif defined(EDITOR)
-	Sint32 mousex = (::mousex / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 mousey = (::mousey / (float)yres) * (float)Frame::virtualScreenY;
-	Sint32 omousex = (::omousex / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 omousey = (::omousey / (float)yres) * (float)Frame::virtualScreenY;
-	Sint32 mousexrel = (::mousexrel / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 mouseyrel = (::mouseyrel / (float)yres) * (float)Frame::virtualScreenY;
 #else
 	const int mouseowner = intro || gamePaused ? inputs.getPlayerIDAllowedKeyboard() : owner;
 	Sint32 mousex = (inputs.getMouse(mouseowner, Inputs::X) / (float)xres) * (float)Frame::virtualScreenX;
@@ -1333,15 +1262,10 @@ Frame::result_t Frame::process(SDL_Rect _size, SDL_Rect _actualSize, bool usable
 
 	const bool mouseActive = isMouseActive(owner);
 
-#ifndef EDITOR
 	static ConsoleVariable<float> cvar_scrollFriction("/scroll_friction", 10.0);
 	static ConsoleVariable<float> cvar_scrollSpeed("/scroll_speed", 50000.0);
 	const real_t scrollFriction = *cvar_scrollFriction * timeFactor;
 	const real_t scrollSpeed = *cvar_scrollSpeed * timeFactor;
-#else
-	const real_t scrollFriction = 10.0 * timeFactor;
-	const real_t scrollSpeed = 50000.0 * timeFactor;
-#endif
 
 	// scroll with mouse wheel
 	if (parent != nullptr && !hollow && mouseActive && rectContainsPoint(fullSize, omousex, omousey) && result.usable) {
@@ -1703,14 +1627,12 @@ void Frame::processField(const SDL_Rect& _size, Field& field, Widget*& destWidge
 
 	// widget capture input
 	if (field.isActivated()) {
-#ifndef EDITOR
 	    if (inputs.hasController(field.getOwner())) {
 	        if (input.consumeBinaryToggle("MenuConfirm") ||
 	            input.consumeBinaryToggle("MenuCancel")) {
 	            field.deactivate();
             }
         }
-#endif
 	}
 	else if (!destWidget) {
 		destWidget = field.handleInput();
@@ -1794,7 +1716,7 @@ void Frame::processSlider(const SDL_Rect& _size, Slider& slider, Widget*& destWi
 }
 
 void Frame::postprocess() {
-#if !defined(EDITOR) && !defined(NDEBUG)
+#if !defined(NDEBUG)
     static ConsoleVariable<bool> cvar("/disableframetick", false);
     if (*cvar) {
         return;
@@ -1813,7 +1735,6 @@ void Frame::postprocess() {
 	    }
 	}
 
-#ifndef EDITOR
 	if (dropDown && inputs.bPlayerUsingKeyboardControl(owner)) {
 		if (!dropDownClicked) {
 			for (int c = 0; c < 3; ++c) {
@@ -1832,7 +1753,6 @@ void Frame::postprocess() {
 			}
 		}
 	}
-#endif
     
     // delete any widgets marked for removal
     for (int c = 0; c < frames.size(); ++c) {
@@ -2119,9 +2039,6 @@ void Frame::resizeForEntries() {
 }
 
 SDL_Rect Frame::getRelativeMousePositionImpl(SDL_Rect& _size, SDL_Rect& _actualSize, bool realtime) const {
-#ifdef EDITOR
-    return SDL_Rect{0, 0, 0, 0};
-#else
 	Sint32 _mousex = (inputs.getMouse(owner, Inputs::X) / (float)xres) * (float)Frame::virtualScreenX;
 	Sint32 _mousey = (inputs.getMouse(owner, Inputs::Y) / (float)yres) * (float)Frame::virtualScreenY;
 	Sint32 _omousex = (inputs.getMouse(owner, Inputs::OX) / (float)xres) * (float)Frame::virtualScreenX;
@@ -2162,7 +2079,6 @@ SDL_Rect Frame::getRelativeMousePositionImpl(SDL_Rect& _size, SDL_Rect& _actualS
 	} else {
 		return SDL_Rect{mousex, mousey, actualSize.w, actualSize.h};
 	}
-#endif
 }
 
 SDL_Rect Frame::getRelativeMousePosition(bool realtime) const {
@@ -2191,17 +2107,10 @@ bool Frame::capturesMouseImpl(SDL_Rect& _size, SDL_Rect& _actualSize, bool realt
 			if (_size.w <= 0 || _size.h <= 0) {
 				return false;
 			} else {
-#ifdef EDITOR
-				Sint32 mousex = (::mousex / (float)xres) * (float)Frame::virtualScreenX;
-				Sint32 mousey = (::mousey / (float)yres) * (float)Frame::virtualScreenY;
-				Sint32 omousex = (::omousex / (float)xres) * (float)Frame::virtualScreenX;
-				Sint32 omousey = (::omousey / (float)yres) * (float)Frame::virtualScreenY;
-#else
 				Sint32 mousex = (inputs.getMouse(owner, Inputs::X) / (float)xres) * (float)Frame::virtualScreenX;
 				Sint32 mousey = (inputs.getMouse(owner, Inputs::Y) / (float)yres) * (float)Frame::virtualScreenY;
 				Sint32 omousex = (inputs.getMouse(owner, Inputs::OX) / (float)xres) * (float)Frame::virtualScreenX;
 				Sint32 omousey = (inputs.getMouse(owner, Inputs::OY) / (float)yres) * (float)Frame::virtualScreenY;
-#endif
 				if (realtime && rectContainsPoint(_size, mousex, mousey)) {
 					return true;
 				}
@@ -2234,13 +2143,11 @@ bool Frame::capturesMouse() const {
 
 void Frame::warpMouseToFrame(const int player, Uint32 flags) const
 {
-#ifndef EDITOR
 	SDL_Rect _size = getAbsoluteSize();
 	inputs.warpMouse(player,
 		(_size.x + _size.w / 2) * ((float)xres / (float)Frame::virtualScreenX),
 		(_size.y + _size.h / 2) * ((float)yres / (float)Frame::virtualScreenY),
 		flags);
-#endif
 }
 
 SDL_Rect Frame::getAbsoluteSize() const

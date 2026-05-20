@@ -964,7 +964,6 @@ void equipSpell(spell_t* spell, int playernum, Item* spellItem);
 Entity* castSpell(Uint32 caster_uid, spell_t* spell, bool using_magicstaff, bool trap, bool usingSpellbook = false, CastSpellProps_t* castSpellProps = nullptr, bool usingFoci = false);
 void castSpellInit(Uint32 caster_uid, spell_t* spell, bool usingSpellbook, bool usingTome); //Initiates the spell animation, then hands off the torch to it, which, when finished, calls castSpell.
 int spellGetCastSound(spell_t* spell);
-#ifndef EDITOR // editor doesn't know about stat*
 int getSpellcastingAbilityFromUsingSpellbook(spell_t* spell, Entity* caster, Stat* casterStats);
 bool isSpellcasterBeginnerFromSpellbook(int player, Entity* caster, Stat* stat, spell_t* spell, Item* spellbookItem);
 int getSpellbookBonusPercent(Entity* caster, Stat* stat, Item* spellbookItem);
@@ -975,7 +974,6 @@ void magicOnEntityHit(Entity* parent, Entity* particle, Entity* hitentity, Stat*
 void magicTrapOnHit(Entity* parent, Entity* hitentity, Stat* hitstats, Sint32 oldHP, int spellID);
 bool applyGenericMagicDamage(Entity* caster, Entity* hitentity, Entity& damageSourceProjectile, int spellID, int damage, bool alertMonsters,
 	bool monsterCollisionOnly = false, int usingSpellbookID = 0);
-#endif
 bool isSpellcasterBeginner(int player, Entity* caster, int skillID);
 void actMagicTrap(Entity* my);
 void actMagicStatusEffect(Entity* my);

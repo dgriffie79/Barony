@@ -270,11 +270,9 @@ extern const char* holidayThemeDirs[HolidayTheme::THEME_MAX];
 HolidayTheme getCurrentHoliday(bool force = false);
 bool isCurrentHoliday(bool force = false);
 
-#ifndef EDITOR
 #include "interface/consolecommand.hpp"
 extern ConsoleVariable<int> cvar_forceHoliday;
 extern ConsoleVariable<bool> cvar_disableHoliday;
-#endif
 
 extern char datadir[PATH_MAX]; //PATH_MAX as defined in main.hpp -- maybe define in Config.hpp?
 extern char outputdir[PATH_MAX];

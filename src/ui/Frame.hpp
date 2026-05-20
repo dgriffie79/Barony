@@ -495,7 +495,5 @@ extern bool drawingGui;
 void createTestUI();
 extern float uiScale;
 
-#ifndef EDITOR
 #include "../interface/consolecommand.hpp"
 extern ConsoleVariable<bool> ui_filter;
-#endif

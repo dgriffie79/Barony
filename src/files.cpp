@@ -31,9 +31,6 @@
 #include "init.hpp"
 #include "mod_tools.hpp"
 #include "ui/LoadingScreen.hpp"
-#ifdef EDITOR
-#include "editor.hpp"
-#endif
 
 char datadir[PATH_MAX];
 char outputdir[PATH_MAX];
@@ -43,15 +40,10 @@ const char* holidayThemeDirs[HolidayTheme::THEME_MAX] = {
     "themes/merry/"
 };
 
-#ifndef EDITOR
 ConsoleVariable<int> cvar_forceHoliday("/force_holiday", 0);
 ConsoleVariable<bool> cvar_disableHoliday("/disable_holiday", false);
-#endif
 
 HolidayTheme getCurrentHoliday(bool force) {
-#ifdef EDITOR
-    return HolidayTheme::THEME_NONE;
-#else
     if (*cvar_disableHoliday && !force) {
         return HolidayTheme::THEME_NONE;
     }
@@ -75,7 +67,6 @@ HolidayTheme getCurrentHoliday(bool force) {
     else {
         return HolidayTheme::THEME_NONE;
     }
-#endif
 }
 
 bool isCurrentHoliday(bool force) {
@@ -2295,10 +2286,8 @@ voxel_t* loadVoxel(char* filename)
 }
 
 constexpr float hellAmbience = 32.f;
-#ifndef EDITOR
 static ConsoleVariable<float> cvar_hell_ambience("/hell_ambience", hellAmbience);
 static ConsoleVariable<Vector4> cvar_map_ambience("/map_ambience", { 0.f, 0.f, 0.f, 0.f });
-#endif
 
 /*-------------------------------------------------------------------------------
 
@@ -2508,13 +2497,6 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 	}
 	if ( destmap == &map )
 	{
-#ifdef EDITOR
-		if ( camera.vismap != nullptr )
-		{
-			free(camera.vismap);
-			camera.vismap = nullptr;
-		}
-#endif
 		if ( menucam.vismap != nullptr )
 		{
 			free(menucam.vismap);
@@ -2568,10 +2550,6 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 	destmap->tiles = (Sint32*) malloc(sizeof(Sint32) * destmap->width * destmap->height * MAPLAYERS);
 	if ( destmap == &map )
 	{
-#ifdef EDITOR
-		camera.vismap = (bool*)malloc(sizeof(bool) * destmap->width * destmap->height);
-        memset(camera.vismap, 0, sizeof(bool) * destmap->height * destmap->width);
-#endif
 		menucam.vismap = (bool*)malloc(sizeof(bool) * destmap->width * destmap->height);
         memset(menucam.vismap, 0, sizeof(bool) * destmap->height * destmap->width);
 		for ( int i = 0; i < MAXPLAYERS; ++i )
@@ -3106,14 +3084,10 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 		}
 #endif
 #ifdef USE_FMOD
-#ifndef EDITOR
 		VoiceChat.updateOnMapChange3DRolloff();
 #endif
-#endif
 
-#ifndef EDITOR
 		map.setMapHDRSettings();
-#endif
 
 		// create new lightmap
         for (int c = 0; c < MAXPLAYERS + 1; ++c) {
@@ -3126,7 +3100,6 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
                 memset(lightmap.data(), 0, sizeof(vec4_t) * map.width * map.height);
                 memset(lightmapSmoothed.data(), 0, sizeof(vec4_t) * (map.width + 2) * (map.height + 2));
 
-#ifndef EDITOR
 				if ( !strncmp(map.filename, "fortress", 8) )
 				{
 					Vector4 ambienceColor = {128.f, 128.f, 152.f, 1.f};
@@ -3168,7 +3141,6 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 						lightmapSmoothed[c].z = ambienceColor.z;
 					}
 				}
-#endif
             }
             else
             {
@@ -3177,28 +3149,24 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
                     lightmap[c].x = hellAmbience;
                     lightmap[c].y = hellAmbience;
                     lightmap[c].z = hellAmbience;
-#ifndef EDITOR
                     if ( svFlags & SV_FLAG_CHEATS )
                     {
                         lightmap[c].x = *cvar_hell_ambience;
                         lightmap[c].y = *cvar_hell_ambience;
                         lightmap[c].z = *cvar_hell_ambience;
                     }
-#endif
                 }
                 for (int c = 0; c < (destmap->width + 2) * (destmap->height + 2); c++ )
                 {
                     lightmapSmoothed[c].x = hellAmbience;
                     lightmapSmoothed[c].y = hellAmbience;
                     lightmapSmoothed[c].z = hellAmbience;
-#ifndef EDITOR
                     if ( svFlags & SV_FLAG_CHEATS )
                     {
                         lightmapSmoothed[c].x = *cvar_hell_ambience;
                         lightmapSmoothed[c].y = *cvar_hell_ambience;
                         lightmapSmoothed[c].z = *cvar_hell_ambience;
                     }
-#endif
                 }
             }
         }
@@ -3784,11 +3752,7 @@ int physfsLoadMapFile(int levelToLoad, Uint32 seed, bool useRandSeed, int* check
 			mapName = physfsFormatMapName(tempstr);
 			if ( useRandSeed )
 			{
-#ifdef EDITOR
-				if ( gameModeManager.currentSession.seededRun.seed == 0 )
-#else
 				if ( gameModeManager.currentSession.seededRun.seed == 0 && !*cvar_map_sequence_rng )
-#endif
 				{
 					mapseed = local_rng.rand();
 				}
@@ -4066,13 +4030,11 @@ void saveModelCache() {
 	}
 }
 
-#ifndef EDITOR
 #include "interface/consolecommand.hpp"
 static ConsoleCommand ccmd_writeModelCache("/write_model_cache", "",
 	[](int argc, const char** argv){
 	saveModelCache();
 	});
-#endif
 
 void generatePolyModels(int start, int end, bool forceCacheRebuild)
 {
@@ -5145,9 +5107,7 @@ void reloadModels(int start, int end) {
 	}
 
 	//messagePlayer(clientnum, Language::get(2354));
-#ifndef EDITOR
 	messagePlayer(clientnum, MESSAGE_MISC, Language::get(2355), start, end);
-#endif
 
 	loading = true;
 	if ( intro ) {

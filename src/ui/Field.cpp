@@ -10,10 +10,8 @@
 #include "Text.hpp"
 #include <cassert>
 
-#ifndef EDITOR
 #include "GameUI.hpp"
 #include "MainMenu.hpp"
-#endif
 
 Field::Field(const int _textLen) {
 	textlen = std::max(_textLen, 0);
@@ -171,10 +169,8 @@ void blitFieldToFrame(SDL_Surface* textSurf, SDL_Surface* destSurf, SDL_Rect src
 	SDL_BlitSurface(textSurf, &src, destSurf, &dest);
 }
 
-#ifndef EDITOR
 static ConsoleVariable<bool> cvar_enableFieldCache(
 	"/fieldcache", false, "toggle fields caching their own text");
-#endif
 
 void Field::buildCache() {
 	while ( !cache.empty() ) {
@@ -188,13 +184,6 @@ void Field::buildCache() {
 	if ( buf ) {
 		dirty = false;
 		memcpy(buf, text ? text : "\0", textlen + 1);
-#ifdef EDITOR
-		for ( char *nexttoken = buf, *token; (token = nexttoken) != nullptr;) {
-			nexttoken = tokenize(token, "\n");
-			auto line = Text::hash(token, font.c_str(), textColor, outlineColor);
-			cache.push_back(std::make_pair(token, new Text(line.second)));
-		}
-#else
 		if ( *cvar_enableFieldCache ) {
 			for ( char *nexttoken = buf, *token; (token = nexttoken) != nullptr;) {
 				nexttoken = tokenize(token, "\n");
@@ -208,7 +197,6 @@ void Field::buildCache() {
 				cache.push_back(std::make_pair(token, nullptr));
 			}
 		}
-#endif
 		free(buf);
 	}
 }
@@ -268,9 +256,6 @@ void Field::draw(SDL_Rect _size, SDL_Rect _actualSize, const std::vector<const W
 	int fullH = lines * (actualFont->height(false) + paddingPerLine + actualFont->getOutline() * 2);
 
 	for ( int yoff = 0, currentLine = 0; currentLine < cache.size(); ++currentLine ) {
-#ifdef EDITOR
-		auto& text = cache[currentLine].second;
-#else
 		Text* text;
 		if ( *cvar_enableFieldCache ) {
 			text = cache[currentLine].second;
@@ -279,7 +264,6 @@ void Field::draw(SDL_Rect _size, SDL_Rect _actualSize, const std::vector<const W
 			text = Text::get(cache[currentLine].first.c_str(),
 				font.c_str(), textColor, outlineColor);
 		}
-#endif
 		if ( !text ) {
 			continue;
 		}
@@ -536,16 +520,10 @@ Field::result_t Field::process(SDL_Rect _size, SDL_Rect _actualSize, const bool 
 		return result;
 	}
 
-#if defined(EDITOR) || defined(NINTENDO)
-	Sint32 omousex = (::omousex / (float)xres) * (float)Frame::virtualScreenX;
-	Sint32 omousey = (::omousey / (float)yres) * (float)Frame::virtualScreenY;
-#else
 	const int mouseowner = intro || gamePaused ? inputs.getPlayerIDAllowedKeyboard() : owner;
 	Sint32 omousex = (inputs.getMouse(mouseowner, Inputs::OX) / (float)xres) * (float)Frame::virtualScreenX;
 	Sint32 omousey = (inputs.getMouse(mouseowner, Inputs::OY) / (float)yres) * (float)Frame::virtualScreenY;
-#endif
 
-#ifndef EDITOR
 #ifndef NINTENDO
 	if (rectContainsPoint(_size, omousex, omousey) && inputs.getVirtualMouse(mouseowner)->draw_cursor) {
 #else
@@ -571,11 +549,6 @@ Field::result_t Field::process(SDL_Rect _size, SDL_Rect _actualSize, const bool 
 		    activate();
 	    }
 	}
-#else
-	result.highlighted = highlighted = false;
-	result.highlightTime = highlightTime = SDL_GetTicks();
-	result.tooltip = nullptr;
-#endif
 
 	return result;
 }
@@ -790,11 +763,7 @@ void Field::reflowTextToFit(const int characterOffset, bool check) {
     }
 	std::string reflowText = "";
 
-#ifndef EDITOR
 	bool usePreciseStringWidth = bUsePreciseFieldTextReflow;
-#else
-	bool usePreciseStringWidth = true;
-#endif
 	if ( usePreciseStringWidth )
 	{
 		// more expensive, but accurate text reflow.

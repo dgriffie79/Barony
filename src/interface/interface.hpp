@@ -808,9 +808,7 @@ public:
 		AssistShrineGUI_t(GenericGUIMenu& g) :
 			parentGUI(g)
 		{
-#ifndef EDITOR
 			resetItems();
-#endif
 		}
 
 		static constexpr int ASSIST_SLOT_CLOAK = -1;

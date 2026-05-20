@@ -35,10 +35,8 @@ size_t getNumTextLines(std::string& str)
 	return numLines + newlines;
 }
 
-#ifndef EDITOR
 static ConsoleVariable<bool> cvar_text_render_addspace("/text_render_addspace", true);
 static ConsoleVariable<bool> cvar_text_delay_dumpcache("/text_delay_dumpcache", false);
-#endif
 
 void Text::render() {
 	if (surf) {
@@ -91,14 +89,12 @@ void Text::render() {
 	bool addedSpace = false;
 
 	const int spaces_width = 0;
-#ifndef EDITOR
 	if ( *cvar_text_render_addspace ) {
 		if ( strToRender == "" ) {
 			addedSpace = true;
 			strToRender += ' ';
 		}
 	}
-#endif
 
 	SDL_Color colorText;
 	getColor(textColor, &colorText.r, &colorText.g, &colorText.b, &colorText.a);
@@ -384,9 +380,6 @@ Text* Text::get(size_t hash, const char* key) {
 
 	// check if cache is full
 	if (TEXT_VOLUME > TEXT_BUDGET) {
-#ifdef EDITOR
-		dumpCache();
-#else
 		if (*cvar_text_delay_dumpcache)
 		{
 			bRequireTextDump = true;
@@ -395,7 +388,6 @@ Text* Text::get(size_t hash, const char* key) {
 		{
 			dumpCache();
 		}
-#endif
 	}
 
 	// text not found, add it to cache
@@ -433,7 +425,6 @@ void Text::dumpCacheInMainLoop()
 	}
 }
 
-#ifndef EDITOR
 #include "../net.hpp"
 #include "../interface/consolecommand.hpp"
 static ConsoleCommand size("/text_cache_size", "measure text cache",
@@ -445,4 +436,3 @@ static ConsoleCommand dump("/text_cache_dump", "dump text cache",
     Text::dumpCache();
     messagePlayer(clientnum, MESSAGE_MISC, "dumped cache");
     });
-#endif

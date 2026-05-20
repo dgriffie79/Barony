@@ -203,7 +203,6 @@ Uint32 messagesEnabled = 0xffffffff; // all enabled
 
 real_t getFPSScale(real_t baseFPS)
 {
-#ifndef EDITOR
 	static ConsoleVariable<bool> cvar_ui_fps_scale_fixed("/ui_fps_scale_fixed", false);
 	if ( *cvar_ui_fps_scale_fixed )
 	{
@@ -213,9 +212,6 @@ real_t getFPSScale(real_t baseFPS)
 	{
 		return baseFPS / (std::max(1U, (unsigned int)fps));
 	}
-#else
-	return baseFPS / (std::max(1U, (unsigned int)fps));
-#endif
 }
 
 //ConsoleVariable<bool> cvar_useTimerInterpolation("/timer_interpolation_enabled", true);

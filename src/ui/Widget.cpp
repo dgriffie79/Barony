@@ -13,9 +13,7 @@
 
 static Widget* _selectedWidgets[MAXPLAYERS] = { nullptr };
 
-#ifndef EDITOR
 ConsoleVariable<bool> cvar_hideGlyphs("/hideprompts", false, "hide button glyphs and prompts");
-#endif
 
 Widget::~Widget() {
 	if (parent) {
@@ -140,13 +138,11 @@ Widget* Widget::handleInput() {
 					//printlog("%s: %p", move.second.c_str(), (void*)result);
 					if (result && !result->disabled && !result->invisible) {
 						auto in = input.input(move.first.c_str());
-#ifndef EDITOR
 						if (in.type != Input::binding_t::bindtype_t::MOUSE_BUTTON &&
 							in.type != Input::binding_t::bindtype_t::KEYBOARD) {
 							inputs.getVirtualMouse(owner)->draw_cursor = false;
 						}
 						playSound(495, 64);
-#endif
 						result->scrollParent();
 						return result;
 					}
@@ -166,12 +162,10 @@ Widget* Widget::handleInput() {
 					//printlog("%s: %p", action.second.c_str(), (void*)result);
 					if (result && !result->disabled) {
 						auto in = input.input(action.first.c_str());
-#ifndef EDITOR
 						if (in.type != Input::binding_t::bindtype_t::MOUSE_BUTTON &&
 							in.type != Input::binding_t::bindtype_t::KEYBOARD) {
 							inputs.getVirtualMouse(owner)->draw_cursor = false;
 						}
-#endif
 						result->activate();
 						return nullptr;
 					}
@@ -433,7 +427,6 @@ void Widget::drawPost(const SDL_Rect size,
 	}
 
 	// button prompts
-#ifndef EDITOR
     if (!*cvar_hideGlyphs && !hideGlyphs && !Mods::isLoading && (inputs.hasController(owner) || !hideKeyboardGlyphs)) {
         auto& actions = selectedWidget->getWidgetActions();
         auto action = actions.begin();
@@ -512,7 +505,6 @@ void Widget::drawPost(const SDL_Rect size,
             }
         }
     }
-#endif
 }
 
 void Widget::scrollParent() {

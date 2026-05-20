@@ -852,11 +852,7 @@ Item* newItem(ItemType type, Status status, Sint16 beatitude, Sint16 count, Uint
 Item* uidToItem(Uint32 uid);
 ItemType itemLevelCurveEntity(Entity& my, Category cat, int minLevel, int maxLevel, BaronyRNG& rng);
 bool itemLevelCurvePostProcess(Entity* my, Item* item, BaronyRNG& rng, 
-#ifdef EDITOR
-	int itemLevel = 0
-#else
 	int itemLevel = currentlevel
-#endif
 	, int* lastItemType = nullptr, int* lastItemSpellType = nullptr
 );
 ItemType itemLevelCurve(Category cat, int minLevel, int maxLevel, BaronyRNG& rng);
@@ -1024,6 +1020,3 @@ enum SpellbookColors
 
 int getItemVariationFromSpellbookOrTome(const Item& item);
 
-#ifdef EDITOR
-SDL_Surface* itemSprite(Item* const item);
-#endif

@@ -10,7 +10,6 @@ BaronyRNG local_rng;
 BaronyRNG net_rng;
 BaronyRNG map_sequence_rng;
 
-#ifndef EDITOR
 #include "interface/consolecommand.hpp"
 #include "net.hpp"
 static BaronyRNG test_rng;
@@ -156,7 +155,6 @@ static ConsoleCommand test_rng_normal(
         }
     }
     });
-#endif
 
 void BaronyRNG::testSeedHealth() const {
 	std::string seed_str;

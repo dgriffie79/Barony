@@ -449,14 +449,12 @@ Entity::Entity(Sint32 in_sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 	new_yaw = 0;
 	new_pitch = 0;
 	new_roll = 0;
-#ifndef EDITOR
 	lerpCurrentState.resetMovement();
 	lerpCurrentState.resetPosition();
 	lerpPreviousState.resetMovement();
 	lerpPreviousState.resetPosition();
 	lerpRenderState.resetMovement();
 	lerpRenderState.resetPosition();
-#endif
 	bNeedsRenderPositionInit = true;
 	bUseRenderInterpolation = false;
 	mapGenerationRoomX = 0;
