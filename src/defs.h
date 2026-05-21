@@ -619,16 +619,23 @@ list_t* list_CopyNew(list_t* srclist);
 Uint32 list_Index(node_t* node);
 node_t* list_Node(list_t* list, int index);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void defaultDeconstructor(void* data);
+void stringDeconstructor(void* data);
 void emptyDeconstructor(void* data);
+void listDeconstructor(void* data);
+button_t* newButton(void);
+#ifdef __cplusplus
+}
+#endif
+
 void entityDeconstructor(void* data);
 void statDeconstructor(void* data);
 void lightDeconstructor(void* data);
 void mapDeconstructor(void* data);
-void stringDeconstructor(void* data);
-void listDeconstructor(void* data);
 struct Entity* newEntity(Sint32 sprite, Uint32 pos, list_t* entlist, list_t* creaturelist);
-button_t* newButton(void);
 string_t* newString(list_t* list, Uint32 color, Uint32 time, int player, char const * const content, ...);
 
 SDL_Cursor* newCursor(char const * const image[]);

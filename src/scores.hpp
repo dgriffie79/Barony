@@ -815,7 +815,17 @@ int getSaveGameClientnum(const SaveGameInfo& info);
 Uint32 getSaveGameMapSeed(const SaveGameInfo& info);
 int getSaveGameVersionNum(const SaveGameInfo& info);
 
+struct cJSON;
+#ifdef __cplusplus
+extern "C" {
+#endif
+int jsonGetInt(struct cJSON* json, const char* key);
+bool jsonGetBool(struct cJSON* json, const char* key);
+const char* jsonGetStr(struct cJSON* json, const char* key);
 int getSavegameVersion(const char* checkstr); // returns -1 on invalid version, otherwise converts to 3 digit int
+#ifdef __cplusplus
+}
+#endif
 void setDefaultPlayerConducts(); // init values for foodless, penniless etc.
 void updatePlayerConductsInMainLoop(); // check and update conduct flags throughout game that don't require a specific action. (tracking gold, server flags etc...)
 void updateGameplayStatisticsInMainLoop(); // check for achievement values for gameplay statistics.

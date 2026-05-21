@@ -1549,8 +1549,14 @@ static const int FURNITURE_BED = 2;
 static const int FURNITURE_BUNKBED = 3;
 static const int FURNITURE_PODIUM = 4;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int checkSpriteType(Sint32 sprite);
 Monster editorSpriteTypeToMonster(Sint32 sprite);
+#ifdef __cplusplus
+}
+#endif
 extern std::vector<const char*>spriteEditorNameStrings;
 extern char tileEditorNameStrings[NUM_EDITOR_TILES][44];
 extern char monsterEditorNameStrings[NUMMONSTERS][32];

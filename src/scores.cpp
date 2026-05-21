@@ -1245,23 +1245,6 @@ bool deleteScore(bool multiplayer, int index)
 	loads all highscores from the scores data file
 
 -------------------------------------------------------------------------------*/
-int jsonGetInt(cJSON* d, const char* key)
-{
-	cJSON* val = cJSON_GetObjectItem(d, key);
-	return val ? (int)val->valuedouble : 0;
-}
-
-bool jsonGetBool(cJSON* d, const char* key)
-{
-	cJSON* val = cJSON_GetObjectItem(d, key);
-	return val ? cJSON_IsTrue(val) : false;
-}
-
-const char* jsonGetStr(cJSON* d, const char* key)
-{
-	cJSON* val = cJSON_GetObjectItem(d, key);
-	return val ? val->valuestring : "";
-}
 
 bool verifyScoreStruct(score_t* score, score_t* score2)
 {
@@ -2672,34 +2655,6 @@ int getSaveGameClientnum(const SaveGameInfo& info)
 Uint32 getSaveGameMapSeed(const SaveGameInfo& info)
 {
 	return info.mapseed;
-}
-
-int getSavegameVersion(const char* checkstr)
-{
-	const int maxlen = (int)strlen(VERSION);
-	int versionNumber = 300;
-	char versionStr[4] = "000";
-	int i = 0;
-	for ( int j = 0; checkstr[j] != '\0' && j < maxlen; ++j )
-	{
-		if ( checkstr[j] >= '0' && checkstr[j] <= '9' )
-		{
-			versionStr[i] = checkstr[j]; // copy all integers into versionStr.
-			++i;
-			if ( i == 3 )
-			{
-				versionStr[i] = '\0';
-				break; // written 3 characters, add termination and break loop.
-			}
-		}
-	}
-	versionNumber = atoi(versionStr); // convert from string to int.
-	if ( versionNumber < 200 || versionNumber > 999 )
-	{
-		// if version number less than v2.0.0, or more than 3 digits, abort.
-		return -1;
-	}
-	return versionNumber;
 }
 
 void setDefaultPlayerConducts()

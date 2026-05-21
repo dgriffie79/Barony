@@ -23,7 +23,13 @@ typedef struct light_t
 
 light_t* lightSphereShadow(int index, Sint32 x, Sint32 y, Sint32 radius, float r, float g, float b, float a, float exp);
 light_t* lightSphere(int index, Sint32 x, Sint32 y, Sint32 radius, float r, float g, float b, float a, float exp);
+#ifdef __cplusplus
+extern "C" {
+#endif
 light_t* newLight(int index, Sint32 x, Sint32 y, Sint32 radius);
+#ifdef __cplusplus
+}
+#endif
 #ifdef __cplusplus
 light_t* addLight(Sint32 x, Sint32 y, const char* name, int range_bonus = 0, int index = 0);
 bool loadLights(bool forceLoadBaseDirectory = false);

@@ -16,59 +16,6 @@
 
 /*-------------------------------------------------------------------------------
 
-	defaultDeconstructor
-
-	Frees the memory occupied by a typical node's data. Do not use for more
-	complex nodes that malloc extraneous data to themselves!
-
--------------------------------------------------------------------------------*/
-
-void defaultDeconstructor(void* data)
-{
-	if (data != NULL)
-	{
-		free(data);
-	}
-}
-
-/*-------------------------------------------------------------------------------
-
-	stringDeconstructor
-
-	Frees the memory occupied by a string.
-
--------------------------------------------------------------------------------*/
-
-void stringDeconstructor(void* data)
-{
-	string_t* string;
-	if (data != NULL)
-	{
-		string = (string_t*)data;
-		if ( string->data != NULL )
-		{
-			free(string->data);
-			string->data = NULL;
-		}
-		free(data);
-	}
-}
-
-/*-------------------------------------------------------------------------------
-
-	emptyDeconstructor
-
-	Useful to remove a node without deallocating its data.
-
--------------------------------------------------------------------------------*/
-
-void emptyDeconstructor(void* data)
-{
-	return;
-}
-
-/*-------------------------------------------------------------------------------
-
 	entityDeconstructor
 
 	Frees the memory occupied by a node pointing to an entity
@@ -199,26 +146,6 @@ void mapDeconstructor(void* data)
 
 /*-------------------------------------------------------------------------------
 
-	listDeconstructor
-
-	Frees the memory occupied by a node pointing to a list
-
--------------------------------------------------------------------------------*/
-
-void listDeconstructor(void* data)
-{
-	list_t* list;
-
-	if (data != NULL)
-	{
-		list = (list_t*)data;
-		list_FreeAll(list);
-		free(data);
-	}
-}
-
-/*-------------------------------------------------------------------------------
-
 	newEntity
 
 	Creates a new entity with empty settings and places it in the entity list
@@ -251,89 +178,6 @@ Entity* newEntity(Sint32 sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 	}
 
 	return entity;
-}
-
-/*-------------------------------------------------------------------------------
-
-	newButton
-
-	Creates a new button and places it in the button list
-
--------------------------------------------------------------------------------*/
-
-button_t* newButton(void)
-{
-	button_t* button;
-
-	// allocate memory for button
-	if ( (button = (button_t*) malloc(sizeof(button_t))) == NULL )
-	{
-		printlog( "failed to allocate memory for new button!\n" );
-		exit(1);
-	}
-
-	// add the button to the button list
-	button->node = list_AddNodeLast(&button_l);
-	button->node->element = button;
-	button->node->deconstructor = &defaultDeconstructor;
-	button->node->size = sizeof(button_t);
-
-	// now set all of my data elements to ZERO or NULL
-	button->x = 0;
-	button->y = 0;
-	button->sizex = 0;
-	button->sizey = 0;
-	button->visible = 1;
-	button->focused = 0;
-	button->key = 0;
-	button->joykey = -1;
-	button->pressed = false;
-	button->needclick = true;
-	button->action = NULL;
-	strcpy(button->label, "nodef");
-
-	button->outline = false;
-
-	return button;
-}
-
-/*-------------------------------------------------------------------------------
-
-	newLight
-
-	Creates a new light and places it in the light list
-
--------------------------------------------------------------------------------*/
-
-light_t* newLight(int index, Sint32 x, Sint32 y, Sint32 radius)
-{
-	light_t* light;
-
-	// allocate memory for light
-	if ((light = (light_t*) malloc(sizeof(light_t))) == nullptr) {
-		printlog( "failed to allocate memory for new light!\n" );
-		exit(1);
-	}
-
-	// add the light to the light list
-	light->node = list_AddNodeLast(&light_l);
-	light->node->element = light;
-	light->node->deconstructor = &lightDeconstructor;
-	light->node->size = sizeof(light_t);
-
-	// now set all of my data elements to ZERO or NULL
-    light->index = index;
-	light->x = x;
-	light->y = y;
-	light->radius = radius;
-	if (light->radius > 0) {
-        const auto size = sizeof(vec4_t) * (radius * 2 + 1) * (radius * 2 + 1);
-		light->tiles = (vec4_t*)malloc(size);
-		memset(light->tiles, 0, size);
-	} else {
-		light->tiles = nullptr;
-	}
-	return light;
 }
 
 /*-------------------------------------------------------------------------------
