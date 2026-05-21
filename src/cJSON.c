@@ -1952,18 +1952,12 @@ static cJSON *get_object_item(const cJSON * const object, const char * const nam
 {
     cJSON *current_element = NULL;
 
-    fprintf(stderr, "[cJSON] get_object_item(object=%p, name=\"%s\", case_sensitive=%d) [ENTER]\n", (const void*)object, name ? name : "(null)", (int)case_sensitive);
-    fflush(stderr);
-
     if ((object == NULL) || (name == NULL))
     {
-        fprintf(stderr, "[cJSON] get_object_item -> NULL (null args)\n");
         return NULL;
     }
 
     current_element = object->child;
-    fprintf(stderr, "[cJSON] get_object_item: object->child=%p, object->type=%d\n", (const void*)current_element, object->type);
-    fflush(stderr);
     if (case_sensitive)
     {
         while ((current_element != NULL) && (current_element->string != NULL) && (strcmp(name, current_element->string) != 0))
@@ -1973,41 +1967,22 @@ static cJSON *get_object_item(const cJSON * const object, const char * const nam
     }
     else
     {
-        while (current_element != NULL)
+        while ((current_element != NULL) && (case_insensitive_strcmp((const unsigned char*)name, (const unsigned char*)(current_element->string)) != 0))
         {
-            fprintf(stderr, "[cJSON] get_object_item: iterating child string=\"%s\" (ptr=%p)\n", current_element->string ? current_element->string : "(null)", (const void*)current_element->string);
-            fflush(stderr);
-            if (current_element->string == NULL)
-            {
-                fprintf(stderr, "[cJSON] get_object_item: CHILD WITH NULL STRING!\n");
-                fflush(stderr);
-                break;
-            }
-            if (case_insensitive_strcmp((const unsigned char*)name, (const unsigned char*)(current_element->string)) == 0)
-            {
-                break;
-            }
             current_element = current_element->next;
         }
     }
 
     if ((current_element == NULL) || (current_element->string == NULL)) {
-        fprintf(stderr, "[cJSON] get_object_item -> NULL (not found)\n");
-        fflush(stderr);
         return NULL;
     }
 
-    fprintf(stderr, "[cJSON] get_object_item -> found: %p, type=%d, string=\"%s\"\n", (const void*)current_element, current_element->type, current_element->string ? current_element->string : "(null)");
-    fflush(stderr);
     return current_element;
 }
 
 CJSON_PUBLIC(cJSON *) cJSON_GetObjectItem(const cJSON * const object, const char * const string)
 {
-    cJSON *result = get_object_item(object, string, false);
-    fprintf(stderr, "[cJSON] GetObjectItem(object=%p, string=\"%s\") -> %p type=%d\n", (const void*)object, string ? string : "(null)", (const void*)result, result ? result->type : -1);
-    fflush(stderr);
-    return result;
+    return get_object_item(object, string, false);
 }
 
 CJSON_PUBLIC(cJSON *) cJSON_GetObjectItemCaseSensitive(const cJSON * const object, const char * const string)
@@ -2017,10 +1992,7 @@ CJSON_PUBLIC(cJSON *) cJSON_GetObjectItemCaseSensitive(const cJSON * const objec
 
 CJSON_PUBLIC(cJSON_bool) cJSON_HasObjectItem(const cJSON *object, const char *string)
 {
-    cJSON_bool result = cJSON_GetObjectItem(object, string) ? 1 : 0;
-    fprintf(stderr, "[cJSON] HasObjectItem(object=%p, string=\"%s\") -> %d\n", (const void*)object, string ? string : "(null)", (int)result);
-    fflush(stderr);
-    return result;
+    return cJSON_GetObjectItem(object, string) ? 1 : 0;
 }
 
 /* Utility for array list handling. */

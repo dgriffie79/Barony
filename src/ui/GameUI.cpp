@@ -26008,30 +26008,14 @@ void loadHUDSettingsJSON()
 			buf[count] = '\0';
 			printlog("[JSON]: HUD file read, parsing JSON...");
 			cJSON* d = cJSON_Parse(buf);
-			printlog("[JSON]: HUD JSON parsed, d=%p type=%d child=%p", (void*)d, d?d->type:-1, (void*)(d?d->child:NULL));
-			if ( d )
-			{
-				int count = 0;
-				for ( cJSON* c = d->child; c && count < 10; c = c->next, count++ )
-				{
-					printlog("[JSON]: child[%d] type=%d string='%s'", count, c->type, c->string ? c->string : "(null)");
-				}
-			}
+			printlog("[JSON]: HUD JSON parsed");
 			FileIO::close(fp);
 			if ( !d )
 			{
 				printlog("[JSON]: Error: Could not parse JSON from %s", inputPath.c_str());
 				return;
 			}
-			printlog("[JSON]: About to check version...");
-			fprintf(stderr, "[DEBUG] d=%p d->type=%d d->child=%p d->child->string='%s'\n", (void*)d, d?d->type:-1, (void*)(d?d->child:NULL), d&&d->child&&d->child->string?d->child->string:"(null)");
-			fflush(stderr);
-			fprintf(stderr, "[DEBUG] About to call cJSON_HasObjectItem(d, \"version\")\n");
-			fflush(stderr);
-			cJSON_bool hasVersion = cJSON_HasObjectItem(d, "version");
-			fprintf(stderr, "[DEBUG] cJSON_HasObjectItem returned %d\n", (int)hasVersion);
-			fflush(stderr);
-			if ( !hasVersion )
+						if ( !cJSON_HasObjectItem(d, "version") )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
 				cJSON_Delete(d);
@@ -26039,8 +26023,6 @@ void loadHUDSettingsJSON()
 			}
 			else
 			{
-				fprintf(stderr, "[DEBUG] Version check passed\n");
-				fflush(stderr);
 				printlog("[JSON]: HUD version check passed, reading settings...");
 				if ( cJSON_HasObjectItem(d, "selected_cursor_opacity") )
 				{
@@ -26242,14 +26224,9 @@ void loadHUDSettingsJSON()
 							}
 							if ( cJSON_HasObjectItem(ally_itr, "hp") )
 							{
-								fprintf(stderr, "[DEBUG] hp for-loop: about to get hp->child\n"); fflush(stderr);
-								cJSON* hpObj = cJSON_GetObjectItem(ally_itr, "hp");
-								fprintf(stderr, "[DEBUG] hpObj=%p hpObj->type=%d hpObj->child=%p\n", (void*)hpObj, hpObj?hpObj->type:-1, (void*)(hpObj?hpObj->child:NULL)); fflush(stderr);
-								cJSON* val_itr = hpObj ? hpObj->child : nullptr;
-								fprintf(stderr, "[DEBUG] val_itr=%p\n", (void*)val_itr); fflush(stderr);
-								for ( ; val_itr != nullptr; val_itr = val_itr->next )
+																for ( cJSON* val_itr = cJSON_GetObjectItem(ally_itr, "hp")->child;
+									val_itr != nullptr; val_itr = val_itr->next )
 								{
-									fprintf(stderr, "[DEBUG] loop: val_itr=%p type=%d string='%s'\n", (void*)val_itr, val_itr->type, val_itr->string?val_itr->string:"(null)"); fflush(stderr);
 									std::string key = val_itr->string;
 									auto& bar = AllyStatusBarSettings_t::FollowerBars_t::hpBar;
 									if ( key == "bar_pixel_width" )
