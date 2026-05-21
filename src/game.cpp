@@ -10,6 +10,7 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
+#include <iostream>
 #include "draw.h"
 #include "game.h"
 #include "stat.h"

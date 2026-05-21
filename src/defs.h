@@ -78,6 +78,14 @@ typedef double real_t;
 #endif
 
 #ifdef __cplusplus
+#include <set>
+#include <unordered_set>
+#include <list>
+const int NUM_JOY_STATUS = SDL_CONTROLLER_BUTTON_MAX;
+const int NUM_JOY_AXIS_STATUS = SDL_CONTROLLER_AXIS_MAX;
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -374,11 +382,9 @@ typedef struct AnimatedTile
 
 struct Language;
 
-#ifdef __cplusplus
-class Item;
-#else
+struct Entity;
+typedef struct Entity Entity;
 typedef struct Item Item;
-#endif
 
 typedef struct map_t map_t;
 extern map_t map;

@@ -14,6 +14,7 @@
 #include "main.h"
 
 #ifdef __cplusplus
+#include "game_types.hpp"
 // ============================================================================
 // ORIGINAL C++ CONTENT — preserved verbatim for C++ compilation
 // ============================================================================
