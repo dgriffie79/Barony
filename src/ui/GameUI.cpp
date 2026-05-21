@@ -26008,13 +26008,14 @@ void loadHUDSettingsJSON()
 			buf[count] = '\0';
 			printlog("[JSON]: HUD file read, parsing JSON...");
 			cJSON* d = cJSON_Parse(buf);
-			printlog("[JSON]: HUD JSON parsed");
+			printlog("[JSON]: HUD JSON parsed, d=%p", (void*)d);
 			FileIO::close(fp);
 			if ( !d )
 			{
 				printlog("[JSON]: Error: Could not parse JSON from %s", inputPath.c_str());
 				return;
 			}
+			printlog("[JSON]: About to check version...");
 			if ( !cJSON_HasObjectItem(d, "version") )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
