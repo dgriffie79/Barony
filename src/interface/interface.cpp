@@ -1651,7 +1651,8 @@ void FollowerRadialMenu::loadFollowerJSON()
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
 			cJSON* d = cJSON_Parse(buf);
-			if ( !cJSON_HasObjectItem(d, "version") )
+			FileIO::close(fp);
+			if ( !d || !cJSON_HasObjectItem(d, "version") )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
 			}
@@ -27333,7 +27334,8 @@ void CalloutRadialMenu::loadCalloutJSON()
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
 			cJSON* d = cJSON_Parse(buf);
-			if ( !cJSON_HasObjectItem(d, "version") )
+			FileIO::close(fp);
+			if ( !d || !cJSON_HasObjectItem(d, "version") )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
 			}
