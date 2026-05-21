@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 BARONY
-File: mod_tools_config.cpp - Class hotbar config, local achievements, gameplay preferences
+File: mod_tools_config.cpp - Class hotbar config, local achievements, gameplay preferences (converted from rapidjson to cJSON)
 Desc: Extracted from mod_tools.cpp for modularity
 
 Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
@@ -36,7 +36,7 @@ void ClassHotbarConfig_t::writeToFile(HotbarConfigType fileWriteType, HotbarConf
 	}
 	outputPath.append(fileName.c_str());
 
-	rapidjson::Document exportDocument;
+	cJSON* exportDocument = NULL;
 	bool writeNewFile = true;
 	if ( fileWriteType == HOTBAR_LAYOUT_CUSTOM_CONFIG )
 	{
@@ -57,7 +57,7 @@ void ClassHotbarConfig_t::writeToFile(HotbarConfigType fileWriteType, HotbarConf
 					printlog("[JSON]: Error opening json file %s for write!", outputPath.c_str());
 					return;
 				}
-				exportDocument.SetObject();
+				exportDocument = cJSON_CreateObject();
 			}
 		}
 		else
@@ -65,17 +65,24 @@ void ClassHotbarConfig_t::writeToFile(HotbarConfigType fileWriteType, HotbarConf
 			char buf[80000];
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
 			FileIO::close(fp);
 
-			exportDocument.ParseStream(is);
-			printlog("[JSON]: Loaded existing file %s", outputPath.c_str());
-			writeNewFile = false;
+			exportDocument = cJSON_Parse(buf);
+			if ( !exportDocument )
+			{
+				printlog("[JSON]: Could not parse existing file %s, creating new...", outputPath.c_str());
+				exportDocument = cJSON_CreateObject();
+			}
+			else
+			{
+				printlog("[JSON]: Loaded existing file %s", outputPath.c_str());
+				writeNewFile = false;
+			}
 		}
 	}
 	else
 	{
-		exportDocument.SetObject();
+		exportDocument = cJSON_CreateObject();
 	}
 
 	const int VERSION = 1;
@@ -85,30 +92,35 @@ void ClassHotbarConfig_t::writeToFile(HotbarConfigType fileWriteType, HotbarConf
 		std::string classname = playerClassInternalNames[client_classes[clientnum]];
 		if ( writeNewFile )
 		{
-			CustomHelpers::addMemberToRoot(exportDocument, "version", rapidjson::Value(VERSION));
-			rapidjson::Value allClassesObject(rapidjson::kObjectType);
-			CustomHelpers::addMemberToRoot(exportDocument, "classes", allClassesObject);
+			cJSON_AddNumberToObject(exportDocument, "version", VERSION);
+			cJSON_AddObjectToObject(exportDocument, "classes");
 		}
 		else
 		{
-			exportDocument["version"].SetInt(VERSION);
+			cJSON* verItem = cJSON_GetObjectItem(exportDocument, "version");
+			if ( verItem ) verItem->valueint = VERSION;
 		}
 
-		if ( !exportDocument["classes"].HasMember(classname.c_str()) )
+		cJSON* classesObj = cJSON_GetObjectItem(exportDocument, "classes");
+		if ( !classesObj )
+		{
+			classesObj = cJSON_AddObjectToObject(exportDocument, "classes");
+		}
+		if ( !cJSON_HasObjectItem(classesObj, classname.c_str()) )
 		{
 			if ( writeMode == HOTBAR_CONFIG_DELETE )
 			{
 				printlog("[JSON]: Custom layout not found for class '%s', skipping deletion...", classname.c_str());
+				cJSON_Delete(exportDocument);
 				return;
 			}
-			exportDocument["classes"].AddMember(rapidjson::Value(classname.c_str(), exportDocument.GetAllocator()),
-				rapidjson::Value(rapidjson::kObjectType), exportDocument.GetAllocator());
+			cJSON_AddObjectToObject(classesObj, classname.c_str());
 		}
 
 		if ( writeMode == HOTBAR_CONFIG_DELETE )
 		{
 			printlog("[JSON]: Custom layout found for class '%s', removing...", classname.c_str());
-			exportDocument["classes"].EraseMember(classname.c_str());
+			cJSON_DeleteItemFromObject(classesObj, classname.c_str());
 		}
 		else
 		{
@@ -118,32 +130,46 @@ void ClassHotbarConfig_t::writeToFile(HotbarConfigType fileWriteType, HotbarConf
 			{
 				layoutname = "modern";
 			}
-			if ( !exportDocument["classes"][classname.c_str()].HasMember(layoutname.c_str()) )
+			cJSON* classObj = cJSON_GetObjectItem(classesObj, classname.c_str());
+			if ( !classObj )
 			{
-				exportDocument["classes"][classname.c_str()].AddMember(rapidjson::Value(layoutname.c_str(), exportDocument.GetAllocator()),
-					rapidjson::Value(rapidjson::kObjectType), exportDocument.GetAllocator());
+				classObj = cJSON_AddObjectToObject(classesObj, classname.c_str());
+			}
+			if ( !cJSON_HasObjectItem(classObj, layoutname.c_str()) )
+			{
+				cJSON_AddObjectToObject(classObj, layoutname.c_str());
 			}
 
-			auto& layoutObj = exportDocument["classes"][classname.c_str()][layoutname.c_str()];
+			cJSON* layoutObj = cJSON_GetObjectItem(classObj, layoutname.c_str());
 			for ( int i = 0; i < NUM_HOTBAR_SLOTS; ++i )
 			{
 				std::string slotnum = std::to_string(i);
-				if ( !layoutObj.HasMember(slotnum.c_str()) )
+				if ( !cJSON_HasObjectItem(layoutObj, slotnum.c_str()) )
 				{
-					layoutObj.AddMember(rapidjson::Value(slotnum.c_str(), exportDocument.GetAllocator()),
-						rapidjson::Value(rapidjson::kObjectType), exportDocument.GetAllocator());
+					cJSON_AddObjectToObject(layoutObj, slotnum.c_str());
 				}
 
-				auto& slot = layoutObj[slotnum.c_str()];
-				if ( !slot.HasMember("items") )
+				cJSON* slot = cJSON_GetObjectItem(layoutObj, slotnum.c_str());
+				if ( !cJSON_HasObjectItem(slot, "items") )
 				{
-					slot.AddMember("items", rapidjson::Value(rapidjson::kArrayType), exportDocument.GetAllocator());
+					cJSON_AddArrayToObject(slot, "items");
 				}
 				else
 				{
-					slot["items"].Clear(); // overwrite new values in array
+					// clear array to overwrite
+					cJSON* itemsArr = cJSON_GetObjectItem(slot, "items");
+					if ( itemsArr )
+					{
+						// remove all items from array
+						cJSON* item = itemsArr->child;
+						while ( item )
+						{
+							cJSON* next = item->next;
+							cJSON_DeleteItemFromArray(itemsArr, 0);
+							item = next;
+						}
+					}
 				}
-				//slot.AddMember("categories", rapidjson::Value(rapidjson::kArrayType), exportDocument.GetAllocator());
 				if ( hotbar_t.slots()[i].item != 0 )
 				{
 					if ( Item* item = uidToItem(hotbar_t.slots()[i].item) )
@@ -162,8 +188,11 @@ void ClassHotbarConfig_t::writeToFile(HotbarConfigType fileWriteType, HotbarConf
 									continue;
 								}
 							}
-							rapidjson::Value itemnamekey(itemstr.c_str(), exportDocument.GetAllocator());
-							slot["items"].PushBack(itemnamekey, exportDocument.GetAllocator());
+							cJSON* itemsArr = cJSON_GetObjectItem(slot, "items");
+							if ( itemsArr )
+							{
+								cJSON_AddItemToArray(itemsArr, cJSON_CreateString(itemstr.c_str()));
+							}
 						}
 					}
 				}
@@ -172,17 +201,16 @@ void ClassHotbarConfig_t::writeToFile(HotbarConfigType fileWriteType, HotbarConf
 	}
 	else if ( fileWriteType == HOTBAR_LAYOUT_DEFAULT_CONFIG )
 	{
-		CustomHelpers::addMemberToRoot(exportDocument, "version", rapidjson::Value(VERSION));
-		rapidjson::Value allClassesObject(rapidjson::kObjectType);
-		CustomHelpers::addMemberToRoot(exportDocument, "classes", allClassesObject);
+		cJSON_AddNumberToObject(exportDocument, "version", VERSION);
+		cJSON* allClassesObject = cJSON_AddObjectToObject(exportDocument, "classes");
 
 		int classIndex = -1;
 		for ( auto& classname : playerClassInternalNames )
 		{
 			++classIndex;
-			rapidjson::Value classObj(rapidjson::kObjectType);
-			classObj.AddMember("classic", rapidjson::Value(rapidjson::kObjectType), exportDocument.GetAllocator());
-			classObj.AddMember("modern", rapidjson::Value(rapidjson::kObjectType), exportDocument.GetAllocator());
+			cJSON* classObj = cJSON_CreateObject();
+			cJSON_AddObjectToObject(classObj, "classic");
+			cJSON_AddObjectToObject(classObj, "modern");
 
 			auto& hotbar_t = players[clientnum]->hotbar;
 
@@ -201,15 +229,12 @@ void ClassHotbarConfig_t::writeToFile(HotbarConfigType fileWriteType, HotbarConf
 				client_classes[clientnum] = classIndex;
 				initClass(clientnum);
 
+				cJSON* layoutObj = cJSON_GetObjectItem(classObj, layout.c_str());
 				for ( int i = 0; i < NUM_HOTBAR_SLOTS; ++i )
 				{
 					std::string slotnum = std::to_string(i);
-					classObj[layout.c_str()].AddMember(rapidjson::Value(slotnum.c_str(), exportDocument.GetAllocator()),
-						rapidjson::Value(rapidjson::kObjectType), exportDocument.GetAllocator());
-
-					auto& slot = classObj[layout.c_str()][slotnum.c_str()];
-					slot.AddMember("items", rapidjson::Value(rapidjson::kArrayType), exportDocument.GetAllocator());
-					//slot.AddMember("categories", rapidjson::Value(rapidjson::kArrayType), exportDocument.GetAllocator());
+					cJSON* slotObj = cJSON_AddObjectToObject(layoutObj, slotnum.c_str());
+					cJSON_AddArrayToObject(slotObj, "items");
 					if ( hotbar_t.slots()[i].item != 0 )
 					{
 						if ( Item* item = uidToItem(hotbar_t.slots()[i].item) )
@@ -228,14 +253,17 @@ void ClassHotbarConfig_t::writeToFile(HotbarConfigType fileWriteType, HotbarConf
 										continue;
 									}
 								}
-								rapidjson::Value itemnamekey(itemstr.c_str(), exportDocument.GetAllocator());
-								slot["items"].PushBack(itemnamekey, exportDocument.GetAllocator());
+								cJSON* itemsArr = cJSON_GetObjectItem(slotObj, "items");
+								if ( itemsArr )
+								{
+									cJSON_AddItemToArray(itemsArr, cJSON_CreateString(itemstr.c_str()));
+								}
 							}
 						}
 					}
 				}
 			}
-			CustomHelpers::addMemberToSubkey(exportDocument, "classes", classname, classObj);
+			cJSON_AddItemToObject(allClassesObject, classname.c_str(), classObj);
 		}
 
 		stats[clientnum]->clearStats();
@@ -247,13 +275,17 @@ void ClassHotbarConfig_t::writeToFile(HotbarConfigType fileWriteType, HotbarConf
 	if ( !fp )
 	{
 		printlog("[JSON]: Error opening json file %s for write!", outputPath.c_str());
+		if ( exportDocument ) cJSON_Delete(exportDocument);
 		return;
 	}
-	rapidjson::StringBuffer os;
-	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-	exportDocument.Accept(writer);
-	fp->write(os.GetString(), sizeof(char), os.GetSize());
+	char* json = cJSON_Print(exportDocument);
+	if ( json )
+	{
+		fp->write(json, sizeof(char), strlen(json));
+		cJSON_free(json);
+	}
 	FileIO::close(fp);
+	cJSON_Delete(exportDocument);
 
 	printlog("[JSON]: Successfully wrote json file %s", outputPath.c_str());
 	return;
@@ -293,63 +325,70 @@ void ClassHotbarConfig_t::readFromFile(ClassHotbarConfig_t::HotbarConfigType fil
 	static char buf[140000];
 	int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	rapidjson::StringStream is(buf);
 	FileIO::close(fp);
 
-	rapidjson::Document d;
-	d.ParseStream(is);
-	if ( !d.HasMember("version") || !d.HasMember("classes") )
+	cJSON* d = cJSON_Parse(buf);
+	if ( !d )
+	{
+		printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+		return;
+	}
+	if ( !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "classes") )
 	{
 		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
 
-	for ( auto classes = d["classes"].MemberBegin(); classes != d["classes"].MemberEnd(); ++classes )
+	cJSON* classesObj = cJSON_GetObjectItem(d, "classes");
+	if ( classesObj )
 	{
-		int classIndex = -1;
-		for ( auto& s : playerClassInternalNames )
+		for ( cJSON* classes = classesObj->child; classes; classes = classes->next )
 		{
-			++classIndex;
-			if ( s == classes->name.GetString() )
+			int classIndex = -1;
+			for ( auto& s : playerClassInternalNames )
 			{
-				break;
+				++classIndex;
+				if ( s == classes->string )
+				{
+					break;
+				}
 			}
-		}
-		if ( !(classIndex >= CLASS_BARBARIAN && classIndex < NUMCLASSES) )
-		{
-			continue;
-		}
-
-		for ( auto layout = classes->value.MemberBegin(); layout != classes->value.MemberEnd(); ++layout )
-		{
-			if ( strcmp(layout->name.GetString(), "classic") && strcmp(layout->name.GetString(), "modern") )
+			if ( !(classIndex >= CLASS_BARBARIAN && classIndex < NUMCLASSES) )
 			{
 				continue;
 			}
-			bool facebarLayout = false;
-			if ( !strcmp(layout->name.GetString(), "modern") )
-			{
-				facebarLayout = true;
-			}
 
-			auto& customOrDefaultHotbar = (fileReadType == HOTBAR_LAYOUT_DEFAULT_CONFIG) ? ClassHotbarsDefault[classIndex] : ClassHotbars[classIndex];
-			auto& classHotbar = facebarLayout ? customOrDefaultHotbar.layoutModern : customOrDefaultHotbar.layoutClassic;
-			classHotbar.hasData = true;
-			for ( int i = 0; i < NUM_HOTBAR_SLOTS; ++i )
+			for ( cJSON* layout = classes->child; layout; layout = layout->next )
 			{
-				std::string slotnum = std::to_string(i);
-				if ( !layout->value.HasMember(slotnum.c_str()) )
+				if ( strcmp(layout->string, "classic") && strcmp(layout->string, "modern") )
 				{
 					continue;
 				}
-				auto& slot = layout->value[slotnum.c_str()];
-				if ( slot.HasMember("items") )
+				bool facebarLayout = false;
+				if ( !strcmp(layout->string, "modern") )
 				{
-					if ( slot["items"].IsArray() )
+					facebarLayout = true;
+				}
+
+				auto& customOrDefaultHotbar = (fileReadType == HOTBAR_LAYOUT_DEFAULT_CONFIG) ? ClassHotbarsDefault[classIndex] : ClassHotbars[classIndex];
+				auto& classHotbar = facebarLayout ? customOrDefaultHotbar.layoutModern : customOrDefaultHotbar.layoutClassic;
+				classHotbar.hasData = true;
+				for ( int i = 0; i < NUM_HOTBAR_SLOTS; ++i )
+				{
+					std::string slotnum = std::to_string(i);
+					cJSON* slot = cJSON_GetObjectItem(layout, slotnum.c_str());
+					if ( !slot )
 					{
-						for ( auto itemArr = slot["items"].Begin(); itemArr != slot["items"].End(); ++itemArr )
+						continue;
+					}
+					cJSON* itemsArr = cJSON_GetObjectItem(slot, "items");
+					if ( itemsArr && cJSON_IsArray(itemsArr) )
+					{
+						cJSON* itemArr = NULL;
+						cJSON_ArrayForEach(itemArr, itemsArr)
 						{
-							std::string itemString = itemArr->GetString();
+							std::string itemString = itemArr->valuestring;
 							int itemType = WOODEN_SHIELD;
 							bool found = false;
 							bool spell = false;
@@ -397,6 +436,7 @@ void ClassHotbarConfig_t::readFromFile(ClassHotbarConfig_t::HotbarConfigType fil
 			}
 		}
 	}
+	cJSON_Delete(d);
 	printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
 }
 
@@ -574,43 +614,58 @@ void LocalAchievements_t::readFromFile()
 	static char buf[65536 * 2];
 	int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	rapidjson::StringStream is(buf);
 	FileIO::close(fp);
 
-	rapidjson::Document d;
-	d.ParseStream(is);
-	if ( !d.HasMember("version") || !d.HasMember("achievements") || !d.HasMember("statistics") )
+	cJSON* d = cJSON_Parse(buf);
+	if ( !d )
+	{
+		printlog("[JSON]: Error: Could not parse json file %s", path);
+		return;
+	}
+	if ( !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "achievements") || !cJSON_HasObjectItem(d, "statistics") )
 	{
 		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", path);
+		cJSON_Delete(d);
 		return;
 	}
 
-	for ( auto achievement = d["achievements"].MemberBegin(); achievement != d["achievements"].MemberEnd(); ++achievement )
+	cJSON* achievementsObj = cJSON_GetObjectItem(d, "achievements");
+	if ( achievementsObj )
 	{
-		auto& ach = LocalAchievements.achievements[achievement->name.GetString()];
-		ach.name = achievement->name.GetString();
-		ach.unlocked = achievement->value["unlocked"].GetBool();
-		ach.unlockTime = achievement->value["unlock_time"].GetInt64();
-
-		auto find = Compendium_t::achievements.find(achievement->name.GetString());
-		if ( find != Compendium_t::achievements.end() )
+		for ( cJSON* achievement = achievementsObj->child; achievement; achievement = achievement->next )
 		{
-			auto& achData = find->second;
-			achData.unlocked = ach.unlocked;
-			achData.unlockTime = ach.unlockTime;
-			if ( ach.unlocked )
+			auto& ach = LocalAchievements.achievements[achievement->string];
+			ach.name = achievement->string;
+			cJSON* unlockedItem = cJSON_GetObjectItem(achievement, "unlocked");
+			if ( unlockedItem ) ach.unlocked = cJSON_IsTrue(unlockedItem);
+			cJSON* timeItem = cJSON_GetObjectItem(achievement, "unlock_time");
+			if ( timeItem ) ach.unlockTime = (int64_t)timeItem->valuedouble;
+
+			auto find = Compendium_t::achievements.find(achievement->string);
+			if ( find != Compendium_t::achievements.end() )
 			{
-				Compendium_t::AchievementData_t::achievementUnlockedLookup.insert(ach.name);
+				auto& achData = find->second;
+				achData.unlocked = ach.unlocked;
+				achData.unlockTime = ach.unlockTime;
+				if ( ach.unlocked )
+				{
+					Compendium_t::AchievementData_t::achievementUnlockedLookup.insert(ach.name);
+				}
 			}
 		}
 	}
 
-	for ( auto statistic = d["statistics"].MemberBegin(); statistic != d["statistics"].MemberEnd(); ++statistic )
+	cJSON* statisticsObj = cJSON_GetObjectItem(d, "statistics");
+	if ( statisticsObj )
 	{
-		std::string statStr = statistic->name.GetString();
-		const int statNum = stoi(statStr);
-		auto& stat = LocalAchievements.statistics[statNum];
-		stat.value = statistic->value["progress"].GetInt();
+		for ( cJSON* statistic = statisticsObj->child; statistic; statistic = statistic->next )
+		{
+			std::string statStr = statistic->string;
+			const int statNum = stoi(statStr);
+			auto& stat = LocalAchievements.statistics[statNum];
+			cJSON* progressItem = cJSON_GetObjectItem(statistic, "progress");
+			if ( progressItem ) stat.value = progressItem->valueint;
+		}
 	}
 
 	for ( int statNum = 0; statNum < NUM_STEAM_STATISTICS; ++statNum )
@@ -618,6 +673,7 @@ void LocalAchievements_t::readFromFile()
 		g_SteamStats[statNum].m_iValue = LocalAchievements.statistics[statNum].value;
 	}
 	sortAchievementsForDisplay();
+	cJSON_Delete(d);
 }
 
 void LocalAchievements_t::writeToFile()
@@ -625,13 +681,12 @@ void LocalAchievements_t::writeToFile()
 	char path[PATH_MAX] = "";
 	completePath(path, "savegames/achievements.json", outputdir);
 
-	rapidjson::Document exportDocument;
-	exportDocument.SetObject();
+	cJSON* exportDocument = cJSON_CreateObject();
 
 	const int VERSION = 1;
 
-	CustomHelpers::addMemberToRoot(exportDocument, "version", rapidjson::Value(VERSION));
-	rapidjson::Value allAchObj(rapidjson::kObjectType);
+	cJSON_AddNumberToObject(exportDocument, "version", VERSION);
+	cJSON* allAchObj = cJSON_AddObjectToObject(exportDocument, "achievements");
 	for ( auto& ach : Compendium_t::achievements )
 	{
 		if ( LocalAchievements.achievements.find(ach.first) == LocalAchievements.achievements.end() )
@@ -640,15 +695,13 @@ void LocalAchievements_t::writeToFile()
 		}
 		auto& achData = LocalAchievements.achievements[ach.first];
 
-		rapidjson::Value namekey(ach.first.c_str(), exportDocument.GetAllocator());
-		allAchObj.AddMember(namekey, rapidjson::Value(rapidjson::kObjectType), exportDocument.GetAllocator());
-		auto& obj = allAchObj[ach.first.c_str()];
-		obj.AddMember("unlocked", achData.unlocked, exportDocument.GetAllocator());
-		obj.AddMember("unlock_time", achData.unlockTime, exportDocument.GetAllocator());
+		cJSON* obj = cJSON_CreateObject();
+		cJSON_AddBoolToObject(obj, "unlocked", achData.unlocked);
+		cJSON_AddNumberToObject(obj, "unlock_time", (double)achData.unlockTime);
+		cJSON_AddItemToObject(allAchObj, ach.first.c_str(), obj);
 	}
-	CustomHelpers::addMemberToRoot(exportDocument, "achievements", allAchObj);
 
-	rapidjson::Value allStatObj(rapidjson::kObjectType);
+	cJSON* allStatObj = cJSON_AddObjectToObject(exportDocument, "statistics");
 	for ( int i = 0; i < NUM_STEAM_STATISTICS; ++i )
 	{
 		if ( LocalAchievements.statistics.find(i) == LocalAchievements.statistics.end() )
@@ -658,24 +711,26 @@ void LocalAchievements_t::writeToFile()
 		auto& statData = LocalAchievements.statistics[i];
 
 		std::string statNum = std::to_string(i);
-		rapidjson::Value namekey(statNum.c_str(), exportDocument.GetAllocator());
-		allStatObj.AddMember(namekey, rapidjson::Value(rapidjson::kObjectType), exportDocument.GetAllocator());
-		auto& obj = allStatObj[statNum.c_str()];
-		obj.AddMember("progress", statData.value, exportDocument.GetAllocator());
+		cJSON* obj = cJSON_CreateObject();
+		cJSON_AddNumberToObject(obj, "progress", statData.value);
+		cJSON_AddItemToObject(allStatObj, statNum.c_str(), obj);
 	}
-	CustomHelpers::addMemberToRoot(exportDocument, "statistics", allStatObj);
 
 	File* fp = FileIO::open(path, "wb");
 	if ( !fp )
 	{
 		printlog("[JSON]: Error opening json file %s for write!", path);
+		cJSON_Delete(exportDocument);
 		return;
 	}
-	rapidjson::StringBuffer os;
-	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-	exportDocument.Accept(writer);
-	fp->write(os.GetString(), sizeof(char), os.GetSize());
+	char* json = cJSON_Print(exportDocument);
+	if ( json )
+	{
+		fp->write(json, sizeof(char), strlen(json));
+		cJSON_free(json);
+	}
 	FileIO::close(fp);
+	cJSON_Delete(exportDocument);
 
 	printlog("[JSON]: Successfully wrote json file %s", path);
 	return;
@@ -792,7 +847,6 @@ void GameplayPreferences_t::receivePacket()
 			int data = (net_packet->data[6 + i] & 0xFF);
 			playerPrefs.preferences[i].value = data;
 			playerPrefs.preferences[i].needsUpdate = false;
-			//messagePlayer(clientnum, MESSAGE_DEBUG, "%d rcv: %d : %d", player, i, playerPrefs.preferences[i].value);
 		}
 		playerPrefs.lastUpdateTick = ticks;
 	}
@@ -924,30 +978,6 @@ void GameplayPreferences_t::process()
 		if ( players[player]->isLocalPlayer() )
 		{
 			isInit = true;
-			/*for ( auto& pref : preferences )
-			{
-			if ( pref.needsUpdate )
-			{
-			doUpdate = true;
-			pref.needsUpdate = false;
-			}
-			}
-
-			if ( ticks - lastUpdateTick > ((intro ? TICKS_PER_SECOND : (TICKS_PER_SECOND * 15)) + 5) )
-			{
-			doUpdate = true;
-			}
-
-			if ( doUpdate )
-			{
-			for ( int i = 0; i < MAXPLAYERS; ++i )
-			{
-			if ( !players[i]->isLocalPlayer() )
-			{
-			sendToClients(i);
-			}
-			}
-			}*/
 		}
 		else
 		{
@@ -1056,7 +1086,6 @@ void GameplayPreferences_t::receiveGameConfig()
 		int data = (net_packet->data[5 + i] & 0xFF);
 		gameConfig[i].value = data;
 		gameConfig[i].needsUpdate = false;
-		//messagePlayer(clientnum, MESSAGE_DEBUG, "GOPT %d rcv: %d", i, gameConfig[i].value);
 	}
 	lastGameConfigUpdateTick = ticks;
 }
@@ -1150,26 +1179,6 @@ void GameplayPreferences_t::serverProcessGameConfig()
 						value |= gameplayPreferences[i].preferences[GPREF_VOICE_NO_RECV].value;
 					}
 				}
-				/*if ( value != oldValue )
-				{
-					if ( multiplayer == SERVER )
-					{
-						for ( int i = 0; i < MAXPLAYERS; ++i )
-						{
-							if ( !client_disconnected[i] )
-							{
-								if ( value != 0 )
-								{
-									messagePlayer(i, MESSAGE_HINT, Language::get(4342));
-								}
-								else
-								{
-									messagePlayer(i, MESSAGE_HINT, Language::get(4343));
-								}
-							}
-						}
-					}
-				}*/
 				break;
 			}
 			case GOPT_VOICE_NO_SEND:
@@ -1183,26 +1192,6 @@ void GameplayPreferences_t::serverProcessGameConfig()
 						value |= gameplayPreferences[i].preferences[GPREF_VOICE_NO_SEND].value;
 					}
 				}
-				/*if ( value != oldValue )
-				{
-					if ( multiplayer == SERVER )
-					{
-						for ( int i = 0; i < MAXPLAYERS; ++i )
-						{
-							if ( !client_disconnected[i] )
-							{
-								if ( value != 0 )
-								{
-									messagePlayer(i, MESSAGE_HINT, Language::get(4342));
-								}
-								else
-								{
-									messagePlayer(i, MESSAGE_HINT, Language::get(4343));
-								}
-							}
-						}
-					}
-				}*/
 				break;
 			}
 			case GOPT_VOICE_PTT:
@@ -1216,26 +1205,6 @@ void GameplayPreferences_t::serverProcessGameConfig()
 						value |= gameplayPreferences[i].preferences[GPREF_VOICE_PTT].value;
 					}
 				}
-				/*if ( value != oldValue )
-				{
-					if ( multiplayer == SERVER )
-					{
-						for ( int i = 0; i < MAXPLAYERS; ++i )
-						{
-							if ( !client_disconnected[i] )
-							{
-								if ( value != 0 )
-								{
-									messagePlayer(i, MESSAGE_HINT, Language::get(4342));
-								}
-								else
-								{
-									messagePlayer(i, MESSAGE_HINT, Language::get(4343));
-								}
-							}
-						}
-					}
-				}*/
 				break;
 			}
 			default:
