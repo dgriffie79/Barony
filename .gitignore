@@ -61,3 +61,5 @@ steam_appid.txt
 # Zig build artifacts
 zig-out/
 .zig-cache/
+
+swarm/
