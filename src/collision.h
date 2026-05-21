@@ -40,7 +40,13 @@ bool entityInsideTile(Entity* entity, int x, int y, int z
 #endif
 );
 bool entityInsideSomething(Entity* entity);
+#ifdef __cplusplus
+extern "C" {
+#endif
 int barony_clear(real_t tx, real_t ty, Entity* my);
+#ifdef __cplusplus
+}
+#endif
 Entity* findEntityInLine(Entity* my, real_t x1, real_t y1, real_t angle, int entities, Entity* target
 #ifdef __cplusplus
 	, list_t* entityListToUse = nullptr

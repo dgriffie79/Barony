@@ -206,6 +206,20 @@ pub fn build(b: *std.Build) void {
     }.apply;
 
     // -----------------------------------------------------------------------
+    // Zig module (being converted from C/C++)
+    // -----------------------------------------------------------------------
+    const zig_mod = b.createModule(.{
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = b.path("src/zighello.zig"),
+    });
+
+    const zig_obj = b.addObject(.{
+        .name = "zigbarony",
+        .root_module = zig_mod,
+    });
+
+    // -----------------------------------------------------------------------
     // Game executable
     // -----------------------------------------------------------------------
     if (game_enabled) {
@@ -214,6 +228,7 @@ pub fn build(b: *std.Build) void {
             .root_module = game_mod,
         });
 
+        barony.root_module.addObject(zig_obj);
         barony.root_module.addWin32ResourceFile(.{ .file = b.path("barony.rc") });
 
         link_required(barony.root_module, deps_root, target.result.os.tag);
