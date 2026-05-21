@@ -10,13 +10,13 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "game.hpp"
-#include "stat.hpp"
-#include "entity.hpp"
+#include "game.h"
+#include "stat.h"
+#include "entity.h"
 #include "monster.hpp"
 #include "collision.h"
 #include "paths.h"
-#include "items.hpp"
+#include "items.h"
 #include "net.hpp"
 #include "magic/magic.hpp"
 #include "mod_tools.hpp"

@@ -12,8 +12,8 @@
 #pragma once
 
 #include "main.h"
-#include "game.hpp"
-#include "items.hpp"
+#include "game.h"
+#include "items.h"
 
 #define NUMCHITCHAT 20
 

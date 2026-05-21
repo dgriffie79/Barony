@@ -11,7 +11,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../files.hpp"
+#include "../files.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>

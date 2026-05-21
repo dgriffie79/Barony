@@ -12,7 +12,7 @@
 #include "../init.h"
 #include "../net.hpp"
 #include "../player.hpp"
-#include "../stat.hpp"
+#include "../stat.h"
 #include "../menu.h"
 #include "../scores.hpp"
 #include "../mod_tools.hpp"

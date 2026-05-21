@@ -10,14 +10,14 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "game.hpp"
+#include "game.h"
 #include "engine/audio/sound.hpp"
 #include "net.hpp"
 #include "collision.h"
-#include "entity.hpp"
+#include "entity.h"
 #include "interface/interface.hpp"
 #include "draw.hpp"
-#include "items.hpp"
+#include "items.h"
 #include "player.hpp"
 #include "prng.h"
 

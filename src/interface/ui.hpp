@@ -12,8 +12,8 @@
 #pragma once
 
 #include "../main.h"
-#include "../game.hpp"
-#include "../files.hpp"
+#include "../game.h"
+#include "../files.h"
 #include "../draw.hpp"
 #include "interface.hpp"
 #include "../colors.hpp"

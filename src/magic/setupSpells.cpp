@@ -10,8 +10,8 @@
 -------------------------------------------------------------------------------*/
 
 #include "../main.h"
-#include "../game.hpp"
-#include "../stat.hpp"
+#include "../game.h"
+#include "../stat.h"
 #include "magic.hpp"
 #include "../mod_tools.hpp"
 

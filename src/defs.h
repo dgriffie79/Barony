@@ -82,6 +82,7 @@ extern "C" {
 #endif
 
 struct Entity;
+typedef struct Entity Entity;
 
 // safe string functions
 char* stringCopy(char* dest, const char* src, size_t dest_size, size_t src_size);

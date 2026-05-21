@@ -1,7 +1,7 @@
 #include "defs.h"
 
 #ifdef __cplusplus
-#include "files.hpp"
+#include "files.h"
 #include "json.h"
 #include "cJSON.h"
 

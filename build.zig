@@ -57,9 +57,11 @@ pub fn build(b: *std.Build) void {
         "src/cursors.c",
         "src/engine/audio/defines.c",
         "src/prng.c",
+
     };
 
-    // C++ sources (still being converted)
+    // C++ sources (being converted to C — some .c files still require C++ due to
+    // dependencies on unconverted headers; compiled with -std=c++17)
     const cpp_sources = &.{
         "src/main.cpp", "src/init.cpp", "src/collision.cpp", "src/light.cpp",
         "src/maps.cpp", "src/draw.cpp", "src/opengl.cpp",

@@ -1,11 +1,11 @@
 #pragma once
 
 #include "main.h"
-#include "game.hpp"
-#include "stat.hpp"
+#include "game.h"
+#include "stat.h"
 #include "net.hpp"
-#include "entity.hpp"
-#include "items.hpp"
+#include "entity.h"
+#include "items.h"
 #include "interface/interface.hpp"
 #include "player.hpp"
 #include "mod_tools.hpp"

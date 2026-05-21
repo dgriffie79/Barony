@@ -11,11 +11,11 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "game.hpp"
-#include "stat.hpp"
-#include "items.hpp"
+#include "game.h"
+#include "stat.h"
+#include "items.h"
 #include "engine/audio/sound.hpp"
-#include "entity.hpp"
+#include "entity.h"
 #include "magic/magic.hpp"
 #include "interface/interface.hpp"
 #include "scores.hpp"

@@ -11,7 +11,7 @@ See LICENSE for details.
 
 #include "main.h"
 #include "menu.h"
-#include "game.hpp"
+#include "game.h"
 #include "lobbies.h"
 #include "draw.hpp"
 #include "player.hpp"

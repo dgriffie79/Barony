@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
-	File: game.hpp
+	File: game.h (migrated from game.hpp)
 	Desc: header file for the game
 
 	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
@@ -10,6 +10,13 @@
 -------------------------------------------------------------------------------*/
 
 #pragma once
+
+#include "main.h"
+
+#ifdef __cplusplus
+// ============================================================================
+// ORIGINAL C++ CONTENT — preserved verbatim for C++ compilation
+// ============================================================================
 
 #include <vector>
 #include <chrono>
@@ -651,3 +658,416 @@ void loadAchievementData(const char* path);
 void sortAchievementsForDisplay();
 
 real_t getFPSScale(real_t baseFPS);
+
+#else
+// ============================================================================
+// C-COMPATIBLE CONTENT
+// ============================================================================
+
+#include "ccontainers.h"
+
+// REMEMBER TO CHANGE THIS WITH EVERY NEW OFFICIAL VERSION!!!
+static const char VERSION[] = "v5.0.2";
+#define GAME_CODE
+
+#define DEBUG 1
+#define ENTITY_PACKET_LENGTH 47
+#define NET_PACKET_SIZE 512
+
+// impulses (bound keystrokes, mousestrokes, and joystick/game controller strokes)
+extern Uint32 impulses[NUMIMPULSES];
+extern Uint32 joyimpulses[NUM_JOY_IMPULSES];
+
+bool handleEvents(void);
+void startMessages(void);
+
+// net packet send
+typedef struct packetsend_t
+{
+	UDPsocket sock;
+	int channel;
+	UDPpacket* packet;
+	int num;
+	int tries;
+	int hostnum;
+} packetsend_t;
+extern list_t safePacketsSent;
+extern void* safePacketsReceivedMap[MAXPLAYERS];
+extern bool receivedclientnum;
+
+extern Sint32 numplayers;
+extern Sint32 clientnum;
+extern bool intro;
+extern int introstage;
+extern bool gamePaused;
+extern bool fadeout;
+extern bool fadefinished;
+extern int fadealpha;
+extern Entity* client_selected[MAXPLAYERS];
+extern bool inrange[MAXPLAYERS];
+extern bool deleteallbuttons;
+extern Sint32 client_classes[MAXPLAYERS];
+extern Uint32 client_keepalive[MAXPLAYERS];
+extern Uint16 portnumber;
+extern list_t messages;
+extern list_t command_history;
+extern node_t* chosen_command;
+extern bool command;
+extern bool noclip;
+extern bool godmode;
+extern bool buddhamode;
+extern bool everybodyfriendly;
+extern bool combat;
+extern bool combattoggle;
+extern bool assailant[MAXPLAYERS];
+extern bool oassailant[MAXPLAYERS];
+extern int assailantTimer[MAXPLAYERS];
+static const int COMBAT_MUSIC_COOLDOWN = 200;
+extern list_t removedEntities;
+extern char maptoload[256];
+extern char configtoload[256];
+extern bool loadingmap;
+extern bool loadingconfig;
+extern int startfloor;
+extern bool skipintro;
+extern Uint32 uniqueGameKey;
+extern Uint32 uniqueLobbyKey;
+extern bool arachnophobia_filter;
+extern bool colorblind_lobby;
+
+// definitions
+extern bool showfps;
+extern real_t time_diff;
+extern real_t t;
+extern real_t ot;
+extern real_t frameval[AVERAGEFRAMES];
+extern Uint32 cycles;
+extern Uint32 pingtime;
+extern real_t fps;
+static const int NUMCLASSES = 26;
+#define NUMRACES 18
+#define NUMPLAYABLERACES 14
+extern char address[64];
+extern bool loadnextlevel;
+extern int skipLevelsOnLoad;
+extern bool loadingSameLevelAsCurrent;
+extern void* loadCustomNextMap;
+extern Uint32 forceMapSeed;
+extern int currentlevel;
+extern bool secretlevel;
+extern bool darkmap;
+extern int shaking;
+extern int bobbing;
+
+enum MessageType {
+	MESSAGE_COMBAT = 1u << 0,
+	MESSAGE_STATUS = 1u << 1,
+	MESSAGE_INVENTORY = 1u << 2,
+	MESSAGE_EQUIPMENT = 1u << 3,
+	MESSAGE_WORLD = 1u << 4,
+	MESSAGE_CHAT = 1u << 5,
+	MESSAGE_PROGRESSION = 1u << 6,
+	MESSAGE_INTERACTION = 1u << 7,
+	MESSAGE_INSPECTION = 1u << 8,
+	MESSAGE_HINT = 1u << 9,
+	MESSAGE_OBITUARY = 1u << 10,
+	MESSAGE_CHATTER = 1u << 11,
+	MESSAGE_SPAM_MISC = 1u << 28,
+	MESSAGE_COMBAT_BASIC = 1u << 29,
+	MESSAGE_DEBUG = 1u << 30,
+	MESSAGE_MISC = 1u << 31,
+};
+extern Uint32 messagesEnabled;
+
+enum PlayerClasses
+{
+	CLASS_BARBARIAN,
+	CLASS_WARRIOR,
+	CLASS_HEALER,
+	CLASS_ROGUE,
+	CLASS_WANDERER,
+	CLASS_CLERIC,
+	CLASS_MERCHANT,
+	CLASS_WIZARD,
+	CLASS_ARCANIST,
+	CLASS_JOKER,
+	CLASS_SEXTON,
+	CLASS_NINJA,
+	CLASS_MONK,
+	CLASS_CONJURER,
+	CLASS_ACCURSED,
+	CLASS_MESMER,
+	CLASS_BREWER,
+	CLASS_MACHINIST,
+	CLASS_PUNISHER,
+	CLASS_SHAMAN,
+	CLASS_HUNTER,
+	CLASS_BARD,
+	CLASS_SAPPER,
+	CLASS_SCION,
+	CLASS_HERMIT,
+	CLASS_PALADIN
+};
+
+static const char* playerClassInternalNames[] = {
+	"class_barbarian",
+	"class_warrior",
+	"class_healer",
+	"class_rogue",
+	"class_wanderer",
+	"class_cleric",
+	"class_merchant",
+	"class_wizard",
+	"class_arcanist",
+	"class_joker",
+	"class_sexton",
+	"class_ninja",
+	"class_monk",
+	"class_conjurer",
+	"class_accursed",
+	"class_mesmer",
+	"class_brewer",
+	"class_machinist",
+	"class_punisher",
+	"class_shaman",
+	"class_hunter",
+	"class_bard",
+	"class_sapper",
+	"class_scion",
+	"class_hermit",
+	"class_paladin"
+};
+
+static const int CLASS_SHAMAN_NUM_STARTING_SPELLS = 15;
+
+enum PlayerRaces
+{
+	RACE_HUMAN,
+	RACE_SKELETON,
+	RACE_VAMPIRE,
+	RACE_SUCCUBUS,
+	RACE_GOATMAN,
+	RACE_AUTOMATON,
+	RACE_INCUBUS,
+	RACE_GOBLIN,
+	RACE_INSECTOID,
+	RACE_RAT,
+	RACE_TROLL,
+	RACE_SPIDER,
+	RACE_IMP,
+	RACE_GNOME,
+	RACE_GREMLIN,
+	RACE_DRYAD,
+	RACE_MYCONID,
+	RACE_SALAMANDER,
+	RACE_ENUM_END
+};
+
+bool achievementUnlocked(const char* achName);
+void steamAchievement(const char* achName);
+void steamUnsetAchievement(const char* achName);
+void steamAchievementClient(int player, const char* achName);
+void steamAchievementEntity(Entity* my, const char* achName);
+void steamStatisticUpdate(int statisticNum, ESteamStatTypes type, int value);
+void steamStatisticUpdateClient(int player, int statisticNum, ESteamStatTypes type, int value);
+void steamIndicateStatisticProgress(int statisticNum, ESteamStatTypes type);
+void pauseGame(int mode, int ignoreplayer);
+int initGame(void);
+void initGameDatafiles(bool moddedReload);
+void initGameDatafilesAsync(bool moddedReload);
+void deinitGame(void);
+void handleButtons(void);
+void gameLogic(void);
+
+// behavior function prototypes:
+void actAnimator(Entity* my);
+void actRotate(Entity* my);
+void actLiquid(Entity* my);
+void actEmpty(Entity* my);
+void actFurniture(Entity* my);
+void actMCaxe(Entity* my);
+void actStatueAnimator(Entity* my);
+void actStatue(Entity* my);
+void actDoorFrame(Entity* my);
+void actDeathCam(Entity* my);
+void actProjectSpiritCam(Entity* my);
+void actDeathGhost(Entity* my);
+void actDeathGhostLimb(Entity* my);
+void actPlayerLimb(Entity* my);
+void actTorch(Entity* my);
+void actCrystalShard(Entity* my);
+void actDoor(Entity* my);
+void actHudWeapon(Entity* my);
+void actHudArm(Entity* my);
+void actHudShield(Entity* my);
+void actHudAdditional(Entity* my);
+void actHudArrowModel(Entity* my);
+void actHudAdditional2(Entity* my);
+void actItem(Entity* my);
+void actGoldBag(Entity* my);
+void actGib(Entity* my);
+void actGreasePuddleSpawner(Entity* my);
+void actGreasePuddle(Entity* my);
+void actMiscPuddle(Entity* my);
+void spawnGreasePuddleSpawner(Entity* caster, real_t x, real_t y, int duration);
+void actDamageGib(Entity* my);
+void actFociGib(Entity* my);
+Entity* spawnFociGib(real_t x, real_t y, real_t z, real_t dir, real_t velocityBonus, Uint32 parentUid, int sprite, Uint32 seed);
+Entity* spawnGib(Entity* parentent, int customGibSprite);
+Entity* spawnDamageGib(Entity* parentent, Sint32 dmgAmount, int gibDmgType, int displayType, bool updateClients);
+Entity* spawnGibClient(Sint16 x, Sint16 y, Sint16 z, Sint16 sprite);
+Entity* spawnMiscPuddle(Entity* parentent, real_t x, real_t y, int sprite, bool updateClients);
+void serverSpawnGibForClient(Entity* gib);
+void actLadder(Entity* my);
+void actLadderUp(Entity* my);
+void actPortal(Entity* my);
+void actWinningPortal(Entity* my);
+void actFlame(Entity* my);
+void actCampfire(Entity* my);
+void actCauldron(Entity* my);
+void actWorkbench(Entity* my);
+void actMailbox(Entity* my);
+Entity* spawnFlame(Entity* parentent, Sint32 sprite);
+Entity* spawnFlameSprites(Entity* parentent, Sint32 sprite);
+Entity* castMagic(Entity* parentent);
+void actSprite(Entity* my);
+void actSpriteNametag(Entity* my);
+void actSpriteWorldTooltip(Entity* my);
+void actSleepZ(Entity* my);
+Entity* spawnBang(Sint16 x, Sint16 y, Sint16 z);
+Entity* spawnExplosion(Sint16 x, Sint16 y, Sint16 z);
+Entity* spawnExplosionFromSprite(Uint16 sprite, Sint16 x, Sint16 y, Sint16 z);
+Entity* spawnPoof(Sint16 x, Sint16 y, Sint16 z, real_t scale, bool updateClients);
+Entity* spawnSleepZ(Sint16 x, Sint16 y, Sint16 z);
+Entity* spawnFloatingSpriteMisc(int sprite, Sint16 x, Sint16 y, Sint16 z);
+void actArrow(Entity* my);
+void actBoulder(Entity* my);
+void actBoulderTrap(Entity* my);
+void actBoulderTrapHole(Entity* my);
+void actBoulderTrapEast(Entity* my);
+void actBoulderTrapWest(Entity* my);
+void actBoulderTrapSouth(Entity* my);
+void actBoulderTrapNorth(Entity* my);
+void actHeadstone(Entity* my);
+void actThrown(Entity* my);
+void actBeartrap(Entity* my);
+void actBeartrapLaunched(Entity* my);
+void actBomb(Entity* my);
+void actDecoyBox(Entity* my);
+void actDecoyBoxCrank(Entity* my);
+void actSpearTrap(Entity* my);
+void actWallBuster(Entity* my);
+void actWallBuilder(Entity* my);
+void actPowerCrystalBase(Entity* my);
+void actPowerCrystal(Entity* my);
+void actPowerCrystalParticleIdle(Entity* my);
+void actPedestalBase(Entity* my);
+void actPedestalOrb(Entity* my);
+void actMidGamePortal(Entity* my);
+void actCustomPortal(Entity* my);
+void actTeleporter(Entity* my);
+void actMagicTrapCeiling(Entity* my);
+void actTeleportShrine(Entity* my);
+void actDaedalusShrine(Entity* my);
+void actAssistShrine(Entity* my);
+void actBell(Entity* my);
+void bellBreakBulb(Entity* my, bool minotaurBreak);
+void actSpellShrine(Entity* my);
+void actExpansionEndGamePortal(Entity* my);
+void actSoundSource(Entity* my);
+void actLightSource(Entity* my);
+void actSignalTimer(Entity* my);
+void actSignalGateAND(Entity* my);
+void actWallLock(Entity* my);
+void actWallButton(Entity* my);
+void actWind(Entity* my);
+void createWaterSplash(real_t x, real_t y, int lifetime);
+
+void startMessages(void);
+bool frameRateLimit(Uint32 maxFrameRate, bool resetAccumulator, bool sleep);
+extern Uint32 networkTickrate;
+extern bool gameloopFreezeEntities;
+extern Uint32 serverSchedulePlayerHealthUpdate;
+
+void drawAllPlayerCameras(void);
+
+#define TOUCHRANGE 32
+#define STRIKERANGE 24
+#define XPSHARERANGE 99999
+
+// function prototypes for charclass.c:
+void initClass(int player);
+void initClassStats(const int classnum, void* myStats);
+void initShapeshiftHotbar(int player);
+void deinitShapeshiftHotbar(int player);
+bool playerUnlockedShamanSpell(int player, Item* item);
+
+extern char last_ip[64];
+extern char last_port[64];
+
+#define HEAL_TIME 600
+#define MAGIC_REGEN_TIME 600
+#define MAGIC_REGEN_AUTOMATON_TIME 300
+
+#define DEFAULT_HP 30
+#define DEFAULT_MP 30
+#define HP_MOD 5
+#define MP_MOD 5
+
+#define SPRITE_FLAME 13
+#define SPRITE_CRYSTALFLAME 96
+
+#define MAXCHARGE 30
+
+static const int BASE_MELEE_DAMAGE = 8;
+static const int BASE_RANGED_DAMAGE = 7;
+static const int BASE_THROWN_DAMAGE = 6;
+static const int BASE_PLAYER_UNARMED_DAMAGE = 8;
+
+extern bool spawn_blood;
+extern bool capture_mouse;
+
+#define LEVELSFILE "maps/levels.txt"
+#define SECRETLEVELSFILE "maps/secretlevels.txt"
+#define LENGTH_OF_LEVEL_REGION 5
+
+#define TICKS_PER_SECOND 50
+static const Uint8 TICKS_TO_PROCESS_FIRE = 30;
+static const int EFFECT_WITHDRAWAL_BASE_TIME = TICKS_PER_SECOND * 60 * 8;
+
+static const char* PLAYERNAMES_MALE_FILE = "playernames-male.txt";
+static const char* PLAYERNAMES_FEMALE_FILE = "playernames-female.txt";
+static const char* NPCNAMES_MALE_FILE = "npcnames-male.txt";
+static const char* NPCNAMES_FEMALE_FILE = "npcnames-female.txt";
+extern void* randomPlayerNamesMale;
+extern void* randomPlayerNamesFemale;
+extern void* randomNPCNamesMale;
+extern void* randomNPCNamesFemale;
+extern bool enabledDLCPack1;
+extern bool enabledDLCPack2;
+extern bool enabledDLCPack3;
+extern void* physFSFilesInDirectory;
+void loadRandomNames(void);
+int mapLevel(int player, int radius, int _x, int _y, bool usingSpell);
+void mapLevel2(int player);
+void mapFoodOnLevel(int player);
+bool mapTileDiggable(const int x, const int y);
+
+// Opaque class forward declarations
+typedef struct TileEntityListHandler TileEntityListHandler;
+extern void* TileEntityList;
+
+typedef struct DebugStatsClass DebugStatsClass;
+extern void* DebugStats;
+
+extern void* cvar_enableKeepAlives;
+extern void* cvar_map_sequence_rng;
+
+typedef struct TimerExperiments TimerExperiments;
+
+void loadAchievementData(const char* path);
+void sortAchievementsForDisplay(void);
+
+real_t getFPSScale(real_t baseFPS);
+
+#endif /* __cplusplus */

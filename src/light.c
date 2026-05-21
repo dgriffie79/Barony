@@ -179,7 +179,7 @@ light_t* lightSphere(int index, Sint32 x, Sint32 y, Sint32 radius, float r, floa
 }
 
 #include "cJSON.h"
-#include "files.hpp"
+#include "files.h"
 
 std::unordered_map<std::string, LightDef> lightDefs;
 bool loadLights(bool forceLoadBaseDirectory) {

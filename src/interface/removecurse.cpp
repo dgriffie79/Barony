@@ -11,9 +11,9 @@
 
 #include "../main.h"
 #include "../draw.hpp"
-#include "../game.hpp"
-#include "../stat.hpp"
-#include "../items.hpp"
+#include "../game.h"
+#include "../stat.h"
+#include "../items.h"
 #include "../net.hpp"
 #include "../player.hpp"
 #include "interface.hpp"

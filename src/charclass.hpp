@@ -11,9 +11,9 @@ See LICENSE for details.
 
 #pragma once
 #include "main.h"
-#include "stat.hpp"
+#include "stat.h"
 #include "json.h"
-#include "files.hpp"
+#include "files.h"
 
 class PlayerCharacterClassManager
 {

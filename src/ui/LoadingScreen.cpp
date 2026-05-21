@@ -5,7 +5,7 @@
 #include "Button.hpp"
 
 #include "../main.h"
-#include "../game.hpp"
+#include "../game.h"
 #include "../draw.hpp"
 #include "../prng.h"
 #include "../mod_tools.hpp"

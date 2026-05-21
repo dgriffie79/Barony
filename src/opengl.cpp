@@ -11,9 +11,9 @@
 
 #include "main.h"
 #include "draw.hpp"
-#include "entity.hpp"
-#include "files.hpp"
-#include "items.hpp"
+#include "entity.h"
+#include "files.h"
+#include "items.h"
 #include "ui/Text.hpp"
 #include "ui/GameUI.hpp"
 #include "interface/interface.hpp"

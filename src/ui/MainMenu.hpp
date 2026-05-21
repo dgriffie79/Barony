@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <string>
 #include "../main.h"
-#include "../game.hpp"
+#include "../game.h"
 #include "../json.h"
 #include "../ui/Frame.hpp"
 #include "../interface/consolecommand.h"

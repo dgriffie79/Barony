@@ -12,9 +12,9 @@
 
 #include "main.h"
 #include "draw.hpp"
-#include "files.hpp"
-#include "game.hpp"
-#include "stat.hpp"
+#include "files.h"
+#include "game.h"
+#include "stat.h"
 #include "interface/interface.hpp"
 #include "messages.hpp"
 #include "book.hpp"

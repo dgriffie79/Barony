@@ -1,15 +1,8 @@
-/*-------------------------------------------------------------------------------
-
-	BARONY
-	File: files.hpp
-	Desc: prototypes for file.cpp, all file access should be mediated
-		  through this interface
-
-	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
-	See LICENSE for details.
-
--------------------------------------------------------------------------------*/
 #pragma once
+
+#ifdef __cplusplus
+// ===================== C++ SECTION =====================
+// Original files.hpp content preserved below.
 
 #include <list>
 #include <string>
@@ -324,3 +317,165 @@ enum MapParameterIndices : int
 	LEVELPARAM_CHANCE_MINOTAUR,
 	LEVELPARAM_DISABLE_NORMAL_EXIT
 };
+
+#else
+// ===================== C SECTION =====================
+
+#include "ccontainers.h"
+#include "defs.h"
+
+/* ---------------------------------------------------------
+   FileInterface vtable approach — replaces the C++ virtual
+   class hierarchy (FileBase / FilePC / FileNX).
+   --------------------------------------------------------- */
+
+/* --- Enums --- */
+enum SeekMode {
+	SEEKMODE_SET,
+	SEEKMODE_ADD,
+	SEEKMODE_SETEND
+};
+
+enum FileMode {
+	FILEMODE_INVALID,
+	FILEMODE_READ,
+	FILEMODE_WRITE
+};
+
+/* --- Forward declarations --- */
+typedef struct FileInterfaceVT FileInterfaceVT;
+typedef struct FileInterface FileInterface;
+typedef struct FilePC FilePC;
+
+/* --- Vtable for FileInterface --- */
+struct FileInterfaceVT {
+	size_t    (*write)(FileInterface* self, const void* src, size_t size, size_t count);
+	size_t    (*read)(FileInterface* self, void* buffer, size_t size, size_t count);
+	size_t    (*size)(FileInterface* self);
+	bool      (*eof)(FileInterface* self);
+	int       (*seek)(FileInterface* self, ptrdiff_t offset, enum SeekMode mode);
+	long int  (*tell)(FileInterface* self);
+	void      (*close)(FileInterface* self);
+};
+
+/* --- Base interface struct --- */
+struct FileInterface {
+	FileInterfaceVT* vtable;
+	enum FileMode    mode;
+	char*            path;       /* heap-allocated C string */
+};
+
+/* Non-virtual convenience methods as standalone functions */
+char*   FileInterface_gets2(FileInterface* self, char* buf, int size);
+char*   FileInterface_gets(FileInterface* self, char* buf, int size);
+int     FileInterface_geti(FileInterface* self);
+char    FileInterface_getc(FileInterface* self);
+int     FileInterface_printf(FileInterface* self, const char* fmt, ...);
+int     FileInterface_puts(FileInterface* self, const char* str);
+int     FileInterface_putc(FileInterface* self, char c);
+void    FileInterface_rewind(FileInterface* self);
+
+/* --- Concrete FilePC (typedef'd to File) --- */
+struct FilePC {
+	FileInterfaceVT* vtable;
+	enum FileMode    mode;
+	char*            path;       /* heap-allocated C string */
+	FILE*            fp;
+	Array_base       data;       /* dynamic uint8_t buffer */
+	size_t           pos;
+};
+typedef FilePC File;
+
+/* --- FileIO replacement --- */
+File*  FileIO_open(const char* path, const char* mode);
+void   FileIO_close(File* file);
+
+/* ---------------------------------------------------------
+   HolidayTheme and related globals
+   --------------------------------------------------------- */
+enum HolidayTheme {
+	THEME_NONE,
+	THEME_HALLOWEEN,
+	THEME_XMAS,
+	THEME_MAX
+};
+extern const char* holidayThemeDirs[THEME_MAX];
+HolidayTheme getCurrentHoliday(bool force);
+bool         isCurrentHoliday(bool force);
+
+/* ConsoleVariable<T> is a C++ template — opaque forward decls for C */
+typedef struct ConsoleVariable_int ConsoleVariable_int;
+typedef struct ConsoleVariable_bool ConsoleVariable_bool;
+extern ConsoleVariable_int  cvar_forceHoliday;
+extern ConsoleVariable_bool cvar_disableHoliday;
+
+/* ---------------------------------------------------------
+   Data directories
+   --------------------------------------------------------- */
+extern char datadir[PATH_MAX];
+extern char outputdir[PATH_MAX];
+
+/* ---------------------------------------------------------
+   Function prototypes (std::string → const char* / String)
+   --------------------------------------------------------- */
+void          glLoadTexture(SDL_Surface* image, int texnum);
+SDL_Surface*  loadImage(const char* filename);
+voxel_t*      loadVoxel(char* filename2);
+bool          verifyMapHash(const char* filename, int hash, bool* fileExistsInTable);
+
+int           loadMap(const char* filename, map_t* destmap, list_t* entlist,
+                      list_t* creatureList, int* checkMapHash);
+int           loadConfig(char* filename);
+int           loadDefaultConfig(void);
+int           saveMap(const char* filename);
+char*         readFile(char* filename);
+
+/* Container-returning functions converted to C String / StringArray */
+typedef struct {
+	String* data;
+	size_t  len;
+	size_t  cap;
+} StringArray;
+
+StringArray   directoryContents(const char* directory, bool includeSubdirectory,
+                                bool includeFiles, const char* base);
+File*         openDataFile(const char* filename, const char* mode);
+DIR*          openDataDir(const char* path);
+bool          dataPathExists(const char* path, bool complete);
+bool          completePath(char* dest, const char* path, const char* base);
+void          openLogFile(void);
+StringArray   getLinesFromDataFile(const char* filename);
+int           loadMainMenuMap(bool blessedAdditionMaps, bool forceVictoryMap, int forcemap);
+int           physfsLoadMapFile(int levelToLoad, Uint32 seed, bool useRandSeed,
+                                int* checkMapHash);
+StringArray   physfsGetFileNamesInDirectory(const char* dir);
+String        physfsFormatMapName(const char* levelfilename);
+bool          physfsModelIndexUpdate(int* start, int* end);
+bool          physfsSearchModelsToUpdate(void);
+bool          physfsSearchSoundsToUpdate(void);
+void          physfsReloadSounds(bool reloadAll);
+void          physfsReloadBooks(void);
+bool          physfsSearchBooksToUpdate(void);
+bool          physfsSearchMusicToUpdate(void);
+void          physfsReloadMusic(bool* introMusicChanged, bool reloadAll);
+void          physfsReloadTiles(bool reloadAll);
+bool          physfsSearchTilesToUpdate(void);
+void          physfsReloadSprites(bool reloadAll);
+bool          physfsSearchSpritesToUpdate(void);
+bool          physfsIsMapLevelListModded(void);
+bool          physfsSearchItemSpritesToUpdate(void);
+void          physfsReloadItemSprites(bool reloadAll);
+bool          physfsSearchMonsterLimbFilesToUpdate(void);
+void          physfsReloadMonsterLimbFiles(void);
+void          physfsReloadSystemImages(void);
+bool          physfsSearchSystemImagesToUpdate(void);
+void          gamemodsUnloadCustomThemeMusic(void);
+
+enum MapParameterIndices {
+	LEVELPARAM_CHANCE_SECRET,
+	LEVELPARAM_CHANCE_DARKNESS,
+	LEVELPARAM_CHANCE_MINOTAUR,
+	LEVELPARAM_DISABLE_NORMAL_EXIT
+};
+
+#endif /* __cplusplus */

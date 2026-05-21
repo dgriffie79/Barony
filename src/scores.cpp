@@ -10,13 +10,13 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "files.hpp"
-#include "game.hpp"
-#include "stat.hpp"
+#include "files.h"
+#include "game.h"
+#include "stat.h"
 #include "menu.h"
 #include "monster.hpp"
 #include "scores.hpp"
-#include "items.hpp"
+#include "items.h"
 #include "interface/interface.hpp"
 #include "magic/magic.hpp"
 #include "net.hpp"

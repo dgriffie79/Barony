@@ -10,12 +10,12 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "game.hpp"
-#include "stat.hpp"
+#include "game.h"
+#include "stat.h"
 #include "messages.hpp"
 #include "engine/audio/sound.hpp"
-#include "entity.hpp"
-#include "items.hpp"
+#include "entity.h"
+#include "items.h"
 #include "net.hpp"
 #include "collision.h"
 #include "player.hpp"

@@ -21,12 +21,12 @@
 #include <thread>
 #include <future>
 
-#include "files.hpp"
+#include "files.h"
 #include "engine/audio/sound.hpp"
-#include "entity.hpp"
+#include "entity.h"
 #include "book.hpp"
 #include "menu.h"
-#include "items.hpp"
+#include "items.h"
 #include "interface/interface.hpp"
 #include "init.h"
 #include "mod_tools.hpp"

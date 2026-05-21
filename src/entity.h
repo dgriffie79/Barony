@@ -1,6 +1,26 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
+	File: entity.h
+	Desc: contains entity related declarations (C-compatible version)
+
+	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
+	See LICENSE for details.
+
+-------------------------------------------------------------------------------*/
+
+#pragma once
+
+#include "main.h"
+
+#ifdef __cplusplus
+// ========================================================================
+// EXISTING C++ CONTENT (preserved verbatim from entity.hpp)
+// ========================================================================
+
+/*-------------------------------------------------------------------------------
+
+	BARONY
 	File: entity.hpp
 	Desc: contains entity related declarations
 
@@ -12,8 +32,8 @@
 #pragma once
 
 #include "main.h"
-#include "game.hpp"
-#include "stat.hpp"
+#include "game.h"
+#include "stat.h"
 #include "light.h"
 #include "monster.hpp"
 #include "interface/consolecommand.h"
@@ -1745,3 +1765,903 @@ public:
 	std::unordered_map<std::string, int> scriptVariables;
 };
 extern TextSourceScript textSourceScript;
+
+
+#else
+// ========================================================================
+// C-COMPATIBLE CONTENT
+// ========================================================================
+
+#include "ccontainers.h"
+
+/* ----------------------------------------------------------------------- */
+/* Forward declarations                                                    */
+/* ----------------------------------------------------------------------- */
+typedef struct Entity Entity;
+typedef struct Stat Stat;
+typedef struct Item Item;
+typedef struct view_t view_t;
+typedef struct spell_t spell_t;
+typedef struct BaronyRNG BaronyRNG;
+typedef int Monster;
+typedef int sex_t;
+typedef struct map_t map_t;
+
+/* ----------------------------------------------------------------------- */
+/* C-compatible TimerExperiments::State / EntityStates                      */
+/* ----------------------------------------------------------------------- */
+typedef struct
+{
+    double acceleration;
+    double velocity;
+    double position;
+} CState;
+
+typedef struct
+{
+    CState x, y, z, yaw, pitch, roll;
+} CEntityStates;
+
+/* ----------------------------------------------------------------------- */
+/* Dither (was nested inside Entity::Dither)                                */
+/* ----------------------------------------------------------------------- */
+typedef struct
+{
+    int value;
+    Uint32 lastUpdateTick;
+} Dither;
+
+/* ----------------------------------------------------------------------- */
+/* Entity struct                                                           */
+/* ----------------------------------------------------------------------- */
+typedef struct Entity
+{
+    /* -- private reference members (before public:) -- */
+    Sint32* circuit_status;
+    Sint32* switch_power;
+    Sint32* chanceToPutOutFire;
+    Sint32* crystalInitialised;
+    Sint32* crystalTurning;
+    Sint32* crystalTurnStartDir;
+    Sint32* crystalGeneratedElectricityNodes;
+    Sint32* crystalHoverDirection;
+    Sint32* crystalHoverWaitTimer;
+    Sint32* orbInitialised;
+    Sint32* orbHoverDirection;
+    Sint32* orbHoverWaitTimer;
+    Sint32* entityShowOnMap;
+
+    Uint32 uid;
+
+    /* -- public data members -- */
+    bool ditheringDisabled;
+    int ditheringOverride;
+    void* dithering;            /* opaque: std::unordered_map<view_t*, Dither> in C++ */
+    vec4_t lightBonus;
+    void* entity_sound;         /* opaque: FMOD::Channel* */
+
+    Uint32 ticks;
+    real_t x, y, z;
+    real_t yaw, pitch, roll;
+    real_t focalx, focaly, focalz;
+    real_t scalex, scaley, scalez;
+    Sint32 sizex, sizey;
+    Sint32 sprite;
+
+    Uint32 lastupdate;
+    Uint32 lastupdateserver;
+    real_t vel_x, vel_y, vel_z;
+    real_t new_x, new_y, new_z;
+    real_t new_yaw, new_pitch, new_roll;
+
+    real_t fskill[NUMENTITYFSKILLS];
+    Sint32 skill[NUMENTITYSKILLS];
+    uint8_t flags[24];          /* bool flags[24] in C++ */
+    char* string;
+    light_t* light;
+    list_t children;
+    Uint32 parent;
+
+    CEntityStates lerpPreviousState;
+    CEntityStates lerpCurrentState;
+    CEntityStates lerpRenderState;
+    real_t lerp_ox;
+    real_t lerp_oy;
+    bool bNeedsRenderPositionInit;
+    bool bUseRenderInterpolation;
+    int mapGenerationRoomX;
+    int mapGenerationRoomY;
+
+    BaronyRNG* entity_rng;
+
+    /* -- reference members: chest skills -- */
+    Sint32* chestInit;
+    Sint32* chestStatus;
+    Sint32* chestHealth;
+    Sint32* chestOpener;
+    Sint32* chestLidClicked;
+    Sint32* chestAmbience;
+    Sint32* chestMaxHealth;
+    Sint32* chestType;
+    Sint32* chestLocked;
+    Sint32* chestPreventLockpickCapstoneExploit;
+    Sint32* chestHasVampireBook;
+    Sint32* chestLockpickHealth;
+    Sint32* chestOldHealth;
+    Sint32* chestMimicChance;
+    Sint32* chestVoidState;
+
+    Sint32* char_gonnavomit;
+    Sint32* char_heal;
+    Sint32* char_energize;
+    Sint32* char_drunk;
+    Sint32* char_torchtime;
+    Sint32* char_poison;
+    Sint32* char_fire;
+
+    /* -- reference members: monster skills -- */
+    Sint32* monsterState;
+    Sint32* monsterTarget;
+    real_t* monsterTargetX;
+    real_t* monsterTargetY;
+    Sint32* monsterSpecialTimer;
+    Sint32* monsterSpecialState;
+    Sint32* monsterSpellAnimation;
+    Sint32* monsterFootstepType;
+    Sint32* monsterLookTime;
+    Sint32* monsterAttack;
+    Sint32* monsterAttackTime;
+    Sint32* monsterArmbended;
+    real_t* monsterWeaponYaw;
+    Sint32* monsterMoveTime;
+    Sint32* monsterHitTime;
+    Sint32* monsterPathBoundaryXStart;
+    Sint32* monsterPathBoundaryYStart;
+    Sint32* monsterPathBoundaryXEnd;
+    Sint32* monsterPathBoundaryYEnd;
+    Sint32* monsterStoreType;
+    Sint32* monsterDevilNumSummons;
+    Sint32* monsterStrafeDirection;
+    Sint32* monsterPathCount;
+    real_t* monsterLookDir;
+    Sint32* monsterEntityRenderAsTelepath;
+    Sint32* monsterAllyIndex;
+    Sint32* monsterAllyState;
+    Sint32* monsterAllyPickupItems;
+    Sint32* monsterAllyInteractTarget;
+    Sint32* monsterAllyClass;
+    Sint32* monsterDefend;
+    Sint32* monsterAllySpecial;
+    Sint32* monsterAllySpecialCooldown;
+    Sint32* monsterAllySummonRank;
+    real_t* monsterKnockbackVelocity;
+    Sint32* monsterKnockbackUID;
+    Sint32* creatureWebbedSlowCount;
+    Sint32* monsterFearfulOfUid;
+    Sint32* creatureShadowTaggedThisUid;
+    Sint32* monsterIllusionTauntingThisUid;
+    Sint32* monsterLastDistractedByNoisemaker;
+    Sint32* monsterExtraReflexTick;
+    real_t* monsterSentrybotLookDir;
+    real_t* monsterKnockbackTangentDir;
+    real_t* playerStrafeVelocity;
+    real_t* playerStrafeDir;
+    real_t* monsterSpecialAttackUnequipSafeguard;
+    real_t* creatureWindDir;
+    real_t* creatureWindVelocity;
+    real_t* creatureHoverZ;
+
+    /* -- effects -- */
+    Sint32* effectPolymorph;
+    Sint32* effectShapeshift;
+
+    /* -- general -- */
+    Sint32* interactedByMonster;
+    real_t* highlightForUI;
+    real_t* highlightForUIGlow;
+    real_t* grayscaleGLRender;
+    real_t* noColorChangeAllyLimb;
+    real_t* mistformGLRender;
+
+    /* -- player skills -- */
+    Sint32* playerLevelEntrySpeech;
+    Sint32* playerAliveTime;
+    Sint32* playerVampireCurse;
+    Sint32* playerAutomatonDeathCounter;
+    Sint32* playerCreatedDeathCam;
+    Sint32* playerCastTimeAnim;
+
+    /* -- monster animation -- */
+    Sint32* monsterAnimationLimbDirection;
+    Sint32* monsterAnimationLimbOvershoot;
+
+    /* -- monster shadow -- */
+    Sint32* monsterShadowInitialMimic;
+    Sint32* monsterShadowDontChangeName;
+
+    /* -- monster slime -- */
+    Sint32* monsterSlimeLastAttack;
+
+    /* -- monster lich -- */
+    Sint32* monsterLichFireMeleeSeq;
+    Sint32* monsterLichFireMeleePrev;
+    Sint32* monsterLichIceCastSeq;
+    Sint32* monsterLichIceCastPrev;
+    Sint32* monsterLichMagicCastCount;
+    Sint32* monsterLichMeleeSwingCount;
+    Sint32* monsterLichBattleState;
+    Sint32* monsterLichTeleportTimer;
+    Sint32* monsterLichAllyStatus;
+    Sint32* monsterLichAllyUID;
+
+    /* -- power crystal -- */
+    Sint32* crystalTurnReverse;
+    Sint32* crystalNumElectricityNodes;
+    Sint32* crystalSpellToActivate;
+    real_t* crystalStartZ;
+    real_t* crystalMaxZVelocity;
+    real_t* crystalMinZVelocity;
+    real_t* crystalTurnVelocity;
+
+    /* -- gate -- */
+    Sint32* gateInit;
+    Sint32* gateStatus;
+    Sint32* gateRattle;
+    real_t* gateStartHeight;
+    real_t* gateVelZ;
+    Sint32* gateInverted;
+    Sint32* gateDisableOpening;
+
+    /* -- lever -- */
+    Sint32* leverTimerTicks;
+    Sint32* leverStatus;
+
+    /* -- boulder trap -- */
+    Sint32* boulderTrapRefireAmount;
+    Sint32* boulderTrapRefireDelay;
+    Sint32* boulderTrapAmbience;
+    Sint32* boulderTrapFired;
+    Sint32* boulderTrapRefireCounter;
+    Sint32* boulderTrapPreDelay;
+    Sint32* boulderTrapRocksToSpawn;
+    Sint32* boulderShatterEarthSpell;
+    Sint32* boulderShatterEarthDamage;
+
+    /* -- ambient particle -- */
+    Sint32* particleDuration;
+    Sint32* particleShrink;
+
+    /* -- particle timer -- */
+    Sint32* particleTimerDuration;
+    Sint32* particleTimerEndAction;
+    Sint32* particleTimerEndSprite;
+    Sint32* particleTimerCountdownAction;
+    Sint32* particleTimerCountdownSprite;
+    Sint32* particleTimerTarget;
+    Sint32* particleTimerPreDelay;
+    Sint32* particleTimerVariable1;
+    Sint32* particleTimerVariable2;
+    Sint32* particleTimerEffectLifetime;
+    Sint32* particleTimerVariable3;
+    Sint32* particleTimerVariable4;
+
+    /* -- door -- */
+    Sint32* doorDir;
+    Sint32* doorInit;
+    Sint32* doorStatus;
+    Sint32* doorHealth;
+    Sint32* doorLocked;
+    Sint32* doorSmacked;
+    Sint32* doorTimer;
+    Sint32* doorOldStatus;
+    Sint32* doorMaxHealth;
+    real_t* doorStartAng;
+    Sint32* doorPreventLockpickExploit;
+    Sint32* doorForceLockedUnlocked;
+    Sint32* doorDisableLockpicks;
+    Sint32* doorDisableOpening;
+    Sint32* doorLockpickHealth;
+    Sint32* doorOldHealth;
+    Sint32* doorUnlockWhenPowered;
+
+    /* -- pedestal -- */
+    Sint32* pedestalHasOrb;
+    Sint32* pedestalOrbType;
+    Sint32* pedestalInvertedPower;
+    Sint32* pedestalInGround;
+    Sint32* pedestalInit;
+    Sint32* pedestalAmbience;
+    Sint32* pedestalLockOrb;
+    Sint32* pedestalPowerStatus;
+    real_t* orbStartZ;
+    real_t* orbMaxZVelocity;
+    real_t* orbMinZVelocity;
+    real_t* orbTurnVelocity;
+
+    /* -- portal -- */
+    Sint32* portalAmbience;
+    Sint32* portalInit;
+    Sint32* portalNotSecret;
+    Sint32* portalVictoryType;
+    Sint32* portalFireAnimation;
+    Sint32* portalCustomLevelsToJump;
+    Sint32* portalCustomRequiresPower;
+    Sint32* portalCustomSprite;
+    Sint32* portalCustomSpriteAnimationFrames;
+    Sint32* portalCustomZOffset;
+    Sint32* portalCustomLevelText1;
+    Sint32* portalCustomLevelText2;
+    Sint32* portalCustomLevelText3;
+    Sint32* portalCustomLevelText4;
+    Sint32* portalCustomLevelText5;
+    Sint32* portalCustomLevelText6;
+    Sint32* portalCustomLevelText7;
+    Sint32* portalCustomLevelText8;
+
+    /* -- teleporter -- */
+    Sint32* teleporterX;
+    Sint32* teleporterY;
+    Sint32* teleporterType;
+    Sint32* teleporterAmbience;
+    Sint32* teleporterStartFrame;
+    Sint32* teleporterCurrentFrame;
+    Sint32* teleporterNumFrames;
+    Sint32* teleporterDuration;
+
+    /* -- ceiling tile -- */
+    Sint32* ceilingTileModel;
+    Sint32* ceilingTileDir;
+    Sint32* ceilingTileAllowTrap;
+    Sint32* ceilingTileBreakable;
+
+    /* -- floor decoration -- */
+    Sint32* floorDecorationModel;
+    Sint32* floorDecorationRotation;
+    Sint32* floorDecorationHeightOffset;
+    Sint32* floorDecorationXOffset;
+    Sint32* floorDecorationYOffset;
+    Sint32* floorDecorationDestroyIfNoWall;
+    Sint32* floorDecorationDialogueProgress;
+    Sint32* floorDecorationInteractText1;
+    Sint32* floorDecorationInteractText2;
+    Sint32* floorDecorationInteractText3;
+    Sint32* floorDecorationInteractText4;
+    Sint32* floorDecorationInteractText5;
+    Sint32* floorDecorationInteractText6;
+    Sint32* floorDecorationInteractText7;
+    Sint32* floorDecorationInteractText8;
+
+    /* -- collider decoration -- */
+    Sint32* colliderDecorationModel;
+    Sint32* colliderDecorationRotation;
+    Sint32* colliderDecorationHeightOffset;
+    Sint32* colliderDecorationXOffset;
+    Sint32* colliderDecorationYOffset;
+    Sint32* colliderHasCollision;
+    Sint32* colliderSizeX;
+    Sint32* colliderSizeY;
+    Sint32* colliderMaxHP;
+    Sint32* colliderDiggable;
+    Sint32* colliderDamageTypes;
+    Sint32* colliderCurrentHP;
+    Sint32* colliderOldHP;
+    Sint32* colliderInit;
+    Sint32* colliderContainedEntity;
+    Sint32* colliderHideMonster;
+    Sint32* colliderKillerUid;
+    Sint32* colliderSpellEvent;
+    Sint32* colliderSpellEventCooldown;
+    Sint32* colliderCreatedParent;
+    Sint32* colliderSpellEventTrigger;
+    Sint32* colliderIsMapGenerated;
+    Sint32* colliderSpellTarget;
+    Sint32* colliderTelepathy;
+    Sint32* colliderDropVariable;
+
+    /* -- spell trap -- */
+    Sint32* spellTrapType;
+    Sint32* spellTrapRefire;
+    Sint32* spellTrapLatchPower;
+    Sint32* spellTrapFloorTile;
+    Sint32* spellTrapRefireRate;
+    Sint32* spellTrapAmbience;
+    Sint32* spellTrapInit;
+    Sint32* spellTrapCounter;
+    Sint32* spellTrapReset;
+
+    /* -- shrine -- */
+    Sint32* shrineSpellEffect;
+    Sint32* shrineRefire1;
+    Sint32* shrineRefire2;
+    Sint32* shrineDir;
+    Sint32* shrineAmbience;
+    Sint32* shrineInit;
+    Sint32* shrineActivateDelay;
+    Sint32* shrineZ;
+    Sint32* shrineDestXOffset;
+    Sint32* shrineDestYOffset;
+    Sint32* shrineDaedalusState;
+
+    /* -- furniture -- */
+    Sint32* furnitureType;
+    Sint32* furnitureInit;
+    Sint32* furnitureDir;
+    Sint32* furnitureHealth;
+    Sint32* furnitureMaxHealth;
+    Sint32* furnitureTableRandomItemChance;
+    Sint32* furnitureTableSpawnChairs;
+    Sint32* furnitureOldHealth;
+
+    /* -- piston -- */
+    Sint32* pistonCamDir;
+    Sint32* pistonCamTimer;
+    real_t* pistonCamRotateSpeed;
+
+    /* -- arrow/projectile -- */
+    Sint32* arrowPower;
+    Sint32* arrowPoisonTime;
+    Sint32* arrowArmorPierce;
+    real_t* arrowSpeed;
+    real_t* arrowFallSpeed;
+    Sint32* arrowBoltDropOffRange;
+    Sint32* arrowShotByWeapon;
+    Sint32* arrowQuiverType;
+    Sint32* arrowShotByParent;
+    Sint32* arrowDropOffEquipmentModifier;
+
+    /* -- item -- */
+    Sint32* itemNotMoving;
+    Sint32* itemNotMovingClient;
+    Sint32* itemSokobanReward;
+    Sint32* itemOriginalOwner;
+    Sint32* itemStolen;
+    Sint32* itemShowOnMap;
+    Sint32* itemDelayMonsterPickingUp;
+    Sint32* itemReceivedDetailsFromServer;
+    Sint32* itemAutoSalvageByPlayer;
+    Sint32* itemSplooshed;
+    Sint32* itemContainer;
+    Sint32* itemFollowUID;
+    Sint32* itemReturnUID;
+    Sint32* itemGerminateResult;
+    real_t* itemWaterBob;
+    real_t* itemLevitate;
+    real_t* itemLevitateStartZ;
+
+    /* -- actmagic -- */
+    Sint32* actmagicIsVertical;
+    Sint32* actmagicIsOrbiting;
+    Sint32* actmagicOrbitDist;
+    Sint32* actmagicOrbitVerticalDirection;
+    Sint32* actmagicOrbitLifetime;
+    Sint32* actmagicMirrorReflected;
+    Sint32* actmagicMirrorReflectedCaster;
+    Sint32* actmagicCastByMagicstaff;
+    Sint32* actmagicSpellbookBonus;
+    real_t* actmagicOrbitVerticalSpeed;
+    real_t* actmagicOrbitStartZ;
+    real_t* actmagicOrbitStationaryX;
+    real_t* actmagicOrbitStationaryY;
+    real_t* actmagicOrbitStationaryCurrentDist;
+    real_t* actmagicSprayGravity;
+    real_t* actmagicVelXStore;
+    real_t* actmagicVelYStore;
+    real_t* actmagicVelZStore;
+    Sint32* actmagicOrbitStationaryHitTarget;
+    Sint32* actmagicOrbitHitTargetUID1;
+    Sint32* actmagicOrbitHitTargetUID2;
+    Sint32* actmagicOrbitHitTargetUID3;
+    Sint32* actmagicOrbitHitTargetUID4;
+    Sint32* actmagicProjectileArc;
+    Sint32* actmagicOrbitCastFromSpell;
+    Sint32* actmagicCastByTinkerTrap;
+    Sint32* actmagicTinkerTrapFriendlyFire;
+    Sint32* actmagicReflectionCount;
+    Sint32* actmagicFromSpellbook;
+    Sint32* actmagicSpray;
+    Sint32* actmagicEmitter;
+    Sint32* actmagicDelayMove;
+    Sint32* actmagicNoHitMessage;
+    Sint32* actmagicNoParticle;
+    Sint32* actmagicNoLight;
+    Sint32* actmagicUpdateOLDHPOnHit;
+    Sint32* actmagicAllowFriendlyFireHit;
+    Sint32* actmagicAdditionalDamage;
+
+    Sint32* actfloorMagicType;
+    Sint32* actfloorMagicClientReceived;
+
+    Sint32* actRadiusMagicID;
+    Sint32* actRadiusMagicInit;
+    Sint32* actRadiusMagicDist;
+    Sint32* actRadiusMagicFollowUID;
+    Sint32* actRadiusMagicDoPulseTick;
+    Sint32* actRadiusMagicAutoPulseTick;
+    Sint32* actRadiusMagicEffectPower;
+
+    Sint32* actParticleWaveStartFrame;
+    Sint32* actParticleWaveLight;
+    Sint32* actParticleWaveMagicType;
+    Sint32* actParticleWaveClientReceived;
+    Sint32* actParticleWaveVariable1;
+
+    /* -- gold -- */
+    Sint32* goldAmount;
+    Sint32* goldAmbience;
+    Sint32* goldSokoban;
+    Sint32* goldBouncing;
+    Sint32* goldInContainer;
+    Sint32* goldTelepathy;
+    Sint32* goldAmountBonus;
+    Sint32* goldDroppedByPlayer;
+
+    /* -- sound source -- */
+    Sint32* soundSourceFired;
+    Sint32* soundSourceToPlay;
+    Sint32* soundSourceVolume;
+    Sint32* soundSourceLatchOn;
+    Sint32* soundSourceDelay;
+    Sint32* soundSourceDelayCounter;
+    Sint32* soundSourceOrigin;
+
+    /* -- light source -- */
+    Sint32* lightSourceBrightness;
+    Sint32* lightSourceAlwaysOn;
+    Sint32* lightSourceInvertPower;
+    Sint32* lightSourceLatchOn;
+    Sint32* lightSourceRadius;
+    Sint32* lightSourceFlicker;
+    Sint32* lightSourceDelay;
+    Sint32* lightSourceDelayCounter;
+    Sint32* lightSourceRGB;
+
+    /* -- text source -- */
+    Sint32* textSourceColorRGB;
+    Sint32* textSourceVariables4W;
+    Sint32* textSourceDelay;
+    Sint32* textSourceIsScript;
+    Sint32* textSourceBegin;
+
+    /* -- signal -- */
+    Sint32* signalActivateDelay;
+    Sint32* signalTimerInterval;
+    Sint32* signalTimerRepeatCount;
+    Sint32* signalTimerLatchInput;
+    Sint32* signalInputDirection;
+    Sint32* signalGateANDPowerCount;
+    Sint32* signalInvertOutput;
+
+    /* -- wall lock -- */
+    Sint32* wallLockState;
+    Sint32* wallLockInvertPower;
+    Sint32* wallLockTurnable;
+    Sint32* wallLockMaterial;
+    Sint32* wallLockDir;
+    Sint32* wallLockClientInteractDelay;
+    Sint32* wallLockPlayerInteracting;
+    Sint32* wallLockPower;
+    Sint32* wallLockInit;
+    Sint32* wallLockTimer;
+    Sint32* wallLockPickable;
+    Sint32* wallLockPickHealth;
+    Sint32* wallLockPickableSkeletonKey;
+    Sint32* wallLockPreventLockpickExploit;
+    Sint32* wallLockAutoGenKey;
+
+    /* -- thrown projectile -- */
+    Sint32* thrownProjectilePower;
+    Sint32* thrownProjectileCharge;
+    Sint32* thrownProjectileParticleTimerUID;
+
+    /* -- player spawn point -- */
+    Sint32* playerStartDir;
+
+    /* -- pressure plate -- */
+    Sint32* pressurePlateTriggerType;
+
+    /* -- world tooltip -- */
+    real_t* worldTooltipAlpha;
+    real_t* worldTooltipZ;
+    Sint32* worldTooltipActive;
+    Sint32* worldTooltipPlayer;
+    Sint32* worldTooltipInit;
+    Sint32* worldTooltipFadeDelay;
+    Sint32* worldTooltipIgnoreDrawing;
+    Sint32* worldTooltipRequiresButtonHeld;
+
+    /* -- statue -- */
+    Sint32* statueInit;
+    Sint32* statueDir;
+    Sint32* statueId;
+
+    /* -- actSprite -- */
+    Sint32* actSpriteUseAlpha;
+    Sint32* actSpriteNoBillboard;
+    Sint32* actSpriteCheckParentExists;
+    Sint32* actSpriteUseCustomSurface;
+    Sint32* actSpriteFollowUID;
+    Sint32* actSpriteHasLightInit;
+    Sint32* actSpriteVelXY;
+    real_t* actSpritePitchRotate;
+
+    /* -- actGib -- */
+    Sint32* actGibHitGroundEvent;
+    Sint32* actGibMagicParticle;
+    Sint32* actGibDisableDrawForLocalPlayer;
+
+    /* -- actWind -- */
+    Sint32* actWindParticleEffect;
+    Sint32* actWindEffectsProjectiles;
+    Sint32* actWindLifetime;
+    real_t* actWindStrength;
+    Sint32* actWindTileBonusLength;
+
+    Sint32* actTrapSabotaged;
+
+    /* -- node pointers -- */
+    node_t* mynode;
+    node_t* myCreatureListNode;
+    node_t* myTileListNode;
+    node_t* myWorldUIListNode;
+
+    list_t* path;
+
+    Stat* clientStats;
+    bool clientsHaveItsStats;
+
+    void (*behavior)(struct Entity* my);
+    bool ranbehavior;
+
+    /* -- bodyparts -- */
+    struct
+    {
+        struct Entity** data;
+        size_t len;
+        size_t cap;
+        size_t elem_size;
+    } bodyparts;
+
+    struct
+    {
+        Uint32* data;
+        size_t len;
+        size_t cap;
+        size_t elem_size;
+    } collisionIgnoreTargets;
+} Entity;
+
+/* ----------------------------------------------------------------------- */
+/* Extern declarations                                                     */
+/* ----------------------------------------------------------------------- */
+extern Uint32 entity_uids, lastEntityUIDs;
+extern Uint32 nummonsters;
+extern bool swornenemies[NUMMONSTERS][NUMMONSTERS];
+extern bool monsterally[NUMMONSTERS][NUMMONSTERS];
+extern bool flickerLights;
+
+/* ----------------------------------------------------------------------- */
+/* Function prototypes                                                     */
+/* ----------------------------------------------------------------------- */
+Entity* uidToEntity(Sint32 uidnum);
+list_t* checkTileForEntity(int x, int y);
+void getItemsOnTile(int x, int y, list_t** list);
+
+Sint32 statGetSTR(Stat* entitystats, Entity* my);
+Sint32 statGetDEX(Stat* entitystats, Entity* my);
+Sint32 statGetCON(Stat* entitystats, Entity* my);
+Sint32 statGetINT(Stat* entitystats, Entity* my);
+Sint32 statGetPER(Stat* entitystats, Entity* my);
+Sint32 statGetCHR(Stat* entitystats, Entity* my);
+
+int checkSpriteType(Sint32 sprite);
+int canWearEquip(Entity* entity, int category);
+int checkEquipType(const Item* item);
+int setGloveSprite(Stat* myStats, Entity* ent, int spriteOffset);
+bool isLevitating(Stat* myStats);
+int getWeaponSkill(const Item* weapon);
+int getStatForProficiency(int skill);
+void setSpriteAttributes(Entity* entityToSet, Entity* entityToCopy, Entity* entityStatToCopy);
+bool monsterIsImmobileTurret(Entity* my, Stat* myStats);
+bool monsterChangesColorWhenAlly(Stat* myStats, Entity* entity);
+int monsterTinkeringConvertHPToAppearance(Stat* myStats);
+int monsterTinkeringConvertAppearanceToHP(Stat* myStats, int appearance);
+void messagePlayerMonsterEvent(int player, Uint32 color, Stat* monsterStats, const char* msgGeneric, const char* msgNamed, int detailType, Entity* optionalEntity);
+char const* playerClassLangEntry(int classnum, int playernum);
+Entity* summonChest(long x, long y);
+void boulderSokobanOnDestroy(bool pushedOffLedge);
+void boulderLavaOrArcaneOnDestroy(Entity* my, int sprite, Entity* boulderHitEntity);
+int playerEntityMatchesUid(Uint32 uid);
+bool monsterNameIsGeneric(Stat* monsterStats);
+bool shieldSpriteAllowedImpForm(int sprite);
+bool weaponSpriteAllowedImpForm(int sprite);
+bool playerRequiresBloodToSustain(int player);
+void spawnBloodVialOnMonsterDeath(Entity* entity, Stat* hitstats, Entity* killer);
+void shrineDaedalusRevealMap(Entity* my);
+void daedalusShrineInteract(Entity* my, Entity* touched);
+int getEntityHungerInterval(int player, Entity* my, Stat* myStats, int hungerInterval);
+void createMonsterEquipment(Stat* stats, struct BaronyRNG* rng);
+int countCustomItems(Stat* stats);
+int countDefaultItems(Stat* stats);
+void copyMonsterStatToPropertyStrings(Stat* tmpSpriteStats);
+void setRandomMonsterStats(Stat* stats, struct BaronyRNG* rng);
+int playerHeadSprite(int race, int sex, int appearance, int frame, int player);
+
+/* -- Act functions -- */
+void actMonster(Entity* my);
+void actPlayer(Entity* my);
+void actPlayerXP(Entity* my);
+void spawnPlayerXP(real_t x, real_t y, int player, int xpAmount);
+void playerAnimateRat(Entity* my);
+void playerAnimateSpider(Entity* my);
+void actFountain(Entity* my);
+void actSink(Entity* my);
+void actCircuit(Entity* my);
+void actSwitch(Entity* my);
+void getPowerablesOnTile(int x, int y, list_t** list);
+void actGate(Entity* my);
+void actArrowTrap(Entity* my);
+void actTrap(Entity* my);
+void actTrapPermanent(Entity* my);
+void actSwitchWithTimer(Entity* my);
+void actIronDoor(Entity* my);
+void actChest(Entity* my);
+void actChestLid(Entity* my);
+void closeChestClientside(int player);
+Item* addItemToChestClientside(int player, Item* item, bool forceNewStack, Item* specificDestinationStack);
+void createChestInventory(Entity* my, int chestType);
+void actStalagFloor(Entity* my);
+void actStalagCeiling(Entity* my);
+void actStalagColumn(Entity* my);
+void actCeilingTile(Entity* my);
+void actPistonBase(Entity* my);
+void actPistonCam(Entity* my);
+void actColumn(Entity* my);
+void actFloorDecoration(Entity* my);
+void actColliderDecoration(Entity* my);
+void actMagiclightBall(Entity* my);
+void actMagiclightMoving(Entity* my);
+void actAmbientParticleEffectIdle(Entity* my);
+void actTextSource(Entity* my);
+
+/* -- Sprite editor -- */
+int editorSpriteTypeToMonster(Sint32 sprite);
+
+/* -- Entity creation -- */
+Entity* newEntity(Sint32 sprite, Uint32 pos, list_t* entlist, list_t* creaturelist);
+
+/* -- AC -- */
+int AC(Stat* stat);
+
+/* -- Entity methods (formerly class members) -- */
+void entitySetUID(Entity* e, Uint32 new_uid);
+void entityStopEntitySound(Entity* e);
+void entitySetEntityString(Entity* e, const char* str);
+bool entityEntityHasString(Entity* e, const char* str);
+
+int entityGetSTR(Entity* e);
+int entityGetDEX(Entity* e);
+int entityGetCON(Entity* e);
+int entityGetINT(Entity* e);
+int entityGetPER(Entity* e);
+int entityGetCHR(Entity* e);
+
+Stat* entityGetStats(Entity* e);
+Monster entityGetRace(Entity* e);
+int entityIsEntityPlayer(Entity* e);
+void entityInitMonster(Entity* e, int mySprite);
+Monster entityGetMonsterTypeFromSprite(const Entity* e);
+void entityActMonsterLimb(Entity* e, bool processLight);
+void entityRemoveMonsterDeathNodes(Entity* e);
+void entitySpawnBlood(Entity* e, int bloodsprite);
+int entityGetReflection(Entity* e);
+int entityGetAttackPose(Entity* e);
+bool entityHasRangedWeapon(Entity* e, bool ignoreMonsterNPCType);
+void entityHumanoidAnimateWalk(Entity* limb, node_t* bodypartNode, int bodypart, double walkSpeed, double dist, double distForFootstepSound);
+Uint32 entityGetMonsterFootstepSound(int footstepType, int bootSprite);
+void entityHandleHumanoidWeaponLimb(Entity* weaponLimb, Entity* weaponArmLimb);
+void entityHandleHumanoidShieldLimb(Entity* shieldLimb, Entity* shieldArmLimb);
+void entityHandleQuiverThirdPersonModel(Stat* myStats, int mySprite);
+bool entitySetBootSprite(Entity* leg, int spriteOffset, bool forceShort);
+bool entityIsBootSpriteShortArmor(Entity* leg);
+bool entityHandleMonsterSpecialAttack(Entity* e, Stat* myStats, Entity* target, double dist, bool forceDeinit);
+void entityHandleMonsterAttack(Entity* e, Stat* myStats, Entity* target, double dist);
+void entityLookAtEntity(Entity* e, Entity* target);
+void entityAutomatonRecycleItem(Entity* e);
+void entityMonsterMoveBackwardsAndPath(Entity* e, bool trySidesFirst);
+bool entityMonsterHasLeader(Entity* e);
+void entityMonsterAllySendCommand(Entity* e, int command, int destX, int destY, Uint32 uid);
+bool entityMonsterAllySetInteract(Entity* e);
+bool entityIsInteractWithMonster(Entity* e);
+void entityClearMonsterInteract(Entity* e);
+bool entityMonsterSetPathToLocation(Entity* e, int destX, int destY, int adjacentTilesToCheck, int pathingType, bool tryRandomSpot, bool shortByShortest);
+bool entityGyrobotSetPathToReturnLocation(Entity* e, int destX, int destY, int adjacentTilesToCheck, bool tryRandomSpot);
+void entityPlayerLevelEntrySpeechSecond(Entity* e);
+bool entityIsPlayerHeadSprite(Entity* e);
+bool entityIsPlayerHeadSpriteStatic(int sprite);
+void entitySetDefaultPlayerModel(int playernum, int playerRace, int limbType, int headSprite);
+int entityGetMonsterFromPlayerRace(int playerRace);
+void entitySetHardcoreStats(Stat* stats);
+void entityHandleNPCInteractDialogue(Stat* myStats, int event);
+void entityPlayerStatIncrease(int playerClass, int chosenStats[3]);
+bool entityIsBossMonster(Entity* e);
+bool entityIsSmiteWeakMonster(Entity* e);
+void entityHandleKnockbackDamage(Stat* myStats, Entity* knockedInto);
+void entitySetHelmetLimbOffsetWithMask(Entity* helm, Entity* mask);
+bool entityCheckIfTriggeredBomb(Entity* e, bool triggerBomb);
+bool entityCheckIfTriggeredWallButton(Entity* e);
+Sint32 entityPlayerInsectoidExpectedManaFromHunger(Stat* myStats);
+Sint32 entityPlayerInsectoidHungerValueOfManaPoint(Stat* myStats);
+void entityPlayerInsectoidIncrementHungerToMP(int mpAmount);
+bool entityIsBoulderSprite(Entity* e);
+void entityCreateWorldUITooltip(Entity* e);
+bool entityBEntityTooltipRequiresButtonHeld(Entity* e);
+bool entityBEntityHighlightedForPlayer(Entity* e, int player);
+void entityUpdateEntityOnHit(Entity* e, Entity* attacker, bool alertTarget);
+bool entityIsDamageableCollider(Entity* e);
+bool entityIsColliderDamageableByMelee(Entity* e);
+bool entityIsColliderWeakToSkill(Entity* e, int proficiency);
+bool entityIsColliderResistToSkill(Entity* e, int proficiency);
+bool entityIsColliderWeakToBoulders(Entity* e);
+bool entityIsColliderShownAsWallOnMinimap(Entity* e);
+bool entityIsColliderDamageableByMagic(Entity* e);
+bool entityIsColliderPathableMonster(Entity* e, int type);
+bool entityIsColliderAttachableToBombs(Entity* e);
+bool entityIsColliderWall(Entity* e);
+bool entityIsColliderBreakableContainer(Entity* e);
+void entityColliderOnDestroy(Entity* e);
+int entityGetColliderOnHitLangEntry(Entity* e);
+int entityGetColliderOnBreakLangEntry(Entity* e);
+int entityGetColliderOnJumpLangEntry(Entity* e);
+int entityGetColliderSfxOnHit(Entity* e);
+int entityGetColliderSfxOnBreak(Entity* e);
+int entityGetColliderLangName(Entity* e);
+bool entityDisturbMimic(Entity* e, Entity* touched, bool takenDamage, bool doMessage);
+bool entityDisturbBat(Entity* e, Entity* touched, bool takenDamage, bool doMessage);
+bool entityIsInertMimic(Entity* e);
+bool entityIsUntargetableBat(Entity* e, real_t* outDist);
+bool entityEntityCanVomit(Entity* e);
+bool entityDoSilkenBowOnAttack(Entity* e, Entity* attacker);
+void entitySetBugbearStrafeDir(Entity* e, bool forceDirection);
+void entityProcessEntityWind(Entity* e);
+bool entityWindEffectsEntity(Entity* e, Entity* entity);
+real_t entityMonsterGetWeightRatio(Entity* e);
+bool entitySpellEffectPreserveItem(Entity* e, Item* item);
+bool entityMistFormDodge(Entity* e, bool checkEffectActiveOnly, Entity* attacker);
+bool entityDefyFleshProc(Entity* e, Entity* attacker);
+bool entityPinpointDamageProc(Entity* e, Entity* attacker, int damage);
+real_t entityGetHealingSpellPotionModifierFromEffects(Entity* e, bool processLevelup);
+void entityAttractItem(Entity* e, Entity* itemEntity);
+void entityCreatureHandleLiftZ(Entity* e);
+bool entityMonsterIsTargetable(Entity* e, bool targetInertMimics);
+bool entityMonsterCanTradeWith(Entity* e, int player);
+bool entityDegradeAmuletProc(Entity* e, Stat* myStats, int type);
+bool entityMyconidReboundOnHit(Entity* e, Entity* attacker);
+void entityPlayerShakeGrowthHelmet(Entity* e);
+
+/* -- Entity effect/magic methods -- */
+void entityHandleEffects(Entity* e, Stat* myStats);
+void entityHandleEffectsClient(Entity* e);
+void entityEffectTimes(Entity* e);
+bool entityIncreaseSkill(Entity* e, int skill, bool notify);
+void entitySetHP(Entity* e, int amount);
+void entityModHP(Entity* e, int amount);
+int entityGetHP(Entity* e);
+void entitySetMP(Entity* e, int amount, bool updateClients);
+int entityModMP(Entity* e, int amount, bool updateClients);
+int entityGetMP(Entity* e);
+void entityDrainMP(Entity* e, int amount, bool notifyOverexpend);
+bool entitySafeConsumeMP(Entity* e, int amount);
+
+/* -- Entity light methods -- */
+int entityEntityLight(Entity* e);
+int entityEntityLightAfterReductions(Stat* myStats, Entity* observer);
+
+/* -- Entity stat methods -- */
+Sint32 entityGetSTRFromStats(Stat* entitystats, Entity* my);
+Sint32 entityGetDEXFromStats(Stat* entitystats, Entity* my);
+Sint32 entityGetCONFromStats(Stat* entitystats, Entity* my);
+Sint32 entityGetINTFromStats(Stat* entitystats, Entity* my);
+Sint32 entityGetPERFromStats(Stat* entitystats, Entity* my);
+Sint32 entityGetCHRFromStats(Stat* entitystats, Entity* my);
+
+#endif /* __cplusplus */

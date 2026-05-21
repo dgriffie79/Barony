@@ -10,7 +10,7 @@ See LICENSE for details.
 -------------------------------------------------------------------------------*/
 
 
-#include "entity.hpp"
+#include "entity.h"
 Entity::Entity(Sint32 in_sprite, Uint32 pos, list_t* entlist, list_t* creaturelist) :
 	lightBonus(0.f),
 	chanceToPutOutFire(skill[37]),

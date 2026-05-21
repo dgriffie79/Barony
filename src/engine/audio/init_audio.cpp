@@ -10,7 +10,7 @@
 -------------------------------------------------------------------------------*/
 
 #include "../../main.h"
-#include "../../files.hpp"
+#include "../../files.h"
 #include "../../ui/LoadingScreen.hpp"
 #include "sound.hpp"
 

@@ -10,12 +10,12 @@
 -------------------------------------------------------------------------------*/
 
 #include "../../main.h"
-#include "../../game.hpp"
+#include "../../game.h"
 #include "sound.hpp"
-#include "../../entity.hpp"
+#include "../../entity.h"
 #include "../../player.hpp"
 #include "../../prng.h"
-#include "../../files.hpp"
+#include "../../files.h"
  #include "music_pc.h"
 
 bool loadMusic()

@@ -13,12 +13,12 @@
 
 #include "../main.h"
 #include "../draw.hpp"
-#include "../game.hpp"
-#include "../stat.hpp"
+#include "../game.h"
+#include "../stat.h"
 #include "interface.hpp"
 #include "../magic/magic.hpp"
 #include "../player.hpp"
-#include "../entity.hpp"
+#include "../entity.h"
 
 void updateRightSidebar()
 {

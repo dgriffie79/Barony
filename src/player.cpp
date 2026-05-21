@@ -10,10 +10,10 @@
 -------------------------------------------------------------------------------*/
 
 #include "player.hpp"
-#include "game.hpp"
+#include "game.h"
 #include "main.h"
 #include "interface/interface.hpp"
-#include "items.hpp"
+#include "items.h"
 #include "shops.hpp"
 #include "menu.h"
 #include "collision.h"

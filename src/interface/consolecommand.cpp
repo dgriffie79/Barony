@@ -14,10 +14,10 @@
 #include "consolecommand.h"
 
 #include <sstream>
-#include "../files.hpp"
-#include "../game.hpp"
-#include "../stat.hpp"
-#include "../items.hpp"
+#include "../files.h"
+#include "../game.h"
+#include "../stat.h"
+#include "../items.h"
 #include "../init.h"
 #include "../book.hpp"
 #include "../engine/audio/sound.hpp"

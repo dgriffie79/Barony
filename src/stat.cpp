@@ -11,10 +11,10 @@
 
 
 #include "main.h"
-#include "game.hpp"
-#include "stat.hpp"
-#include "entity.hpp"
-#include "items.hpp"
+#include "game.h"
+#include "stat.h"
+#include "entity.h"
+#include "items.h"
 #include "magic/magic.hpp"
 #include "net.hpp"
 #include "player.hpp"

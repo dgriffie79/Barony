@@ -12,10 +12,10 @@
 #pragma once
 
 #include "../main.h"
-#include "../game.hpp"
+#include "../game.h"
 #include "../draw.hpp"
 #include "../ui/Frame.hpp"
-#include "../items.hpp"
+#include "../items.h"
 
 class Item;
 
@@ -59,7 +59,7 @@ extern bool uiscale_skillspage;
 extern real_t uiscale_hotbar;
 extern real_t uiscale_inventory;
 
-#include "../entity.hpp"
+#include "../entity.h"
 
 enum DamageGib {
 	DMG_DEFAULT,

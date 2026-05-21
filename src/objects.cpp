@@ -11,7 +11,7 @@
 
 #include "main.h"
 #include <new>
-#include "entity.hpp"
+#include "entity.h"
 #include "messages.hpp"
 
 /*-------------------------------------------------------------------------------

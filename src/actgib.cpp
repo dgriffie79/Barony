@@ -10,10 +10,10 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "game.hpp"
-#include "stat.hpp"
+#include "game.h"
+#include "stat.h"
 #include "monster.hpp"
-#include "entity.hpp"
+#include "entity.h"
 #include "net.hpp"
 #include "collision.h"
 #include "player.hpp"

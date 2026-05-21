@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "game.hpp"
+#include "game.h"
 #include <queue>
 
 #define DEFAULT_PORT 57165

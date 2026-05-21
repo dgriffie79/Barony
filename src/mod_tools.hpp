@@ -11,15 +11,15 @@ See LICENSE for details.
 
 #pragma once
 #include "main.h"
-#include "stat.hpp"
+#include "stat.h"
 #include "json.h"
-#include "files.hpp"
+#include "files.h"
 #include "prng.h"
-#include "items.hpp"
+#include "items.h"
 #include "cJSON.h"
 #include "net.hpp"
 #include "scores.hpp"
-#include "entity.hpp"
+#include "entity.h"
 #include "ui/Widget.hpp"
 
 

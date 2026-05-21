@@ -10,8 +10,8 @@
 -------------------------------------------------------------------------------*/
 
 #include "../../main.h"
-#include "../../files.hpp"
-#include "../../game.hpp"
+#include "../../files.h"
+#include "../../game.h"
 #include "sound.hpp"
 #include "../../player.hpp"
 

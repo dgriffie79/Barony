@@ -11,10 +11,10 @@
 
 #include "../main.h"
 #include "../draw.hpp"
-#include "../game.hpp"
-#include "../stat.hpp"
+#include "../game.h"
+#include "../stat.h"
 #include "../net.hpp"
-#include "../files.hpp"
+#include "../files.h"
 #include "interface.hpp"
 
 

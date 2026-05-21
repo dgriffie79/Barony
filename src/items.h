@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
-	File: items.hpp
+	File: items.h
 	Desc: contains names and definitions for items
 
 	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
@@ -13,7 +13,9 @@
 
 #include "main.h"
 #include "prng.h"
-#include "game.hpp"
+
+#ifdef __cplusplus
+#include "game.h"
 
 class Entity; // forward declare
 class Stat; // forward declare
@@ -1019,4 +1021,957 @@ enum SpellbookColors
 };
 
 int getItemVariationFromSpellbookOrTome(const Item& item);
+#else
+/*----------------------------------------------------------------------------*/
+/*  C-COMPATIBLE SECTION                                                      */
+/*----------------------------------------------------------------------------*/
+#include "ccontainers.h"
+#include "defs.h"
 
+/* Forward declarations for types defined in other headers */
+typedef struct Stat Stat;
+typedef struct Entity Entity;
+typedef struct ItemGeneric ItemGeneric;
+
+/* ------------------------------------------------------------------ */
+/* enums                                                               */
+/* ------------------------------------------------------------------ */
+
+typedef enum ItemType
+{
+	WOODEN_SHIELD,
+	QUARTERSTAFF,
+	BRONZE_SWORD,
+	BRONZE_MACE,
+	BRONZE_AXE,
+	BRONZE_SHIELD,
+	SLING,
+	IRON_SPEAR,
+	IRON_SWORD,
+	IRON_MACE,
+	IRON_AXE,
+	IRON_SHIELD,
+	SHORTBOW,
+	STEEL_HALBERD,
+	STEEL_SWORD,
+	STEEL_MACE,
+	STEEL_AXE,
+	STEEL_SHIELD,
+	STEEL_SHIELD_RESISTANCE,
+	CROSSBOW,
+	GLOVES,
+	GLOVES_DEXTERITY,
+	BRACERS,
+	BRACERS_CONSTITUTION,
+	GAUNTLETS,
+	GAUNTLETS_STRENGTH,
+	CLOAK,
+	CLOAK_MAGICREFLECTION,
+	CLOAK_INVISIBILITY,
+	CLOAK_PROTECTION,
+	LEATHER_BOOTS,
+	LEATHER_BOOTS_SPEED,
+	IRON_BOOTS,
+	IRON_BOOTS_WATERWALKING,
+	STEEL_BOOTS,
+	STEEL_BOOTS_LEVITATION,
+	STEEL_BOOTS_FEATHER,
+	LEATHER_BREASTPIECE,
+	IRON_BREASTPIECE,
+	STEEL_BREASTPIECE,
+	HAT_PHRYGIAN,
+	HAT_HOOD,
+	HAT_WIZARD,
+	HAT_JESTER,
+	LEATHER_HELM,
+	IRON_HELM,
+	STEEL_HELM,
+	AMULET_SEXCHANGE,
+	AMULET_LIFESAVING,
+	AMULET_WATERBREATHING,
+	AMULET_MAGICREFLECTION,
+	AMULET_STRANGULATION,
+	AMULET_POISONRESISTANCE,
+	POTION_WATER,
+	POTION_BOOZE,
+	POTION_JUICE,
+	POTION_SICKNESS,
+	POTION_CONFUSION,
+	POTION_EXTRAHEALING,
+	POTION_HEALING,
+	POTION_CUREAILMENT,
+	POTION_BLINDNESS,
+	POTION_RESTOREMAGIC,
+	POTION_INVISIBILITY,
+	POTION_LEVITATION,
+	POTION_SPEED,
+	POTION_ACID,
+	POTION_PARALYSIS,
+	SCROLL_MAIL,
+	SCROLL_IDENTIFY,
+	SCROLL_LIGHT,
+	SCROLL_BLANK,
+	SCROLL_ENCHANTWEAPON,
+	SCROLL_ENCHANTARMOR,
+	SCROLL_REMOVECURSE,
+	SCROLL_FIRE,
+	SCROLL_FOOD,
+	SCROLL_MAGICMAPPING,
+	SCROLL_REPAIR,
+	SCROLL_DESTROYARMOR,
+	SCROLL_TELEPORTATION,
+	SCROLL_SUMMON,
+	MAGICSTAFF_LIGHT,
+	MAGICSTAFF_DIGGING,
+	MAGICSTAFF_LOCKING,
+	MAGICSTAFF_MAGICMISSILE,
+	MAGICSTAFF_OPENING,
+	MAGICSTAFF_SLOW,
+	MAGICSTAFF_COLD,
+	MAGICSTAFF_FIRE,
+	MAGICSTAFF_LIGHTNING,
+	MAGICSTAFF_SLEEP,
+	RING_ADORNMENT,
+	RING_SLOWDIGESTION,
+	RING_PROTECTION,
+	RING_WARNING,
+	RING_STRENGTH,
+	RING_CONSTITUTION,
+	RING_INVISIBILITY,
+	RING_MAGICRESISTANCE,
+	RING_CONFLICT,
+	RING_LEVITATION,
+	RING_REGENERATION,
+	RING_TELEPORTATION,
+	SPELLBOOK_FORCEBOLT,
+	SPELLBOOK_MAGICMISSILE,
+	SPELLBOOK_COLD,
+	SPELLBOOK_FIREBALL,
+	SPELLBOOK_LIGHT,
+	SPELLBOOK_REMOVECURSE,
+	SPELLBOOK_LIGHTNING,
+	SPELLBOOK_IDENTIFY,
+	SPELLBOOK_MAGICMAPPING,
+	SPELLBOOK_SLEEP,
+	SPELLBOOK_CONFUSE,
+	SPELLBOOK_SLOW,
+	SPELLBOOK_OPENING,
+	SPELLBOOK_LOCKING,
+	SPELLBOOK_LEVITATION,
+	SPELLBOOK_INVISIBILITY,
+	SPELLBOOK_TELEPORTATION,
+	SPELLBOOK_HEALING,
+	SPELLBOOK_EXTRAHEALING,
+	SPELLBOOK_CUREAILMENT,
+	SPELLBOOK_DIG,
+	GEM_ROCK,
+	GEM_LUCK,
+	GEM_GARNET,
+	GEM_RUBY,
+	GEM_JACINTH,
+	GEM_AMBER,
+	GEM_CITRINE,
+	GEM_JADE,
+	GEM_EMERALD,
+	GEM_SAPPHIRE,
+	GEM_AQUAMARINE,
+	GEM_AMETHYST,
+	GEM_FLUORITE,
+	GEM_OPAL,
+	GEM_DIAMOND,
+	GEM_JETSTONE,
+	GEM_OBSIDIAN,
+	GEM_GLASS,
+	TOOL_PICKAXE,
+	TOOL_TINOPENER,
+	TOOL_MIRROR,
+	TOOL_LOCKPICK,
+	TOOL_SKELETONKEY,
+	TOOL_TORCH,
+	TOOL_LANTERN,
+	TOOL_BLINDFOLD,
+	TOOL_TOWEL,
+	TOOL_GLASSES,
+	TOOL_BEARTRAP,
+	FOOD_BREAD,
+	FOOD_CREAMPIE,
+	FOOD_CHEESE,
+	FOOD_APPLE,
+	FOOD_MEAT,
+	FOOD_FISH,
+	FOOD_TIN,
+	READABLE_BOOK,
+	SPELL_ITEM,
+	ARTIFACT_SWORD,
+	ARTIFACT_MACE,
+	ARTIFACT_SPEAR,
+	ARTIFACT_AXE,
+	ARTIFACT_BOW,
+	ARTIFACT_BREASTPIECE,
+	ARTIFACT_HELM,
+	ARTIFACT_BOOTS,
+	ARTIFACT_CLOAK,
+	ARTIFACT_GLOVES,
+	CRYSTAL_BREASTPIECE,
+	CRYSTAL_HELM,
+	CRYSTAL_BOOTS,
+	CRYSTAL_SHIELD,
+	CRYSTAL_GLOVES,
+	VAMPIRE_DOUBLET,
+	WIZARD_DOUBLET,
+	HEALER_DOUBLET,
+	MIRROR_SHIELD,
+	BRASS_KNUCKLES,
+	IRON_KNUCKLES,
+	SPIKED_GAUNTLETS,
+	FOOD_TOMALLEY,
+	TOOL_CRYSTALSHARD,
+	CRYSTAL_SWORD,
+	CRYSTAL_SPEAR,
+	CRYSTAL_BATTLEAXE,
+	CRYSTAL_MACE,
+	BRONZE_TOMAHAWK,
+	IRON_DAGGER,
+	STEEL_CHAKRAM,
+	CRYSTAL_SHURIKEN,
+	CLOAK_BLACK,
+	MAGICSTAFF_STONEBLOOD,
+	MAGICSTAFF_BLEED,
+	MAGICSTAFF_SUMMON,
+	TOOL_BLINDFOLD_FOCUS,
+	TOOL_BLINDFOLD_TELEPATHY,
+	SPELLBOOK_SUMMON,
+	SPELLBOOK_STONEBLOOD,
+	SPELLBOOK_BLEED,
+	SPELLBOOK_REFLECT_MAGIC,
+	SPELLBOOK_ACID_SPRAY,
+	SPELLBOOK_STEAL_WEAPON,
+	SPELLBOOK_DRAIN_SOUL,
+	SPELLBOOK_VAMPIRIC_AURA,
+	SPELLBOOK_CHARM_MONSTER,
+	POTION_EMPTY,
+	ARTIFACT_ORB_BLUE,
+	ARTIFACT_ORB_RED,
+	ARTIFACT_ORB_PURPLE,
+	ARTIFACT_ORB_GREEN,
+	TUNIC,
+	HAT_FEZ,
+	MAGICSTAFF_CHARM,
+	POTION_POLYMORPH,
+	FOOD_BLOOD,
+	CLOAK_BACKPACK,
+	TOOL_ALEMBIC,
+	POTION_FIRESTORM,
+	POTION_ICESTORM,
+	POTION_THUNDERSTORM,
+	POTION_STRENGTH,
+	SUEDE_BOOTS,
+	SUEDE_GLOVES,
+	CLOAK_SILVER,
+	HAT_HOOD_SILVER,
+	HAT_HOOD_RED,
+	SILVER_DOUBLET,
+	SPELLBOOK_REVERT_FORM,
+	SPELLBOOK_RAT_FORM,
+	SPELLBOOK_SPIDER_FORM,
+	SPELLBOOK_TROLL_FORM,
+	SPELLBOOK_IMP_FORM,
+	SPELLBOOK_SPRAY_WEB,
+	SPELLBOOK_POISON,
+	SPELLBOOK_SPEED,
+	SPELLBOOK_FEAR,
+	SPELLBOOK_STRIKE,
+	SPELLBOOK_DETECT_FOOD,
+	SPELLBOOK_WEAKNESS,
+	MASK_SHAMAN,
+	SPELLBOOK_AMPLIFY_MAGIC,
+	SPELLBOOK_SHADOW_TAG,
+	SPELLBOOK_TELEPULL,
+	SPELLBOOK_DEMON_ILLU,
+	SPELLBOOK_TROLLS_BLOOD,
+	SPELLBOOK_SALVAGE,
+	TOOL_WHIP,
+	SPELLBOOK_FLUTTER,
+	SPELLBOOK_DASH,
+	SPELLBOOK_SELF_POLYMORPH,
+	SPELLBOOK_9,
+	SPELLBOOK_10,
+	MAGICSTAFF_POISON,
+	TOOL_METAL_SCRAP,
+	TOOL_MAGIC_SCRAP,
+	TOOL_TINKERING_KIT,
+	TOOL_SENTRYBOT,
+	TOOL_DETONATOR_CHARGE,
+	TOOL_BOMB,
+	TOOL_SLEEP_BOMB,
+	TOOL_FREEZE_BOMB,
+	TOOL_TELEPORT_BOMB,
+	TOOL_GYROBOT,
+	TOOL_SPELLBOT,
+	TOOL_DECOY,
+	TOOL_DUMMYBOT,
+	MACHINIST_APRON,
+	ENCHANTED_FEATHER,
+	PUNISHER_HOOD,
+	SCROLL_CHARGING,
+	QUIVER_SILVER,
+	QUIVER_PIERCE,
+	QUIVER_LIGHTWEIGHT,
+	QUIVER_FIRE,
+	QUIVER_KNOCKBACK,
+	QUIVER_CRYSTAL,
+	QUIVER_HUNTING,
+	LONGBOW,
+	COMPOUND_BOW,
+	HEAVY_CROSSBOW,
+	BOOMERANG,
+	SCROLL_CONJUREARROW,
+	MONOCLE,
+	TOOL_PLAYER_LOOT_BAG,
+	MASK_BANDIT,
+	MASK_EYEPATCH,
+	MASK_MASQUERADE,
+	MASK_MOUTH_ROSE,
+	MASK_GOLDEN,
+	MASK_SPOOKY,
+	MASK_TECH_GOGGLES,
+	MASK_HAZARD_GOGGLES,
+	MASK_PHANTOM,
+	MASK_PIPE,
+	MASK_GRASS_SPRIG,
+	MASK_PLAGUE,
+	MASK_MOUTHKNIFE,
+	HAT_SILKEN_BOW,
+	HAT_PLUMED_CAP,
+	HAT_BYCOCKET,
+	HAT_TOPHAT,
+	HAT_BANDANA,
+	HAT_CIRCLET,
+	HAT_CROWN,
+	HAT_LAURELS,
+	HAT_TURBAN,
+	HAT_CROWNED_HELM,
+	HAT_WARM,
+	HAT_WOLF_HOOD,
+	HAT_BEAR_HOOD,
+	HAT_STAG_HOOD,
+	HAT_BUNNY_HOOD,
+	HAT_BOUNTYHUNTER,
+	HAT_MITER,
+	HAT_HEADDRESS,
+	HAT_CHEF,
+	HELM_MINING,
+	MASK_STEEL_VISOR,
+	MASK_CRYSTAL_VISOR,
+	MASK_ARTIFACT_VISOR,
+	HAT_CIRCLET_WISDOM,
+	HAT_HOOD_APPRENTICE,
+	HAT_HOOD_ASSASSIN,
+	HAT_HOOD_WHISPERS,
+	RING_RESOLVE,
+	CLOAK_GUARDIAN,
+	MASK_MARIGOLD,
+	KEY_STONE,
+	KEY_BONE,
+	KEY_BRONZE,
+	KEY_IRON,
+	KEY_SILVER,
+	KEY_GOLD,
+	KEY_CRYSTAL,
+	KEY_MACHINE,
+	TOOL_FOCI_FIRE,
+	INSTRUMENT_FLUTE,
+	INSTRUMENT_LYRE,
+	INSTRUMENT_DRUM,
+	INSTRUMENT_LUTE,
+	INSTRUMENT_HORN,
+	RAPIER,
+	AMULET_BURNINGRESIST,
+	GREASE_BALL,
+	BRANCH_STAFF,
+	BRANCH_BOW,
+	BRANCH_BOW_INFECTED,
+	DUST_BALL,
+	BOLAS,
+	STEEL_FLAIL,
+	FOOD_RATION,
+	FOOD_RATION_SPICY,
+	FOOD_RATION_SOUR,
+	FOOD_RATION_BITTER,
+	FOOD_RATION_HEARTY,
+	FOOD_RATION_HERBAL,
+	FOOD_RATION_SWEET,
+	SLOP_BALL,
+	TOOL_FRYING_PAN,
+	CLEAT_BOOTS,
+	BANDIT_BREASTPIECE,
+	TUNIC_BLOUSE,
+	BONE_BREASTPIECE,
+	BLACKIRON_BREASTPIECE,
+	SILVER_BREASTPIECE,
+	IRON_PAULDRONS,
+	QUILTED_GAMBESON,
+	ROBE_CULTIST,
+	ROBE_HEALER,
+	ROBE_MONK,
+	ROBE_WIZARD,
+	SHAWL,
+	CHAIN_HAUBERK,
+	BONE_BRACERS,
+	BLACKIRON_GAUNTLETS,
+	SILVER_GAUNTLETS,
+	QUILTED_GLOVES,
+	CHAIN_GLOVES,
+	BONE_BOOTS,
+	BLACKIRON_BOOTS,
+	SILVER_BOOTS,
+	QUILTED_BOOTS,
+	LOAFERS,
+	CHAIN_BOOTS,
+	SCUTUM,
+	BONE_SHIELD,
+	BLACKIRON_SHIELD,
+	SILVER_SHIELD,
+	CLOAK_DENDRITE,
+	BONE_HELM,
+	BLACKIRON_HELM,
+	SILVER_HELM,
+	HAT_FELT,
+	QUILTED_CAP,
+	HOOD_TEAL,
+	CHAIN_COIF,
+	FOOD_SHROOM,
+	FOOD_NUT,
+	TOOL_FOCI_SNOW,
+	TOOL_FOCI_NEEDLES,
+	TOOL_FOCI_ARCS,
+	TOOL_FOCI_SAND,
+	TOOL_FOCI_DARK_LIFE,
+	TOOL_FOCI_DARK_RIFT,
+	TOOL_FOCI_DARK_SILENCE,
+	TOOL_FOCI_DARK_VENGEANCE,
+	TOOL_FOCI_DARK_SUPPRESS,
+	TOOL_FOCI_LIGHT_PEACE,
+	TOOL_FOCI_LIGHT_JUSTICE,
+	TOOL_FOCI_LIGHT_PROVIDENCE,
+	TOOL_FOCI_LIGHT_PURITY,
+	TOOL_FOCI_LIGHT_SANCTUARY,
+	MAGICSTAFF_SCEPTER,
+	TOME_SORCERY,
+	TOME_MYSTICISM,
+	TOME_THAUMATURGY,
+	HAT_CIRCLET_SORCERY,
+	HAT_CIRCLET_THAUMATURGY,
+	TOOL_DUCK,
+	SHILLELAGH_MACE,
+	CLAYMORE_SWORD,
+	ANELACE_SWORD,
+	LANCE_SPEAR,
+	STEEL_FALSHION,
+	STEEL_GREATAXE,
+	BLACKIRON_AXE,
+	BLACKIRON_CROSSBOW,
+	BLACKIRON_DART,
+	BLACKIRON_MACE,
+	BLACKIRON_SWORD,
+	BLACKIRON_TRIDENT,
+	BONE_AXE,
+	BONE_MACE,
+	BONE_SHORTBOW,
+	BONE_SPEAR,
+	BONE_SWORD,
+	BONE_THROWING,
+	SILVER_AXE,
+	SILVER_GLAIVE,
+	SILVER_MACE,
+	SILVER_PLUMBATA,
+	SILVER_SWORD,
+	QUIVER_BONE,
+	QUIVER_BLACKIRON,
+	GEM_JEWEL,
+	SPELLBOOK_METEOR,
+	SPELLBOOK_ICE_WAVE,
+	SPELLBOOK_GUARD_BODY,
+	SPELLBOOK_GUARD_SPIRIT,
+	SPELLBOOK_DIVINE_GUARD,
+	SPELLBOOK_PROF_NIMBLENESS,
+	SPELLBOOK_PROF_GREATER_MIGHT,
+	SPELLBOOK_PROF_COUNSEL,
+	SPELLBOOK_PROF_STURDINESS,
+	SPELLBOOK_BLESS_FOOD,
+	SPELLBOOK_PINPOINT,
+	SPELLBOOK_DONATION,
+	SPELLBOOK_SCRY_ALLIES,
+	SPELLBOOK_SCRY_TRAPS,
+	SPELLBOOK_SCRY_TREASURES,
+	SPELLBOOK_DETECT_ENEMY,
+	SPELLBOOK_TURN_UNDEAD,
+	SPELLBOOK_HEAL_OTHER,
+	SPELLBOOK_BLOOD_WARD,
+	SPELLBOOK_DIVINE_ZEAL,
+	SPELLBOOK_MAXIMISE,
+	SPELLBOOK_MINIMISE,
+	SPELLBOOK_INCOHERENCE,
+	SPELLBOOK_OVERCHARGE,
+	SPELLBOOK_ENVENOM_WEAPON,
+	SPELLBOOK_PSYCHIC_SPEAR,
+	SPELLBOOK_DEFY_FLESH,
+	SPELLBOOK_GREASE_SPRAY,
+	SPELLBOOK_BLOOD_WAVES,
+	SPELLBOOK_COMMAND,
+	SPELLBOOK_METALLURGY,
+	SPELLBOOK_FORGE_KEY,
+	SPELLBOOK_RESHAPE_WEAPON,
+	SPELLBOOK_ALTER_ARROW,
+	SPELLBOOK_VOID_CHEST,
+	SPELLBOOK_LEAD_BOLT,
+	SPELLBOOK_NUMBING_BOLT,
+	SPELLBOOK_CURSE_FLESH,
+	SPELLBOOK_COWARDICE,
+	SPELLBOOK_SEEK_ALLY,
+	SPELLBOOK_DEEP_SHADE,
+	SPELLBOOK_SPIRIT_WEAPON,
+	SPELLBOOK_SPORES,
+	SPELLBOOK_WINDGATE,
+	SPELLBOOK_TELEKINESIS,
+	SPELLBOOK_DISARM,
+	SPELLBOOK_ABUNDANCE,
+	SPELLBOOK_PRESERVE,
+	SPELLBOOK_SABOTAGE,
+	SPELLBOOK_MIST_FORM,
+	SPELLBOOK_FORCE_SHIELD,
+	SPELLBOOK_SPLINTER_GEAR,
+	SPELLBOOK_ATTRACT_ITEMS,
+	SPELLBOOK_ABSORB_MAGIC,
+	SPELLBOOK_TUNNEL,
+	SPELLBOOK_NULL_AREA,
+	SPELLBOOK_FIRE_SPRITE,
+	SPELLBOOK_SPIN,
+	SPELLBOOK_CLEANSE_FOOD,
+	SPELLBOOK_FLAME_CLOAK,
+	SPELLBOOK_LIGHTNING_BOLT,
+	SPELLBOOK_DISRUPT_EARTH,
+	SPELLBOOK_FIRE_WALL,
+	SPELLBOOK_SLAM,
+	SPELLBOOK_IGNITE,
+	SPELLBOOK_SHATTER_OBJECTS,
+	SPELLBOOK_KINETIC_FIELD,
+	SPELLBOOK_THORNS,
+	SPELLBOOK_MAGICIANS_ARMOR,
+	SPELLBOOK_HEAL_MINOR,
+	SPELLBOOK_SIGIL,
+	SPELLBOOK_SANCTUARY,
+	SPELLBOOK_HOLY_BEAM,
+	SPELLBOOK_DOMINATE,
+	ITEM_ENUM_MAX
+} ItemType;
+#define NUMITEMS ITEM_ENUM_MAX
+
+typedef enum Category
+{
+	WEAPON,
+	ARMOR,
+	AMULET,
+	POTION,
+	SCROLL,
+	MAGICSTAFF,
+	RING,
+	SPELLBOOK,
+	GEM,
+	THROWN,
+	TOOL,
+	FOOD,
+	BOOK,
+	SPELL_CAT,
+	TOME_SPELL,
+	CATEGORY_MAX
+} Category;
+
+typedef enum Status
+{
+	BROKEN,
+	DECREPIT,
+	WORN,
+	SERVICABLE,
+	EXCELLENT
+} Status;
+
+typedef enum EquipmentType
+{
+	TYPE_NONE,
+	TYPE_HELM,
+	TYPE_HAT,
+	TYPE_BREASTPIECE,
+	TYPE_BOOTS,
+	TYPE_SHIELD,
+	TYPE_GLOVES,
+	TYPE_CLOAK,
+	TYPE_RING,
+	TYPE_AMULET,
+	TYPE_MASK,
+	TYPE_SWORD,
+	TYPE_AXE,
+	TYPE_SPEAR,
+	TYPE_MACE,
+	TYPE_BOW,
+	TYPE_PROJECTILE,
+	TYPE_OFFHAND
+} EquipmentType;
+
+enum ItemEquippableSlot
+{
+	EQUIPPABLE_IN_SLOT_WEAPON,
+	EQUIPPABLE_IN_SLOT_SHIELD,
+	EQUIPPABLE_IN_SLOT_MASK,
+	EQUIPPABLE_IN_SLOT_HELM,
+	EQUIPPABLE_IN_SLOT_GLOVES,
+	EQUIPPABLE_IN_SLOT_BOOTS,
+	EQUIPPABLE_IN_SLOT_BREASTPLATE,
+	EQUIPPABLE_IN_SLOT_CLOAK,
+	EQUIPPABLE_IN_SLOT_AMULET,
+	EQUIPPABLE_IN_SLOT_RING,
+	NO_EQUIP
+};
+
+/* ------------------------------------------------------------------ */
+/* C-compatible Item struct (no std:: members)                         */
+/* ------------------------------------------------------------------ */
+typedef struct Item
+{
+	ItemType type;
+	Status status;
+
+	Sint16 beatitude;
+	Sint16 count;
+	Uint32 appearance;
+	bool identified;
+	Uint32 uid;
+	Sint32 x, y;
+	Uint32 ownerUid;
+	Uint32 interactNPCUid;
+	bool forcedPickupByPlayer;
+	bool isDroppable;
+	bool playerSoldItemToShop;
+	bool itemHiddenFromShop;
+	bool notifyIcon;
+	bool spellNotifyIcon;
+	Uint8 itemRequireTradingSkillInShop;
+	bool itemSpecialShopConsumable;
+
+	node_t* node;
+} Item;
+
+extern Uint32 itemuids;
+
+/* ItemGeneric forward-declared opaque (has std::string/std::map members) */
+extern ItemGeneric items[];  /* actually NUMITEMS; sized by the C++ definition */
+
+/* ------------------------------------------------------------------ */
+/* Bomb placement enums (pulled out of Item class for C)               */
+/* ------------------------------------------------------------------ */
+enum ItemBombPlacement
+{
+	ITEM_BOMB_FLOOR,
+	ITEM_BOMB_WALL,
+	ITEM_BOMB_CHEST,
+	ITEM_BOMB_DOOR,
+	ITEM_BOMB_COLLIDER
+};
+enum ItemBombFacingDirection
+{
+	ITEM_BOMB_UP,
+	ITEM_BOMB_NORTH,
+	ITEM_BOMB_EAST,
+	ITEM_BOMB_SOUTH,
+	ITEM_BOMB_WEST
+};
+enum ItemBombTriggerType
+{
+	ITEM_BOMB_TRIGGER_ENEMIES,
+	ITEM_BOMB_TELEPORT_RECEIVER,
+	ITEM_BOMB_TRIGGER_ALL
+};
+
+enum EquipItemResult
+{
+	EQUIP_ITEM_FAIL_CANT_UNEQUIP,
+	EQUIP_ITEM_SUCCESS_NEWITEM,
+	EQUIP_ITEM_SUCCESS_UPDATE_QTY,
+	EQUIP_ITEM_SUCCESS_UNEQUIP
+};
+enum EquipItemSendToServerSlot
+{
+	EQUIP_ITEM_SLOT_WEAPON,
+	EQUIP_ITEM_SLOT_SHIELD,
+	EQUIP_ITEM_SLOT_MASK,
+	EQUIP_ITEM_SLOT_HELM,
+	EQUIP_ITEM_SLOT_GLOVES,
+	EQUIP_ITEM_SLOT_BOOTS,
+	EQUIP_ITEM_SLOT_BREASTPLATE,
+	EQUIP_ITEM_SLOT_CLOAK,
+	EQUIP_ITEM_SLOT_AMULET,
+	EQUIP_ITEM_SLOT_RING
+};
+enum ItemStackResults
+{
+	ITEM_STACKING_ERROR,
+	ITEM_DESTINATION_NOT_SAME_ITEM,
+	ITEM_DESTINATION_STACK_IS_FULL,
+	ITEM_ADDED_ENTIRELY_TO_DESTINATION_STACK,
+	ITEM_ADDED_PARTIALLY_TO_DESTINATION_STACK,
+	ITEM_ADDED_WITHOUT_NEEDING_STACK
+};
+struct ItemStackResult
+{
+	enum ItemStackResults resultType;
+	Item* itemToStackInto;
+};
+
+enum SpellbookColors
+{
+	SPELLBOOK_COLOR_THAUM_2,
+	SPELLBOOK_COLOR_THAUM_3,
+	SPELLBOOK_COLOR_THAUM_1,
+	SPELLBOOK_COLOR_MYSTICISM_2,
+	SPELLBOOK_COLOR_SORCERY_1,
+	SPELLBOOK_COLOR_SORCERY_3,
+	SPELLBOOK_COLOR_MYSTICISM_1,
+	SPELLBOOK_COLOR_SORCERY_2,
+	SPELLBOOK_COLOR_MYSTICISM_3
+};
+
+/* ------------------------------------------------------------------ */
+/* C-compatible function prototypes                                    */
+/* ------------------------------------------------------------------ */
+
+/* Item methods → free functions taking Item* as first param */
+char* Item_description(const Item* item);
+char* Item_getName(const Item* item);
+
+Sint32 Item_weaponGetAttack(const Item* item, const Stat* wielder);
+Sint32 Item_armorGetAC(const Item* item, const Stat* wielder);
+bool Item_canUnequip(Item* item, const Stat* wielder);
+int Item_buyValue(const Item* item, int player);
+int Item_sellValue(const Item* item, int player);
+bool Item_usableWhileShapeshifted(const Item* item, const Stat* wielder);
+char* Item_getScrollLabel(const Item* item);
+const char* Item_getTomeLabel(const Item* item);
+int Item_getTomeSpellID(const Item* item);
+
+void Item_apply(Item* item, int player, Entity* entity);
+void Item_applyLockpickToWall(const Item* item, int player, int x, int y);
+
+void Item_applySkeletonKey(Item* item, int player, Entity* entity);
+void Item_applyLockpick(Item* item, int player, Entity* entity);
+void Item_applyOrb(Item* item, int player, ItemType type, Entity* entity);
+void Item_applyEmptyPotion(Item* item, int player, Entity* entity);
+
+bool Item_isThisABetterWeapon(const Item* newWeapon, const Item* weaponAlreadyHave);
+bool Item_isThisABetterArmor(const Item* newArmor, const Item* armorAlreadyHave);
+bool Item_shouldItemStack(const Item* item, int player, bool ignoreStackLimit);
+bool Item_shouldItemStackInShop(Item* item, bool ignoreStackLimit);
+int Item_getMaxStackLimit(const Item* item, int player);
+
+bool Item_isShield(const Item* item);
+bool Item_doesItemProvideBeatitudeAC(ItemType type);
+bool Item_doesPotionHarmAlliesOnThrown(const Item* item);
+
+Sint32 Item_potionGetEffectHealth(const Item* item, Entity* my, Stat* myStats);
+Sint32 Item_potionGetEffectDamage(const Item* item, Entity* my, Stat* myStats);
+Sint32 Item_potionGetEffectDurationMinimum(const Item* item, Entity* my, Stat* myStats);
+Sint32 Item_potionGetEffectDurationMaximum(const Item* item, Entity* my, Stat* myStats);
+Sint32 Item_potionGetEffectDurationRandom(const Item* item, Entity* my, Stat* myStats);
+Sint32 Item_potionGetCursedEffectDurationMinimum(const Item* item, Entity* my, Stat* myStats);
+Sint32 Item_potionGetCursedEffectDurationMaximum(const Item* item, Entity* my, Stat* myStats);
+Sint32 Item_potionGetCursedEffectDurationRandom(const Item* item, Entity* my, Stat* myStats);
+int Item_getBaseFoodSatiation(ItemType type);
+
+Sint32 Item_getWeight(const Item* item);
+Sint32 Item_getGoldValue(const Item* item);
+
+void Item_foodTinGetDescriptionIndices(const Item* item, int* a, int* b, int* c);
+void Item_foodTinGetDescription(const Item* item, char* cookingMethod, size_t cookingMethodSize, char* protein, size_t proteinSize, char* sides, size_t sidesSize);
+int Item_foodGetPukeChance(const Item* item, Stat* eater);
+int Item_getLootBagPlayer(const Item* item);
+int Item_getLootBagNumItems(const Item* item);
+int Item_getDuckPlayer(const Item* item);
+
+void Item_applyBomb(Item* item, Entity* parent, ItemType type, enum ItemBombPlacement placement, enum ItemBombFacingDirection dir, Entity* thrown, Entity* onEntity);
+void Item_applyTinkeringCreation(Item* item, Entity* parent, Entity* thrown);
+void Item_applyDuck(Item* item, Uint32 parentUid, real_t x, real_t y, Entity* hitentity, bool onLevelRespawn);
+bool Item_unableToEquipDueToSwapWeaponTimer(const Item* item, int player);
+bool Item_tinkeringBotIsMaxHealth(const Item* item);
+bool Item_isTinkeringItemWithThrownLimit(const Item* item);
+void Item_onItemIdentified(int player, Item* tempItem);
+void Item_itemFindUniqueAppearance(Item* tempItem, Uint32* appearances, size_t appearancesCount);
+
+/* ItemGeneric accessors (C wrappers around C++ implementation) */
+const char* ItemGeneric_getIdentifiedName(const ItemGeneric* gen);
+const char* ItemGeneric_getUnidentifiedName(const ItemGeneric* gen);
+void ItemGeneric_setIdentifiedName(ItemGeneric* gen, const char* name);
+void ItemGeneric_setUnidentifiedName(ItemGeneric* gen, const char* name);
+bool ItemGeneric_hasAttribute(ItemGeneric* gen, const char* attribute);
+
+/* Item usage functions (Item** → Item** in C, no default args) */
+bool item_PotionWater(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionBooze(Item** item, Entity* entity, Entity* usedBy, bool shouldConsumeItem);
+bool item_PotionJuice(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionSickness(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionConfusion(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionGrease(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionCureAilment(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionBlindness(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionHealing(Item** item, Entity* entity, Entity* usedBy, bool shouldConsumeItem);
+bool item_PotionExtraHealing(Item** item, Entity* entity, Entity* usedBy, bool shouldConsumeItem);
+bool item_PotionRestoreMagic(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionInvisibility(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionLevitation(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionSpeed(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionStrength(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionAcid(Item** item, Entity* entity, Entity* usedBy);
+bool item_PotionUnstableStorm(Item** item, Entity* entity, Entity* usedBy, Entity* thrownPotion);
+bool item_PotionParalysis(Item** item, Entity* entity, Entity* usedBy);
+Entity* item_PotionPolymorph(Item** item, Entity* entity, Entity* usedBy);
+void item_ScrollMail(Item** item, int player);
+void item_ScrollIdentify(Item** item, int player);
+void item_ScrollLight(Item** item, int player);
+void item_ScrollBlank(Item** item, int player);
+void item_ScrollEnchantWeapon(Item** item, int player);
+void item_ScrollEnchantArmor(Item** item, int player);
+void item_ScrollRemoveCurse(Item** item, int player);
+bool item_ScrollFire(Item** item, int player);
+void item_ScrollFood(Item** item, int player);
+void item_ScrollConjureArrow(Item** item, int player);
+void item_ScrollMagicMapping(Item** item, int player);
+void item_ScrollRepair(Item** item, int player);
+void item_ScrollDestroyArmor(Item** item, int player);
+void item_ScrollTeleportation(Item** item, int player);
+void item_ScrollSummon(Item** item, int player);
+void item_AmuletSexChange(Item** item, int player);
+void item_ToolTowel(Item** item, int player);
+void item_ToolTinOpener(Item** item, int player);
+void item_ToolMirror(Item** item, int player);
+Entity* item_ToolBeartrap(Item** item, Entity* usedBy);
+void item_Food(Item** item, int player);
+void item_FoodTin(Item** item, int player);
+void item_FoodAutomaton(Item** item, int player);
+void item_Spellbook(Item** item, int player);
+void item_ToolLootBag(Item** item, int player);
+
+/* General functions */
+Item* newItem(ItemType type, Status status, Sint16 beatitude, Sint16 count, Uint32 appearance, bool identified, list_t* inventory);
+Item* uidToItem(Uint32 uid);
+ItemType itemLevelCurveEntity(Entity* my, Category cat, int minLevel, int maxLevel, BaronyRNG* rng);
+bool itemLevelCurvePostProcess(Entity* my, Item* item, BaronyRNG* rng, int itemLevel, int* lastItemType, int* lastItemSpellType);
+ItemType itemLevelCurve(Category cat, int minLevel, int maxLevel, BaronyRNG* rng);
+Item* newItemFromEntity(const Entity* entity, bool discardUid);
+Entity* dropItemMonster(Item* item, Entity* monster, Stat* monsterStats, Sint16 count);
+Item** itemSlot(Stat* myStats, Item* item);
+
+enum Category itemCategory(const Item* item);
+Sint32 itemModel(const Item* item, bool shortModel, Entity* creature);
+Sint32 itemModelFirstperson(const Item* item);
+void consumeItem(Item** item, int player);
+bool dropItem(Item* item, int player, bool notifyMessage, bool dropAll);
+bool playerGreasyDropItem(int player, Item* const item);
+bool playerThrowDuck(int player, Item* const item, int charge);
+void useItem(Item* item, int player, Entity* usedBy, bool unequipForDropping, bool serverCheckUse);
+
+void playerTryEquipItemAndUpdateServer(int player, Item* item, bool checkInventorySpaceForPaperDoll);
+void clientSendEquipUpdateToServer(enum EquipItemSendToServerSlot slot, enum EquipItemResult equipType, int player, ItemType type, Status status, Sint16 beatitude, int count, Uint32 appearance, bool identified);
+void clientUnequipSlotAndUpdateServer(int player, enum EquipItemSendToServerSlot slot, Item* item);
+void clientSendAppearanceUpdateToServer(int player, Item* item, bool onIdentify);
+void clientSendItemTypeUpdateToServer(int player, Item* item, ItemType prevItemType);
+enum EquipItemResult equipItem(Item* item, Item** slot, int player, bool checkInventorySpaceForPaperDoll);
+
+struct ItemStackResult getItemStackingBehavior(int player, Item* itemToCheck, Item* itemDestinationStack, int* newQtyForCheckedItem, int* newQtyForDestItem);
+struct ItemStackResult getItemStackingBehaviorIntoChest(int player, Item* itemToCheck, Item* itemDestinationStack, int* newQtyForCheckedItem, int* newQtyForDestItem);
+void getItemEmptySlotStackingBehavior(int player, Item* itemToCheck, int* newQtyForCheckedItem, int* newQtyForDestItem);
+Item* itemPickup(int player, Item* item, Item* addToSpecificInventoryItem, bool forceNewStack);
+bool itemIsEquipped(const Item* item, int player);
+bool shouldInvertEquipmentBeatitude(const Stat* wielder);
+bool isItemEquippableInShieldSlot(const Item* item);
+bool itemIsConsumableByAutomaton(const Item* item);
+
+extern const real_t potionDamageSkillMultipliers[6];
+extern const real_t thrownDamageSkillMultipliers[6];
+extern Uint32 enchantedFeatherScrollSeed;
+
+static const int ENCHANTED_FEATHER_MAX_DURABILITY = 101;
+static const int QUIVER_MAX_AMMO_QTY = 51;
+static const int SCRAP_MAX_STACK_QTY = 101;
+static const int THROWN_GEM_MAX_STACK_QTY = 9;
+static const int MAGICSTAFF_SCEPTER_CHARGE_MAX = 101;
+static const int TOME_APPEARANCE_MAX = 1024;
+
+static const int ENCHANTED_FEATHER_SCROLLS_FIXED_LIST[] =
+{
+	SCROLL_BLANK,
+	SCROLL_MAIL,
+	SCROLL_DESTROYARMOR,
+	SCROLL_DESTROYARMOR,
+	SCROLL_DESTROYARMOR,
+	SCROLL_FIRE,
+	SCROLL_FIRE,
+	SCROLL_FIRE,
+	SCROLL_LIGHT,
+	SCROLL_LIGHT,
+	SCROLL_SUMMON,
+	SCROLL_SUMMON,
+	SCROLL_IDENTIFY,
+	SCROLL_IDENTIFY,
+	SCROLL_REMOVECURSE,
+	SCROLL_CONJUREARROW,
+	SCROLL_FOOD,
+	SCROLL_FOOD,
+	SCROLL_TELEPORTATION,
+	SCROLL_TELEPORTATION,
+	SCROLL_CHARGING,
+	SCROLL_REPAIR,
+	SCROLL_MAGICMAPPING,
+	SCROLL_ENCHANTWEAPON,
+	SCROLL_ENCHANTARMOR
+};
+
+/* Item comparison */
+int itemCompare(const Item* item1, const Item* item2, bool checkAppearance, bool comparisonUsedForStacking);
+
+bool isPotionBad(const Item* potion);
+bool isRangedWeapon(const Item* item);
+bool isRangedWeaponByType(ItemType type);
+bool isMeleeWeapon(const Item* item);
+bool itemIsThrowableTinkerTool(const Item* item);
+
+void createCustomInventory(Stat* stats, int itemLimit, BaronyRNG* rng);
+void copyItem(Item* itemToSet, const Item* itemToCopy);
+bool swapMonsterWeaponWithInventoryItem(Entity* my, Stat* myStats, node_t* inventoryNode, bool moveStack, bool overrideCursed);
+bool monsterUnequipSlot(Stat* myStats, Item** slot, Item* itemToUnequip);
+bool monsterUnequipSlotFromCategory(Stat* myStats, Item** slot, Category cat);
+node_t* itemNodeInInventory(const Stat* myStats, Sint32 itemToFind, Category cat, bool randomSlot);
+node_t* spellbookNodeInInventory(const Stat* myStats, int spellIDToFind);
+node_t* getRangedWeaponItemNodeInInventory(const Stat* myStats, bool includeMagicstaff);
+node_t* getMeleeWeaponItemNodeInInventory(const Stat* myStats);
+ItemType itemTypeWithinGoldValue(int cat, int minValue, int maxValue, BaronyRNG* rng);
+bool itemSpriteIsQuiverThirdPersonModel(int sprite);
+bool itemSpriteIsQuiverBaseThirdPersonModel(int sprite);
+bool itemSpriteIsFociThirdPersonModel(int sprite);
+bool itemTypeIsQuiver(ItemType type);
+bool itemTypeIsFoci(ItemType type);
+bool itemTypeIsInstrument(ItemType type);
+bool itemTypeIsThrownBall(ItemType type);
+real_t rangedAttackGetSpeedModifier(const Stat* myStats);
+bool rangedWeaponUseQuiverOnAttack(const Stat* myStats);
+real_t getArtifactWeaponEffectChance(ItemType type, Stat* wielder, real_t* effectAmount);
+void updateHungerMessages(Entity* my, Stat* myStats, Item* eaten);
+bool playerCanSpawnMoreTinkeringBots(const Stat* myStats);
+int maximumTinkeringBotsCanBeDeployed(const Stat* myStats);
+extern bool overrideTinkeringLimit;
+extern int decoyBoxRange;
+
+static const int MONSTER_ITEM_UNDROPPABLE_APPEARANCE = 1234567890;
+static const int ITEM_TINKERING_APPEARANCE = 987654320;
+static const int ITEM_GENERATED_QUIVER_APPEARANCE = 1122334455;
+
+int getItemVariationFromSpellbookOrTome(const Item* item);
+
+#endif /* __cplusplus */

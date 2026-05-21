@@ -12,10 +12,10 @@
 -------------------------------------------------------------------------------*/
 
 #include "../../main.h"
-#include "../../game.hpp"
-#include "../../stat.hpp"
+#include "../../game.h"
+#include "../../stat.h"
 #include "sound.hpp"
-#include "../../entity.hpp"
+#include "../../entity.h"
 #include "../../net.hpp"
 #include "../../player.hpp"
 #include "../../ui/GameUI.hpp"

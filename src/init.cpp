@@ -17,7 +17,7 @@
 #include <sstream>
 
 #include "draw.hpp"
-#include "files.hpp"
+#include "files.h"
 #include "engine/audio/sound.hpp"
 #include "prng.h"
 #include "hash.h"
@@ -27,7 +27,7 @@
 #include "net.hpp"
 #include "menu.h"
 #include "player.hpp"
-#include "items.hpp"
+#include "items.h"
 #include "cppfuncs.hpp"
 #include "ui/Text.hpp"
 #include "ui/Font.hpp"

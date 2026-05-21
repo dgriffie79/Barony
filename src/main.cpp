@@ -11,7 +11,7 @@
 
 #include "main.h"
 #include "hash.h"
-#include "entity.hpp"
+#include "entity.h"
 #include "prng.h"
 
 #ifdef WINDOWS

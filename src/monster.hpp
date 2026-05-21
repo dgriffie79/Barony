@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "stat.hpp"
+#include "stat.h"
 #include "json.h"
 
 #include "interface/consolecommand.h"

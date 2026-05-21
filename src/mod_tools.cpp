@@ -9,7 +9,7 @@ See LICENSE for details.
 
 -------------------------------------------------------------------------------*/
 #define MOD_TOOLS_CPP
-#include "items.hpp"
+#include "items.h"
 #include "mod_tools.hpp"
 #include "menu.h"
 #include "classdescriptions.h"

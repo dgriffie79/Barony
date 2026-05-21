@@ -10,8 +10,8 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "entity.hpp"
-#include "items.hpp"
+#include "entity.h"
+#include "items.h"
 #include "interface/interface.hpp"
 #include "player.hpp"
 /*-------------------------------------------------------------------------------

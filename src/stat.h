@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
-	File: stat.hpp
+	File: stat.h
 	Desc: header for stat.cpp (contains Stat class definition)
 
 	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
@@ -11,11 +11,15 @@
 
 #pragma once
 
+#ifdef __cplusplus
+
+// ===================== EXISTING C++ CONTENT =====================
+
 #ifdef USE_FMOD
 #include <fmod.hpp>
 #endif
 #include <cassert>
-#include "items.hpp"
+#include "items.h"
 
 enum Monster : int;
 
@@ -549,3 +553,498 @@ static const int MAX_PLAYER_STAT_VALUE = 248;
 void setDefaultMonsterStats(Stat* stats, int sprite);
 bool isMonsterStatsDefault(Stat& myStats);
 const char* getSkillLangEntry(int skill);
+
+// ===================== END C++ CONTENT =====================
+
+#else
+
+// ===================== C-COMPATIBLE CONTENT =====================
+
+#include "ccontainers.h"
+#include "defs.h"
+#include <assert.h>
+
+// Forward declarations for types defined in other headers
+typedef int Monster;
+typedef int ItemType;
+struct Entity;
+struct Item;
+
+// effects
+static const int EFF_ASLEEP = 0;
+static const int EFF_POISONED = 1;
+static const int EFF_STUNNED = 2;
+static const int EFF_CONFUSED = 3;
+static const int EFF_DRUNK = 4;
+static const int EFF_INVISIBLE = 5;
+static const int EFF_BLIND = 6;
+static const int EFF_GREASY = 7;
+static const int EFF_MESSY = 8;
+static const int EFF_FAST = 9;
+static const int EFF_PARALYZED = 10;
+static const int EFF_LEVITATING = 11;
+static const int EFF_TELEPATH = 12;
+static const int EFF_VOMITING = 13;
+static const int EFF_BLEEDING = 14;
+static const int EFF_SLOW = 15;
+static const int EFF_MAGICRESIST = 16;
+static const int EFF_MAGICREFLECT = 17;
+static const int EFF_VAMPIRICAURA = 18;
+static const int EFF_SHRINE_RED_BUFF = 19;
+static const int EFF_SHRINE_GREEN_BUFF = 20;
+static const int EFF_SHRINE_BLUE_BUFF = 21;
+static const int EFF_HP_REGEN = 22;
+static const int EFF_MP_REGEN = 23;
+static const int EFF_PACIFY = 24;
+static const int EFF_POLYMORPH = 25;
+static const int EFF_KNOCKBACK = 26;
+static const int EFF_WITHDRAWAL = 27;
+static const int EFF_POTION_STR = 28;
+static const int EFF_SHAPESHIFT = 29;
+static const int EFF_WEBBED = 30;
+static const int EFF_FEAR = 31;
+static const int EFF_MAGICAMPLIFY = 32;
+static const int EFF_DISORIENTED = 33;
+static const int EFF_SHADOW_TAGGED = 34;
+static const int EFF_TROLLS_BLOOD = 35;
+static const int EFF_FLUTTER = 36;
+static const int EFF_DASH = 37;
+static const int EFF_DISTRACTED_COOLDOWN = 38;
+static const int EFF_MIMIC_LOCKED = 39;
+static const int EFF_ROOTED = 40;
+static const int EFF_NAUSEA_PROTECTION = 41;
+static const int EFF_CON_BONUS = 42;
+static const int EFF_PWR = 43;
+static const int EFF_AGILITY = 44;
+static const int EFF_RALLY = 45;
+static const int EFF_MARIGOLD = 46;
+static const int EFF_ENSEMBLE_FLUTE = 47;
+static const int EFF_ENSEMBLE_LYRE = 48;
+static const int EFF_ENSEMBLE_DRUM = 49;
+static const int EFF_ENSEMBLE_LUTE = 50;
+static const int EFF_ENSEMBLE_HORN = 51;
+static const int EFF_LIFT = 52;
+static const int EFF_GUARD_SPIRIT = 53;
+static const int EFF_GUARD_BODY = 54;
+static const int EFF_DIVINE_GUARD = 55;
+static const int EFF_NIMBLENESS = 56;
+static const int EFF_GREATER_MIGHT = 57;
+static const int EFF_COUNSEL = 58;
+static const int EFF_STURDINESS = 59;
+static const int EFF_BLESS_FOOD = 60;
+static const int EFF_PINPOINT = 61;
+static const int EFF_PENANCE = 62;
+static const int EFF_SACRED_PATH = 63;
+static const int EFF_DETECT_ENEMY = 64;
+static const int EFF_BLOOD_WARD = 65;
+static const int EFF_TRUE_BLOOD = 66;
+static const int EFF_DIVINE_ZEAL = 67;
+static const int EFF_MAXIMISE = 68;
+static const int EFF_MINIMISE = 69;
+static const int EFF_WEAKNESS = 70;
+static const int EFF_INCOHERENCE = 71;
+static const int EFF_OVERCHARGE = 72;
+static const int EFF_ENVENOM_WEAPON = 73;
+static const int EFF_MAGIC_GREASE = 74;
+static const int EFF_COMMAND = 75;
+static const int EFF_MIMIC_VOID = 76;
+static const int EFF_CURSE_FLESH = 77;
+static const int EFF_NUMBING_BOLT = 78;
+static const int EFF_DELAY_PAIN = 79;
+static const int EFF_SEEK_CREATURE = 80;
+static const int EFF_TABOO = 81;
+static const int EFF_COURAGE = 82;
+static const int EFF_COWARDICE = 83;
+static const int EFF_SPORES = 84;
+static const int EFF_ABUNDANCE = 85;
+static const int EFF_GREATER_ABUNDANCE = 86;
+static const int EFF_PRESERVE = 87;
+static const int EFF_MIST_FORM = 88;
+static const int EFF_FORCE_SHIELD = 89;
+static const int EFF_LIGHTEN_LOAD = 90;
+static const int EFF_ATTRACT_ITEMS = 91;
+static const int EFF_RETURN_ITEM = 92;
+static const int EFF_DEMESNE_DOOR = 93;
+static const int EFF_REFLECTOR_SHIELD = 94;
+static const int EFF_DIZZY = 95;
+static const int EFF_SPIN = 96;
+static const int EFF_CRITICAL_SPELL = 97;
+static const int EFF_MAGIC_WELL = 98;
+static const int EFF_STATIC = 99;
+static const int EFF_ABSORB_MAGIC = 100;
+static const int EFF_FLAME_CLOAK = 101;
+static const int EFF_DUSTED = 102;
+static const int EFF_NOISE_VISIBILITY = 103;
+static const int EFF_RATION_SPICY = 104;
+static const int EFF_RATION_SOUR = 105;
+static const int EFF_RATION_BITTER = 106;
+static const int EFF_RATION_HEARTY = 107;
+static const int EFF_RATION_HERBAL = 108;
+static const int EFF_RATION_SWEET = 109;
+static const int EFF_GROWTH = 110;
+static const int EFF_THORNS = 111;
+static const int EFF_BLADEVINES = 112;
+static const int EFF_BASTION_MUSHROOM = 113;
+static const int EFF_BASTION_ROOTS = 114;
+static const int EFF_FOCI_LIGHT_PEACE = 115;
+static const int EFF_FOCI_LIGHT_JUSTICE = 116;
+static const int EFF_FOCI_LIGHT_PROVIDENCE = 117;
+static const int EFF_FOCI_LIGHT_PURITY = 118;
+static const int EFF_FOCI_LIGHT_SANCTUARY = 119;
+static const int EFF_STASIS = 120;
+static const int EFF_HP_MP_REGEN = 121;
+static const int EFF_DISRUPTED = 122;
+static const int EFF_FROST = 123;
+static const int EFF_MAGICIANS_ARMOR = 124;
+static const int EFF_PROJECT_SPIRIT = 125;
+static const int EFF_DEFY_FLESH = 126;
+static const int EFF_PINPOINT_DAMAGE = 127;
+static const int EFF_SALAMANDER_HEART = 128;
+static const int EFF_DIVINE_FIRE = 129;
+static const int EFF_HEALING_WORD = 130;
+static const int EFF_HOLY_FIRE = 131;
+static const int EFF_SIGIL = 132;
+static const int EFF_SANCTUARY = 133;
+static const int EFF_DUCKED = 134;
+static const int NUMEFFECTS = 160;
+
+// stats
+static const int STAT_STR = 0;
+static const int STAT_DEX = 1;
+static const int STAT_CON = 2;
+static const int STAT_INT = 3;
+static const int STAT_PER = 4;
+static const int STAT_CHR = 5;
+
+static const int NUMSTATS = 6;
+
+// proficiencies
+static const int PRO_LOCKPICKING = 0;
+static const int PRO_STEALTH = 1;
+static const int PRO_TRADING = 2;
+static const int PRO_APPRAISAL = 3;
+static const int PRO_THAUMATURGY = 4;
+static const int PRO_LEADERSHIP = 5;
+static const int PRO_MYSTICISM = 6;
+static const int PRO_SORCERY = 7;
+static const int PRO_RANGED = 8;
+static const int PRO_SWORD = 9;
+static const int PRO_MACE = 10;
+static const int PRO_AXE = 11;
+static const int PRO_POLEARM = 12;
+static const int PRO_SHIELD = 13;
+static const int PRO_UNARMED = 14;
+static const int PRO_ALCHEMY = 15;
+static const int NUMPROFICIENCIES = 16;
+static const int PRO_LEGACY_SWIMMING = 32;
+static const int PRO_LEGACY_MAGIC = 33;
+static const int PRO_LEGACY_SPELLCASTING = 34;
+
+static const int SKILL_LEVEL_NOVICE = 1;
+static const int SKILL_LEVEL_BASIC = 20;
+static const int SKILL_LEVEL_SKILLED = 40;
+static const int SKILL_LEVEL_EXPERT = 60;
+static const int SKILL_LEVEL_MASTER = 80;
+static const int SKILL_LEVEL_LEGENDARY = 100;
+
+static const int CAPSTONE_LOCKPICKING_UNLOCK = SKILL_LEVEL_LEGENDARY;
+static const int CAPSTONE_UNLOCK_LEVEL[NUMPROFICIENCIES] =
+{
+		100,		//Lockpicking
+		100,		//Stealth
+		100,		//Trading
+		100,		//Appraisal
+		100,		//Swimming
+		100,		//Leadership
+		100,		//Spellcasting
+		100,		//Magic
+		100,		//Ranged
+		100,		//Sword
+		100,		//Mace
+		100,		//Axe
+		100,		//Polearm
+		100,		//Shield
+		100,		//Unarmed
+		100			//Alchemy
+};
+
+static const int CAPSTONE_LOCKPICKING_CHEST_GOLD_AMOUNT = 100;
+
+#define ITEM_SLOT_NUMPROPERTIES 7
+#define ITEM_SLOT_HELM 0
+#define ITEM_SLOT_WEAPON (ITEM_SLOT_HELM + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_SHIELD (ITEM_SLOT_WEAPON + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_ARMOR (ITEM_SLOT_SHIELD + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_BOOTS (ITEM_SLOT_ARMOR + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_RING (ITEM_SLOT_BOOTS + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_AMULET (ITEM_SLOT_RING + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_CLOAK (ITEM_SLOT_AMULET + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_MASK (ITEM_SLOT_CLOAK + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_GLOVES (ITEM_SLOT_MASK + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_INV_1 (ITEM_SLOT_GLOVES + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_INV_2 (ITEM_SLOT_INV_1 + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_INV_3 (ITEM_SLOT_INV_2 + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_INV_4 (ITEM_SLOT_INV_3 + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_INV_5 (ITEM_SLOT_INV_4 + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_SLOT_INV_6 (ITEM_SLOT_INV_5 + ITEM_SLOT_NUMPROPERTIES)
+#define ITEM_CHANCE 5
+#define ITEM_SLOT_CATEGORY 6
+#define ITEM_CUSTOM_SLOT_LIMIT 6
+#define ITEM_SLOT_NUM (ITEM_SLOT_INV_6 + ITEM_SLOT_NUMPROPERTIES)
+
+//--Stat Flag constants--
+static const int STAT_FLAG_NPC = 0;
+static const int STAT_FLAG_SNEAK = 1;
+static const int STAT_FLAG_ALLY_PICKUP = 2;
+static const int STAT_FLAG_ALLY_CLASS = 3;
+static const int STAT_FLAG_PLAYER_RACE = 4;
+static const int STAT_FLAG_POLYMORPH_STORAGE = 5;
+static const int STAT_FLAG_ALLY_SUMMON_LVLHP = 6;
+static const int STAT_FLAG_ALLY_SUMMON_STRDEXCONINT = 7;
+static const int STAT_FLAG_ALLY_SUMMON_PERCHR = 8;
+static const int STAT_FLAG_ALLY_SUMMON2_LVLHP = 9;
+static const int STAT_FLAG_ALLY_SUMMON2_STRDEXCONINT = 10;
+static const int STAT_FLAG_ALLY_SUMMON2_PERCHR = 11;
+static const int STAT_FLAG_MYSTERIOUS_SHOPKEEP = 16;
+static const int STAT_FLAG_NO_DROP_ITEMS = 19;
+static const int STAT_FLAG_FORCE_ALLEGIANCE_TO_PLAYER = 20;
+static const int STAT_FLAG_DISABLE_MINIBOSS = 21;
+static const int STAT_FLAG_XP_PERCENT_AWARD = 22;
+static const int STAT_FLAG_MONSTER_CAST_INVENTORY_SPELLBOOKS = 23;
+static const int STAT_FLAG_SHOPKEEPER_CUSTOM_PROPERTIES = 24;
+static const int STAT_FLAG_MONSTER_NAME_GENERIC = 25;
+static const int STAT_FLAG_MONSTER_DISABLE_HC_SCALING = 26;
+static const int STAT_FLAG_HP_BONUS = 27;
+static const int STAT_FLAG_MP_BONUS = 28;
+static const int STAT_FLAG_ASSISTANCE_PLAYER_PTS = 29;
+
+typedef enum
+{
+	MALE = 0,
+	FEMALE = 1
+} sex_t;
+
+typedef enum {
+    UNKNOWN,
+    MONSTER,
+    ITEM,
+    ALLY_BETRAYAL,
+    ATTEMPTED_ROBBERY,
+    TRESPASSING,
+    TRAP_ARROW,
+    TRAP_BEAR,
+    TRAP_SPIKE,
+    TRAP_MAGIC,
+    TRAP_BOMB,
+    BOULDER,
+    LAVA,
+    WATER,
+    FAILED_INVOCATION,
+    STARVATION,
+    POISON,
+    BLEEDING,
+    BURNING_TO_CRISP,
+    STRANGULATION,
+    FUNNY_POTION,
+    BOTTOMLESS_PIT,
+    NO_FUEL,
+    FOUNTAIN,
+    SINK,
+    FAILED_ALCHEMY,
+	FAILED_CHALLENGE,
+	BELL,
+	MUSHROOM,
+	LEAVES,
+	DEATH_KNOCKBACK
+} KilledBy;
+
+typedef int MonsterForceAllegiance;
+#define MONSTER_FORCE_ALLEGIANCE_NONE 0
+#define MONSTER_FORCE_PLAYER_ALLY 1
+#define MONSTER_FORCE_PLAYER_ENEMY 2
+#define MONSTER_FORCE_PLAYER_RECRUITABLE 3
+
+typedef int EnsembleEffectsBonusType;
+#define ENSEMBLE_FLUTE_EFF_1 0
+#define ENSEMBLE_FLUTE_EFF_2 1
+#define ENSEMBLE_FLUTE_TIER 2
+#define ENSEMBLE_LUTE_EFF_1 3
+#define ENSEMBLE_LUTE_EFF_2 4
+#define ENSEMBLE_LUTE_TIER 5
+#define ENSEMBLE_DRUM_EFF_1 6
+#define ENSEMBLE_DRUM_EFF_2 7
+#define ENSEMBLE_DRUM_TIER 8
+#define ENSEMBLE_HORN_EFF_1 9
+#define ENSEMBLE_HORN_EFF_2 10
+#define ENSEMBLE_HORN_TIER 11
+#define ENSEMBLE_LYRE_EFF_1 12
+#define ENSEMBLE_LYRE_EFF_2 13
+#define ENSEMBLE_LYRE_TIER 14
+#define ENSEMBLE_LYRE_TIER_2 15
+
+typedef struct Lootbag_t
+{
+	int spawn_x;
+	int spawn_y;
+	bool spawnedOnGround;
+	bool looted;
+	Item* items;
+	size_t num_items;
+	size_t cap_items;
+} Lootbag_t;
+
+typedef struct MonsterRangedAccuracy
+{
+	Uint32 lastTarget;
+	real_t accuracy;
+	Uint32 lastTick;
+} MonsterRangedAccuracy;
+
+typedef struct Stat
+{
+	Sint32 PROFICIENCIES[NUMPROFICIENCIES];
+	Uint8 EFFECTS[NUMEFFECTS];
+
+	int type;                       // Monster
+	sex_t sex;
+	Uint32 stat_appearance;
+	char name[128];
+
+	Uint32 poisonKiller;
+
+	char obituary[128];
+	int killer;                     // KilledBy
+	Uint32 killer_uid;
+	int killer_monster;             // Monster
+	int killer_item;                // ItemType
+	char killer_name[128];
+
+	Sint32 HP, MAXHP, OLDHP;
+	Sint32 MP, MAXMP;
+	Sint32 STR, DEX, CON, INT, PER, CHR;
+	Sint32 EXP, LVL;
+	Sint32 GOLD, HUNGER;
+	Sint32 RANDOM_STR, RANDOM_DEX, RANDOM_CON, RANDOM_INT, RANDOM_PER, RANDOM_CHR;
+	Sint32 RANDOM_MAXHP, RANDOM_HP, RANDOM_MAXMP, RANDOM_MP;
+	Sint32 RANDOM_LVL;
+	Sint32 RANDOM_GOLD;
+	Sint32 MISC_FLAGS[32];
+	Sint32 PLAYER_LVL_STAT_BONUS[NUMSTATS];
+	Sint32 PLAYER_LVL_STAT_TIMER[NUMSTATS * 2];
+
+	Uint32 EFFECTS_ACCRETION_TIME[NUMEFFECTS];
+	Sint32 EFFECTS_TIMERS[NUMEFFECTS];
+	bool defending;
+	Uint32 parrying;
+	Sint32* sneaking;
+	Sint32* allyItemPickup;
+	Sint32* allyClass;
+	Sint32* playerRace;
+	Sint32* playerPolymorphStorage;
+	Sint32* playerSummonLVLHP;
+	Sint32* playerSummonSTRDEXCONINT;
+	Sint32* playerSummonPERCHR;
+	Sint32* playerSummon2LVLHP;
+	Sint32* playerSummon2STRDEXCONINT;
+	Sint32* playerSummon2PERCHR;
+	Sint32* monsterIsCharmed;
+	Sint32* playerShapeshiftStorage;
+	Sint32* monsterTinkeringStatus;
+	Sint32* monsterMimicLockedBy;
+	Sint32* monsterDemonHasBeenExorcised;
+	Sint32* bleedInflictedBy;
+	Sint32* burningInflictedBy;
+	Sint32* monsterNoDropItems;
+	Sint32* monsterForceAllegiance;
+
+	Uint32 leader_uid;
+	list_t FOLLOWERS;
+	list_t inventory;
+	Item* helmet;
+	Item* breastplate;
+	Item* gloves;
+	Item* shoes;
+	Item* shield;
+	Item* weapon;
+	Item* cloak;
+	Item* amulet;
+	Item* ring;
+	Item* mask;
+
+#ifdef USE_FMOD
+	void* monster_sound;
+#else
+	void* monster_sound;
+#endif
+	int monster_idlevar;
+	void* attributes;               // opaque (was std::map<std::string,std::string>)
+	void* player_lootbags;          // opaque (was std::map<Uint32,Lootbag_t>)
+	list_t void_chest_inventory;
+	list_t magic_effects;
+
+	Sint32 EDITOR_ITEMS[ITEM_SLOT_NUM];
+
+	MonsterRangedAccuracy monsterRangedAccuracy;
+	void* itemLastDegradeTick;      // opaque (was std::map<ItemType,Uint32>)
+} Stat;
+
+extern Stat* stats[MAXPLAYERS];
+
+// Stat method wrappers (C-compatible)
+Sint32 stat_getProficiency(const Stat* self, int skill);
+Sint32 stat_getModifiedProficiency(const Stat* self, int skill);
+void stat_setProficiency(Stat* self, int skill, int value);
+void stat_setProficiencyUnsafe(Stat* self, int skill, int value);
+int stat_getGoldWeight(const Stat* self);
+Uint8 stat_getEffectActive(const Stat* self, int effect);
+void stat_clearEffect(Stat* self, int effect);
+void stat_setEffectActive(Stat* self, int effect, Uint8 effectStrength);
+void stat_setEffectValueUnsafe(Stat* self, int effect, Uint8 effectStrength);
+Stat* stat_create(Sint32 sprite);
+void stat_destroy(Stat* self);
+void stat_clearStats(Stat* self);
+void stat_freePlayerEquipment(Stat* self);
+Stat* stat_copyStats(Stat* self);
+void stat_copyNPCStatsAndInventoryFrom(Stat* self, Stat* src);
+void stat_printStats(Stat* self);
+int stat_pickRandomEquippedItemToDegradeOnHit(Stat* self, Item** returnItem, bool excludeWeapon, bool excludeShield, bool excludeArmor, bool excludeJewelry);
+int stat_pickRandomEquippedItem(Stat* self, Item** returnItem, bool excludeWeapon, bool excludeShield, bool excludeArmor, bool excludeJewelry);
+int stat_getPassiveShieldBonus(const Stat* self, bool checkShield, bool excludeSkill);
+int stat_getActiveShieldBonus(const Stat* self, bool checkShield, bool excludeSkill, Item* shieldItem, bool checkNonShieldBonus);
+int stat_getParryingACBonus(Stat* myStats, Item* myWeapon, bool checkWeapon, bool excludeSkill, int weaponSkill);
+const char* stat_getAttribute(const Stat* self, const char* key);
+void stat_setAttribute(Stat* self, const char* key, const char* value);
+bool stat_statusEffectRemovedByCureAilment(const Stat* self, int effect, Entity* my);
+int stat_numShillelaghDebuffsActive(Stat* self, Entity* my);
+void stat_addItemToLootingBag(Stat* self, int player, real_t x, real_t y, Item* item);
+Uint32 stat_getLootingBagKey(const Stat* self, int player);
+bool stat_emptyLootingBag(int player, Uint32 key);
+real_t stat_getEnsembleEffectBonus(Stat* self, EnsembleEffectsBonusType bonusType, int checkEffectStrength);
+Sint32 stat_getThaumProficiencySpellStatBonus(Stat* self, int whichStat, Sint32 currentBonus);
+int stat_getMaxAttackCharge(const Stat* myStats);
+real_t stat_monsterRangedAccuracy_getAccuracy(Stat* self, Uint32 target);
+void stat_monsterRangedAccuracy_incrementAccuracy(Stat* self);
+void stat_monsterRangedAccuracy_modifyProjectile(Stat* self, Entity* my, Entity* projectile);
+
+// Free functions
+static const int MAX_PLAYER_STAT_VALUE = 248;
+void setDefaultMonsterStats(Stat* stats, int sprite);
+bool isMonsterStatsDefault(Stat* myStats);
+const char* getSkillLangEntry(int skill);
+
+static inline bool skillCapstoneUnlocked(int player, int proficiency)
+{
+	return (stat_getModifiedProficiency(stats[player], proficiency) >= CAPSTONE_UNLOCK_LEVEL[proficiency]);
+}
+
+// Stat class static members exposed as extern globals
+extern int stat_maxEquipmentBonusToSkill;
+static const Sint32 kEnsembleBreakPointTier4 = 40;
+static const Sint32 kEnsembleBreakPointTier3 = 20;
+static const Sint32 kEnsembleBreakPointTier2 = 5;
+static const Sint32 kEnsembleBreakPointTier1 = 0;
+static const Uint8 nullEffectValue = 0;
+
+// ===================== END C CONTENT =====================
+
+#endif

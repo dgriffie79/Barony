@@ -12,14 +12,14 @@
 
 #include "../main.h"
 
-#include "../game.hpp"
+#include "../game.h"
 #include "../menu.h"
 #include "../interface/interface.hpp"
 #include "../interface/consolecommand.h"
-#include "../stat.hpp"
+#include "../stat.h"
 #include "../player.hpp"
 #include "../draw.hpp"
-#include "../items.hpp"
+#include "../items.h"
 #include "../mod_tools.hpp"
 #include "../input.hpp"
 #include "../collision.h"

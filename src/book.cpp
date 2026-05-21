@@ -10,8 +10,8 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "files.hpp"
-#include "game.hpp"
+#include "files.h"
+#include "game.h"
 #include "interface/interface.hpp"
 #include "book.hpp"
 #include "cJSON.h"
