@@ -33,6 +33,57 @@
 
 /*-------------------------------------------------------------------------------
 
+	entityDist
+
+	returns the distance between two entities
+
+-------------------------------------------------------------------------------*/
+
+extern "C" real_t entityDist(Entity* my, Entity* your)
+{
+	real_t dx = my->x - your->x;
+	real_t dy = my->y - your->y;
+	return sqrt(dx * dx + dy * dy);
+}
+
+/*-------------------------------------------------------------------------------
+
+	entityInsideEntity
+
+	returns true if the two entities are overlapping
+
+-------------------------------------------------------------------------------*/
+
+extern "C" bool entityInsideEntity(Entity* entity1, Entity* entity2)
+{
+	if ( !entity1 || !entity2 )
+		return false;
+	real_t e1x = entity1->x;
+	real_t e2x = entity2->x;
+	real_t e1y = entity1->y;
+	real_t e2y = entity2->y;
+	real_t e1sx = (real_t)entity1->sizex;
+	real_t e2sx = (real_t)entity2->sizex;
+	real_t e1sy = (real_t)entity1->sizey;
+	real_t e2sy = (real_t)entity2->sizey;
+	if ( e1x + e1sx > e2x - e2sx )
+	{
+		if ( e1x - e1sx < e2x + e2sx )
+		{
+			if ( e1y + e1sy > e2y - e2sy )
+			{
+				if ( e1y - e1sy < e2y + e2sy )
+				{
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+/*-------------------------------------------------------------------------------
+
 	entityClicked
 
 	returns the entity that was last clicked on with the mouse

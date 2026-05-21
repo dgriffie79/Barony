@@ -27,7 +27,7 @@
 
 | Language | File Count | Status |
 |----------|-----------|--------|
-| **Zig** 🦎 | 7 files, 21 functions | ✅ Working (utils, entity, collision, mechanisms, item, objects, scores) |
+| **Zig** 🦎 | 8 files (6 active + 2 empty) | ✅ Working (utils, entity, item, objects, scores, set) |
 | **C** 🔧 | 6 files (hash, savepng, shader, cursors, prng, defines) | ✅ Working (system-API glue layer) |
 | **C++** 📦 | 148 files | ✅ Working |
 | **Headers** | 25 dual-mode .h + ~30 .hpp | ✅ Working |
@@ -59,3 +59,4 @@ DLLs must be in PATH: `$env:PATH += ";C:\dev\barony-deps\bin"`
 1. **Debug mode crashes** — Zig safety checks fire on benign null-pointer-offset arithmetic.
 2. **@cImport limitations** — Works for our C-compatible headers (entity.h, defs.h) but fails on libpng/SDL/GLEW macro-heavy headers.
 3. **Zig 0.16 quirks** — `callconv(.C)` must be lowercase `.c`. `[*c]` pointer semantics differ from `*`.
+4. **Entity struct layout mismatch** — The dual-mode `Entity` in `entity.h` uses `void* dithering` (8 bytes) in the C struct vs `std::unordered_map<view_t*, Dither>` (~48 bytes) in the C++ class. This ~40-byte offset shift causes ALL subsequent fields (`x`, `y`, `sizex`, `sizey`, `skill[]`, etc.) to be at wrong offsets when read from Zig via @cImport. **Fix**: Any Zig function that accesses Entity fields must be moved to C++ with `extern "C"` linkage. Currently affected functions (`entityDist`, `entityInsideEntity`, `getPowerablesOnTile`) have been moved back to C++.

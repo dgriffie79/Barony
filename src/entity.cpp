@@ -10025,6 +10025,44 @@ list_t* checkTileForEntity(int x, int y)
 
 /*-------------------------------------------------------------------------------
 
+	getPowerablesOnTile
+
+	Fills the given list with nodes for every "powerable" entity on the given
+	map tile (x, y) — entities with a non-zero skill[28] value
+
+-------------------------------------------------------------------------------*/
+
+extern "C" void getPowerablesOnTile(int x, int y, list_t** list)
+{
+	list_t* entities = checkTileForEntity(x, y);
+	if ( !entities )
+	{
+		return;
+	}
+	node_t* node = NULL;
+	for ( node = entities->first; node != NULL; node = node->next )
+	{
+		if ( node->element )
+		{
+			Entity* entity = (Entity*)node->element;
+			if ( entity->skill[28] != 0 )
+			{
+				if ( *list == NULL )
+				{
+					*list = (list_t*)malloc(sizeof(list_t));
+					(*list)->first = NULL;
+					(*list)->last = NULL;
+				}
+				node_t* node2 = list_AddNodeLast(*list);
+				node2->element = entity;
+				node2->deconstructor = &emptyDeconstructor;
+			}
+		}
+	}
+}
+
+/*-------------------------------------------------------------------------------
+
 getItemsOnTile
 
 Fills the given list with nodes for every item entity on the given
