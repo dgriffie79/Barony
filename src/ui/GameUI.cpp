@@ -5880,7 +5880,7 @@ void StatusEffectQueue_t::loadStatusEffectsJSON()
 				if ( cJSON_HasObjectItem(d, "sustained_effects") )
 				{
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "sustained_effects")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						int id = -1;
 						if ( cJSON_HasObjectItem(itr, "id") )
@@ -5952,7 +5952,7 @@ void StatusEffectQueue_t::loadStatusEffectsJSON()
 				if ( cJSON_HasObjectItem(d, "effects") )
 				{
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "effects")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						int id = -1;
 						if ( cJSON_HasObjectItem(itr, "id") )
@@ -14361,7 +14361,7 @@ void Player::CharacterSheet_t::loadCharacterSheetJSON()
 				{
 					mapDisplayNamesDescriptions.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "level_strings")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						std::string name = "";
 						std::string desc = "";
@@ -14380,12 +14380,12 @@ void Player::CharacterSheet_t::loadCharacterSheetJSON()
 				{
 					hoverTextStrings.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "hover_text")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						if ( cJSON_IsObject(itr) )
 						{
 							for ( cJSON* inner_itr = itr->child;
-								inner_itr != nullptr; ++inner_itr )
+								inner_itr != nullptr; inner_itr = inner_itr->next )
 							{
 								hoverTextStrings[inner_itr->string] = inner_itr->valuestring;
 							}
@@ -25583,7 +25583,7 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 					auto& allEntries = skillSheetData.skillEntries;
 					allEntries.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "skills")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						allEntries.push_back(SkillSheetData_t::SkillEntry_t());
 						auto& entry = allEntries[allEntries.size() - 1];
@@ -25672,7 +25672,7 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 						if ( cJSON_HasObjectItem(itr, "effects_position") )
 						{
 							for ( cJSON* effPos_itr = cJSON_GetObjectItem(itr, "effects_position")->child; 
-								effPos_itr != nullptr; ++effPos_itr )
+								effPos_itr != nullptr; effPos_itr = effPos_itr->next )
 							{
 								std::string memberName = effPos_itr->string;
 								if ( memberName == "effect_start_offset_x" )
@@ -25774,7 +25774,7 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 					else if ( cJSON_IsArray(cJSON_GetObjectItem(d, "alchemy_potion_names_to_filter")) )
 					{
 						for ( cJSON* pot_itr = cJSON_GetObjectItem(d, "alchemy_potion_names_to_filter")->child; 
-							pot_itr != nullptr; ++pot_itr )
+							pot_itr != nullptr; pot_itr = pot_itr->next )
 						{
 							skillSheetData.potionNamesToFilter.push_back(pot_itr->valuestring);
 						}
@@ -25852,7 +25852,7 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 					auto& allyTable = skillSheetData.leadershipAllyTableBase;
 					allyTable.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "leadership_allies_base")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						std::string monsterName = itr->string;
 						int monsterType = -1;
@@ -25868,7 +25868,7 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 						if ( cJSON_IsArray(itr) )
 						{
 							for ( cJSON* ally_itr = itr->child;
-								ally_itr != nullptr; ++ally_itr )
+								ally_itr != nullptr; ally_itr = ally_itr->next )
 							{
 								std::string allyName = ally_itr->valuestring;
 								int allyType = -1;
@@ -25893,7 +25893,7 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 					auto& allyTable = skillSheetData.leadershipAllyTableLegendary;
 					allyTable.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "leadership_allies_legendary")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						std::string monsterName = itr->string;
 						int monsterType = -1;
@@ -25909,7 +25909,7 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 						if ( cJSON_IsArray(itr) )
 						{
 							for ( cJSON* ally_itr = itr->child;
-								ally_itr != nullptr; ++ally_itr )
+								ally_itr != nullptr; ally_itr = ally_itr->next )
 							{
 								std::string allyName = ally_itr->valuestring;
 								int allyType = -1;
@@ -25934,7 +25934,7 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 					auto& allyTable = skillSheetData.leadershipAllyTableSpecialRecruitment;
 					allyTable.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "leadership_allies_unique_recruits")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						std::string monsterName = itr->string;
 						int monsterType = -1;
@@ -25950,10 +25950,10 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 						if ( cJSON_IsArray(itr) )
 						{
 							for ( cJSON* ally_itr = itr->child;
-								ally_itr != nullptr; ++ally_itr )
+								ally_itr != nullptr; ally_itr = ally_itr->next )
 							{
 								for ( cJSON* entry_itr = ally_itr->child;
-									entry_itr != nullptr; ++entry_itr )
+									entry_itr != nullptr; entry_itr = entry_itr->next )
 								{
 									std::string allyName = entry_itr->string;
 									int allyType = -1;
@@ -26769,7 +26769,7 @@ void loadHUDSettingsJSON()
 						if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "messages"), pair.first) )
 						{
 							for ( cJSON* itr = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "messages"), pair.first)->child;
-								itr != nullptr; ++itr )
+								itr != nullptr; itr = itr->next )
 							{
 								std::string alignmentStr = itr->string;
 								auto alignment = Player::MessageZone_t::ALIGN_LEFT_BOTTOM;
@@ -26792,7 +26792,7 @@ void loadHUDSettingsJSON()
 
 								auto& setting = messageZoneSettings.addSetting(pair.second, alignment);
 								for ( cJSON* itr2 = itr->child;
-									itr2 != nullptr; ++itr2 )
+									itr2 != nullptr; itr2 = itr2->next )
 								{
 									std::string layoutStr = itr2->string;
 									auto layout = MessageZoneSettings_t::MessageSettings_t::LAYOUT_DEFAULT;
@@ -26821,7 +26821,7 @@ void loadHUDSettingsJSON()
 					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "world_dialogue"), "types") )
 					{
 						for ( cJSON* itr = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "world_dialogue"), "types")->child;
-							itr != nullptr; ++itr )
+							itr != nullptr; itr = itr->next )
 						{
 							std::string type = itr->string;
 							auto dialogueType = Player::WorldUI_t::WorldTooltipDialogue_t::DIALOGUE_NONE;
@@ -26912,7 +26912,7 @@ void loadHUDSettingsJSON()
 					{
 						enemyBarSettings.heightOffsets.clear();
 						for ( cJSON* itr = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "world_height_offsets")->child;
-							itr != nullptr; ++itr )
+							itr != nullptr; itr = itr->next )
 						{
 							enemyBarSettings.heightOffsets[itr->string] = itr->valuedouble;
 						}
@@ -26921,7 +26921,7 @@ void loadHUDSettingsJSON()
 					{
 						enemyBarSettings.screenDistanceOffsets.clear();
 						for ( cJSON* itr = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "screen_depth_distance_offset")->child;
-							itr != nullptr; ++itr )
+							itr != nullptr; itr = itr->next )
 						{
 							enemyBarSettings.screenDistanceOffsets[itr->string] = itr->valuedouble;
 						}
@@ -26930,7 +26930,7 @@ void loadHUDSettingsJSON()
 					{
 						EnemyHPDamageBarHandler::widthHealthBreakpointsMonsters.clear();
 						for ( cJSON* itr = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "monster_bar_width_to_hp_intervals")->child;
-							itr != nullptr; ++itr )
+							itr != nullptr; itr = itr->next )
 						{
 							// you need to FindMember() if getting objects from an array...
 							auto widthPercentMember = cJSON_GetObjectItem(itr, "width_percent");
@@ -26951,7 +26951,7 @@ void loadHUDSettingsJSON()
 					{
 						EnemyHPDamageBarHandler::widthHealthBreakpointsFurniture.clear();
 						for ( cJSON* itr = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "furniture_bar_width_to_hp_intervals")->child;
-							itr != nullptr; ++itr )
+							itr != nullptr; itr = itr->next )
 						{
 							// you need to FindMember() if getting objects from an array...
 							auto widthPercentMember = cJSON_GetObjectItem(itr, "width_percent");
@@ -27151,7 +27151,7 @@ void loadHUDSettingsJSON()
 				{
 					Player::GUIDropdown_t::allDropDowns.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "dropdowns")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						auto& dropdown = Player::GUIDropdown_t::allDropDowns[itr->string];
 						dropdown.internalName = itr->string;
@@ -27204,7 +27204,7 @@ void loadHUDSettingsJSON()
 							dropdown.defaultOption = 0;
 						}
 						for ( cJSON* options_itr = cJSON_GetObjectItem(itr, "options")->child;
-							options_itr != nullptr; ++options_itr )
+							options_itr != nullptr; options_itr = options_itr->next )
 						{
 							std::string text = "";
 							std::string controller_glyph = "";
