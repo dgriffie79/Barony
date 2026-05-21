@@ -1982,7 +1982,10 @@ static cJSON *get_object_item(const cJSON * const object, const char * const nam
 
 CJSON_PUBLIC(cJSON *) cJSON_GetObjectItem(const cJSON * const object, const char * const string)
 {
-    return get_object_item(object, string, false);
+    cJSON *result = get_object_item(object, string, false);
+    fprintf(stderr, "[cJSON] GetObjectItem(object=%p, string=\"%s\") -> %p type=%d\n", (const void*)object, string ? string : "(null)", (const void*)result, result ? result->type : -1);
+    fflush(stderr);
+    return result;
 }
 
 CJSON_PUBLIC(cJSON *) cJSON_GetObjectItemCaseSensitive(const cJSON * const object, const char * const string)
@@ -1992,7 +1995,10 @@ CJSON_PUBLIC(cJSON *) cJSON_GetObjectItemCaseSensitive(const cJSON * const objec
 
 CJSON_PUBLIC(cJSON_bool) cJSON_HasObjectItem(const cJSON *object, const char *string)
 {
-    return cJSON_GetObjectItem(object, string) ? 1 : 0;
+    cJSON_bool result = cJSON_GetObjectItem(object, string) ? 1 : 0;
+    fprintf(stderr, "[cJSON] HasObjectItem(object=%p, string=\"%s\") -> %d\n", (const void*)object, string ? string : "(null)", (int)result);
+    fflush(stderr);
+    return result;
 }
 
 /* Utility for array list handling. */

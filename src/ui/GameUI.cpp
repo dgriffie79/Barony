@@ -26024,14 +26024,9 @@ void loadHUDSettingsJSON()
 			else
 			{
 				printlog("[JSON]: HUD version check passed, reading settings...");
-				#define LOG_OBJ(obj, key) ({ cJSON* _r = cJSON_GetObjectItem(obj, key); printlog("[JSON]: GetObjectItem(%s) -> %p type=%d", key, (void*)_r, _r?_r->type:-1); _r; })
-				#define LOG_HAS(obj, key) ({ int _h = cJSON_HasObjectItem(obj, key); printlog("[JSON]: HasObjectItem(%s) -> %d", key, _h); _h; })
-				printlog("[JSON]: checking selected_cursor_opacity...");
-				if ( LOG_HAS(d, "selected_cursor_opacity") )
+				if ( cJSON_HasObjectItem(d, "selected_cursor_opacity") )
 				{
-					printlog("[JSON]: reading selected_cursor_opacity...");
-					selectedCursorOpacity = LOG_OBJ(d, "selected_cursor_opacity")->valueint;
-					printlog("[JSON]: read selected_cursor_opacity OK");
+					selectedCursorOpacity = cJSON_GetObjectItem(d, "selected_cursor_opacity")->valueint;
 				}
 				if ( cJSON_HasObjectItem(d, "selected_old_cursor_opacity") )
 				{
