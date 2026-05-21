@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 BARONY
-File: mod_tools_gamemode.cpp - Game mode management (tutorial, seeded runs, challenge runs)
+File: mod_tools_gamemode.cpp - Game mode management (converted from rapidjson to cJSON)
 Desc: Extracted from mod_tools.cpp for modularity
 
 Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
@@ -78,7 +78,6 @@ void GameModeManager_t::Tutorial_t::createFirstTutorialCompletedPrompt()
 	MainMenu::tutorialFirstTimeCompleted();
 }
 
-//TODO: NX PORT: Update for the Switch?
 void GameModeManager_t::Tutorial_t::readFromFile()
 {
 	levels.clear();
@@ -96,28 +95,41 @@ void GameModeManager_t::Tutorial_t::readFromFile()
 		char buf[65536];
 		int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 		buf[count] = '\0';
-		rapidjson::StringStream is(buf);
 		FileIO::close(fp);
 
-		rapidjson::Document d;
-		d.ParseStream(is);
-		if ( !d.HasMember("version") || !d.HasMember("levels") )
+		cJSON* d = cJSON_Parse(buf);
+		if ( !d )
 		{
-			printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+			printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
 			return;
 		}
-		int version = d["version"].GetInt();
-
-		for ( rapidjson::Value::ConstMemberIterator level_itr = d["levels"].MemberBegin(); level_itr != d["levels"].MemberEnd(); ++level_itr )
+		if ( !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "levels") )
 		{
-			Tutorial_t::Level_t level;
-			level.filename = level_itr->name.GetString();
-			level.title = level_itr->value["title"].GetString();
-			level.description = level_itr->value["desc"].GetString();
-			levels.push_back(level);
+			printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+			cJSON_Delete(d);
+			return;
 		}
-		Menu.windowTitle = d["window_title"].GetString();
-		Menu.defaultHoverText = d["default_hover_text"].GetString();
+		int version = cJSON_GetObjectItem(d, "version")->valueint;
+
+		cJSON* levelsObj = cJSON_GetObjectItem(d, "levels");
+		if ( levelsObj )
+		{
+			for ( cJSON* level_itr = levelsObj->child; level_itr; level_itr = level_itr->next )
+			{
+				Tutorial_t::Level_t level;
+				level.filename = level_itr->string;
+				cJSON* titleItem = cJSON_GetObjectItem(level_itr, "title");
+				if ( titleItem ) level.title = titleItem->valuestring;
+				cJSON* descItem = cJSON_GetObjectItem(level_itr, "desc");
+				if ( descItem ) level.description = descItem->valuestring;
+				levels.push_back(level);
+			}
+		}
+		cJSON* winTitle = cJSON_GetObjectItem(d, "window_title");
+		if ( winTitle ) Menu.windowTitle = winTitle->valuestring;
+		cJSON* defHover = cJSON_GetObjectItem(d, "default_hover_text");
+		if ( defHover ) Menu.defaultHoverText = defHover->valuestring;
+		cJSON_Delete(d);
 		printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
 	}
 	else
@@ -139,73 +151,80 @@ void GameModeManager_t::Tutorial_t::readFromFile()
 		char buf[65536];
 		int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 		buf[count] = '\0';
-		rapidjson::StringStream is(buf);
 		FileIO::close(fp);
 
-		rapidjson::Document d;
-		d.ParseStream(is);
-		if ( !d.HasMember("version") || !d.HasMember("levels") )
+		cJSON* d = cJSON_Parse(buf);
+		if ( !d )
+		{
+			printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+			return;
+		}
+		if ( !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "levels") )
 		{
 			printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+			cJSON_Delete(d);
 
 			// recreate this file, corrupted?
 			printlog("[JSON]: File %s corrupt, recreating...", inputPath.c_str());
-			d.Clear();
-			d.SetObject();
-			CustomHelpers::addMemberToRoot(d, "version", rapidjson::Value(1));
-			CustomHelpers::addMemberToRoot(d, "first_time_prompt", rapidjson::Value(FirstTimePrompt.showFirstTimePrompt));
-			CustomHelpers::addMemberToRoot(d, "first_tutorial_complete", rapidjson::Value(firstTutorialCompleted));
-
-			rapidjson::Value levelsObj(rapidjson::kObjectType);
-			CustomHelpers::addMemberToRoot(d, "levels", levelsObj);
+			cJSON* newDoc = cJSON_CreateObject();
+			cJSON_AddNumberToObject(newDoc, "version", 1);
+			cJSON_AddBoolToObject(newDoc, "first_time_prompt", FirstTimePrompt.showFirstTimePrompt);
+			cJSON_AddBoolToObject(newDoc, "first_tutorial_complete", firstTutorialCompleted);
+			cJSON* newLevels = cJSON_AddObjectToObject(newDoc, "levels");
 			for ( auto it = levels.begin(); it != levels.end(); ++it )
 			{
-				rapidjson::Value level(rapidjson::kObjectType);
-				level.AddMember("completion_time", rapidjson::Value(it->completionTime), d.GetAllocator());
-				CustomHelpers::addMemberToSubkey(d, "levels", it->filename, level);
+				cJSON* level = cJSON_CreateObject();
+				cJSON_AddNumberToObject(level, "completion_time", (double)it->completionTime);
+				cJSON_AddItemToObject(newLevels, it->filename.c_str(), level);
 			}
-			writeToFile((cJSON*)(void*)&d);
+			writeToFile(newDoc);
+			cJSON_Delete(newDoc);
 			return;
 		}
-		int version = d["version"].GetInt();
+		int version = cJSON_GetObjectItem(d, "version")->valueint;
 
-		this->FirstTimePrompt.showFirstTimePrompt = d["first_time_prompt"].GetBool();
-		if ( d.HasMember("first_tutorial_complete") )
-		{
-			this->firstTutorialCompleted = d["first_tutorial_complete"].GetBool();
-		}
+		cJSON* fpt = cJSON_GetObjectItem(d, "first_time_prompt");
+		if ( fpt ) this->FirstTimePrompt.showFirstTimePrompt = cJSON_IsTrue(fpt);
+		cJSON* ftc = cJSON_GetObjectItem(d, "first_tutorial_complete");
+		if ( ftc ) this->firstTutorialCompleted = cJSON_IsTrue(ftc);
 
-		for ( auto it = levels.begin(); it != levels.end(); ++it )
+		cJSON* levelsObj = cJSON_GetObjectItem(d, "levels");
+		if ( levelsObj )
 		{
-			if ( d["levels"].HasMember(it->filename.c_str()) && d["levels"][it->filename.c_str()].HasMember("completion_time") )
+			for ( auto it = levels.begin(); it != levels.end(); ++it )
 			{
-				it->completionTime = d["levels"][it->filename.c_str()]["completion_time"].GetUint();
+				cJSON* levelItem = cJSON_GetObjectItem(levelsObj, it->filename.c_str());
+				if ( levelItem )
+				{
+					cJSON* ct = cJSON_GetObjectItem(levelItem, "completion_time");
+					if ( ct ) it->completionTime = (Uint32)ct->valuedouble;
+				}
 			}
 		}
+		cJSON_Delete(d);
 		printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
 	}
 	else
 	{
 		printlog("[JSON]: File %s does not exist, creating...", tutorialScoresFilename.c_str());
 
-		rapidjson::Document d;
-		d.SetObject();
-		CustomHelpers::addMemberToRoot(d, "version", rapidjson::Value(1));
-		CustomHelpers::addMemberToRoot(d, "first_time_prompt", rapidjson::Value(true));
-		CustomHelpers::addMemberToRoot(d, "first_tutorial_complete", rapidjson::Value(false));
+		cJSON* d = cJSON_CreateObject();
+		cJSON_AddNumberToObject(d, "version", 1);
+		cJSON_AddBoolToObject(d, "first_time_prompt", 1);
+		cJSON_AddBoolToObject(d, "first_tutorial_complete", 0);
 
 		this->FirstTimePrompt.showFirstTimePrompt = true;
 		this->firstTutorialCompleted = false;
 
-		rapidjson::Value levelsObj(rapidjson::kObjectType);
-		CustomHelpers::addMemberToRoot(d, "levels", levelsObj);
+		cJSON* levelsObj = cJSON_AddObjectToObject(d, "levels");
 		for ( auto it = levels.begin(); it != levels.end(); ++it )
 		{
-			rapidjson::Value level(rapidjson::kObjectType);
-			level.AddMember("completion_time", rapidjson::Value(it->completionTime), d.GetAllocator());
-			CustomHelpers::addMemberToSubkey(d, "levels", it->filename, level);
+			cJSON* level = cJSON_CreateObject();
+			cJSON_AddNumberToObject(level, "completion_time", (double)it->completionTime);
+			cJSON_AddItemToObject(levelsObj, it->filename.c_str(), level);
 		}
-		writeToFile((cJSON*)(void*)&d);
+		writeToFile(d);
+		cJSON_Delete(d);
 	}
 }
 
@@ -235,46 +254,72 @@ void GameModeManager_t::Tutorial_t::writeToDocument()
 	char buf[65536];
 	int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	rapidjson::StringStream is(buf);
 	FileIO::close(fp);
 
-	rapidjson::Document d;
-	d.ParseStream(is);
+	cJSON* d = cJSON_Parse(buf);
+	if ( !d )
+	{
+		printlog("[JSON]: Could not parse json file %s", inputPath.c_str());
+		return;
+	}
 
-	if ( !d.HasMember("version") || !d.HasMember("levels") )
+	if ( !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "levels") )
 	{
 		printlog("[JSON]: File %s corrupt, recreating...", inputPath.c_str());
-		d.Clear();
-		d.SetObject();
-		CustomHelpers::addMemberToRoot(d, "version", rapidjson::Value(1));
-		CustomHelpers::addMemberToRoot(d, "first_time_prompt", rapidjson::Value(FirstTimePrompt.showFirstTimePrompt));
-		CustomHelpers::addMemberToRoot(d, "first_tutorial_complete", rapidjson::Value(firstTutorialCompleted));
-
-		rapidjson::Value levelsObj(rapidjson::kObjectType);
-		CustomHelpers::addMemberToRoot(d, "levels", levelsObj);
+		cJSON_Delete(d);
+		d = cJSON_CreateObject();
+		cJSON_AddNumberToObject(d, "version", 1);
+		cJSON_AddBoolToObject(d, "first_time_prompt", FirstTimePrompt.showFirstTimePrompt);
+		cJSON_AddBoolToObject(d, "first_tutorial_complete", firstTutorialCompleted);
+		cJSON* levelsObj = cJSON_AddObjectToObject(d, "levels");
 		for ( auto it = levels.begin(); it != levels.end(); ++it )
 		{
-			rapidjson::Value level(rapidjson::kObjectType);
-			level.AddMember("completion_time", rapidjson::Value(it->completionTime), d.GetAllocator());
-			CustomHelpers::addMemberToSubkey(d, "levels", it->filename, level);
+			cJSON* level = cJSON_CreateObject();
+			cJSON_AddNumberToObject(level, "completion_time", (double)it->completionTime);
+			cJSON_AddItemToObject(levelsObj, it->filename.c_str(), level);
 		}
+		writeToFile(d);
+		cJSON_Delete(d);
+		return;
 	}
 	else
 	{
-		d["first_time_prompt"].SetBool(this->FirstTimePrompt.showFirstTimePrompt);
-		if ( !d.HasMember("first_tutorial_complete") )
+		cJSON* fpt = cJSON_GetObjectItem(d, "first_time_prompt");
+		if ( fpt )
 		{
-			CustomHelpers::addMemberToRoot(d, "first_tutorial_complete", rapidjson::Value(false));
+			cJSON_SetBoolValue(fpt, FirstTimePrompt.showFirstTimePrompt);
 		}
-		d["first_tutorial_complete"].SetBool(this->firstTutorialCompleted);
-
-		for ( auto it = levels.begin(); it != levels.end(); ++it )
+		if ( !cJSON_HasObjectItem(d, "first_tutorial_complete") )
 		{
-			d["levels"][it->filename.c_str()]["completion_time"].SetUint(it->completionTime);
+			cJSON_AddBoolToObject(d, "first_tutorial_complete", 0);
+		}
+		cJSON* ftc = cJSON_GetObjectItem(d, "first_tutorial_complete");
+		if ( ftc )
+		{
+			cJSON_SetBoolValue(ftc, firstTutorialCompleted);
+		}
+
+		cJSON* levelsObj = cJSON_GetObjectItem(d, "levels");
+		if ( levelsObj )
+		{
+			for ( auto it = levels.begin(); it != levels.end(); ++it )
+			{
+				cJSON* levelItem = cJSON_GetObjectItem(levelsObj, it->filename.c_str());
+				if ( levelItem )
+				{
+					cJSON* ct = cJSON_GetObjectItem(levelItem, "completion_time");
+					if ( ct )
+					{
+						ct->valueint = (int)it->completionTime;
+						ct->valuedouble = (double)it->completionTime;
+					}
+				}
+			}
 		}
 	}
 
-	writeToFile((cJSON*)(void*)&d);
+	writeToFile(d);
+	cJSON_Delete(d);
 }
 
 void GameModeManager_t::Tutorial_t::Menu_t::open()
@@ -304,68 +349,11 @@ void GameModeManager_t::Tutorial_t::Menu_t::onClickEntry()
 void GameModeManager_t::Tutorial_t::FirstTimePrompt_t::createPrompt()
 {
 	return;
-	//bWindowOpen = true;
-	//showFirstTimePrompt = false;
-	//if ( !title_bmp )
-	//{
-	//	return;
-	//}
-
-	//// create window
-	//subwindow = 1;
-	//subx1 = xres / 2 - ((0.75 * title_bmp->w / 2) + 52);
-	//subx2 = xres / 2 + ((0.75 * title_bmp->w / 2) + 52);
-	//suby1 = yres / 2 - ((0.75 * title_bmp->h / 2) + 88);
-	//suby2 = yres / 2 + ((0.75 * title_bmp->h / 2) + 88);
-	//strcpy(subtext, "");
-
-	//Uint32 centerWindowX = subx1 + (subx2 - subx1) / 2;
-
-	//button_t* button = newButton();
-	//strcpy(button->label, Language::get(3965));
-	//button->sizex = strlen(Language::get(3965)) * 10 + 8;
-	//button->sizey = 20;
-	//button->x = centerWindowX - button->sizex / 2;
-	//button->y = suby2 - 28 - 24;
-	//button->action = &buttonPromptEnterTutorialHub;
-	//button->visible = 1;
-	//button->focused = 1;
-
-	//button = newButton();
-	//strcpy(button->label, Language::get(3966));
-	//button->sizex = strlen(Language::get(3966)) * 12 + 8;
-	//button->sizey = 20;
-	//button->x = centerWindowX - button->sizex / 2;
-	//button->y = suby2 - 28;
-	//button->action = &buttonSkipPrompt;
-	//button->visible = 1;
-	//button->focused = 1;
 }
 
 void GameModeManager_t::Tutorial_t::FirstTimePrompt_t::drawDialogue()
 {
 	return;
-	/*if ( !bWindowOpen )
-	{
-		return;
-	}
-	Uint32 centerWindowX = subx1 + (subx2 - subx1) / 2;
-
-	SDL_Rect pos;
-	pos.x = centerWindowX - 0.75 * title_bmp->w / 2;
-	pos.y = suby1 + 4;
-	pos.w = 0.75 * title_bmp->w;
-	pos.h = 0.75 * title_bmp->h;
-	SDL_Rect scaled;
-	scaled.x = 0;
-	scaled.y = 0;
-	scaled.w = title_bmp->w * 0.75;
-	scaled.h = title_bmp->h * 0.75;
-	drawImageScaled(title_bmp, nullptr, &pos);
-	
-	ttfPrintTextFormattedColor(ttf12, centerWindowX - strlen(Language::get(3936)) * TTF12_WIDTH / 2, suby2 + 8 - TTF12_HEIGHT * 13, makeColorRGB(255, 255, 0), Language::get(3936));
-	ttfPrintTextFormatted(ttf12, centerWindowX - (longestline(Language::get(3967)) * TTF12_WIDTH) / 2, suby2 + 8 - TTF12_HEIGHT * 11, Language::get(3967));
-	ttfPrintTextFormatted(ttf12, centerWindowX - (longestline(Language::get(3967)) * TTF12_WIDTH) / 2 - TTF12_WIDTH / 2, suby2 + 8 - TTF12_HEIGHT * 11, Language::get(3968));*/
 }
 
 void GameModeManager_t::Tutorial_t::FirstTimePrompt_t::buttonSkipPrompt(button_t* my)
@@ -554,27 +542,48 @@ void GameModeManager_t::CurrentSession_t::SeededRun_t::readSeedNamesFromFile()
 	char buf[10000];
 	int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	rapidjson::StringStream is(buf);
 	FileIO::close(fp);
 
-	rapidjson::Document d;
-	d.ParseStream(is);
-	if ( !d.HasMember("version") || !d.HasMember("prefixes") || !d.HasMember("suffixes") )
+	cJSON* d = cJSON_Parse(buf);
+	if ( !d )
+	{
+		printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+		return;
+	}
+	if ( !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "prefixes") || !cJSON_HasObjectItem(d, "suffixes") )
 	{
 		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
 
 	prefixes.clear();
 	suffixes.clear();
-	for ( auto it = d["prefixes"].Begin(); it != d["prefixes"].End(); ++it )
+	cJSON* prefixesArr = cJSON_GetObjectItem(d, "prefixes");
+	if ( prefixesArr )
 	{
-		prefixes.push_back(it->GetString());
+		cJSON* it = NULL;
+		cJSON_ArrayForEach(it, prefixesArr)
+		{
+			if ( cJSON_IsString(it) && it->valuestring )
+			{
+				prefixes.push_back(it->valuestring);
+			}
+		}
 	}
-	for ( auto it = d["suffixes"].Begin(); it != d["suffixes"].End(); ++it )
+	cJSON* suffixesArr = cJSON_GetObjectItem(d, "suffixes");
+	if ( suffixesArr )
 	{
-		suffixes.push_back(it->GetString());
+		cJSON* it = NULL;
+		cJSON_ArrayForEach(it, suffixesArr)
+		{
+			if ( cJSON_IsString(it) && it->valuestring )
+			{
+				suffixes.push_back(it->valuestring);
+			}
+		}
 	}
+	cJSON_Delete(d);
 }
 
 void GameModeManager_t::CurrentSession_t::ChallengeRun_t::updateKillEvent(Entity* entity)
@@ -724,268 +733,283 @@ static ConsoleVariable<int> cvar_challengeevent("/challengeevent", -1);
 
 bool GameModeManager_t::CurrentSession_t::ChallengeRun_t::loadScenario()
 {
-	rapidjson::Document d;
-	const char* json = scenarioStr.c_str();
-	d.Parse(json);
-
-	if ( !d.HasMember("version") || !d.HasMember("seed") || !d.HasMember("lockedFlags") || !d.HasMember("setFlags") )
+	cJSON* d = cJSON_Parse(scenarioStr.c_str());
+	if ( !d )
 	{
-		printlog("[JSON]: Error: Scenario has no 'version' value in json file, or JSON syntax incorrect!");
+		printlog("[JSON]: Error: Could not parse scenario JSON!");
 		reset();
 		return false;
 	}
 
-	seed = d["seed"].GetUint();
-	seed_word = d["seed_word"].GetString();
-	lockedFlags = d["lockedFlags"].GetUint();
-	setFlags = d["setFlags"].GetUint();
-	lid = d["lid"].GetString();
-	lid_version = d["lid_version"].GetInt();
-
-	if ( d.HasMember("base_stats") )
+	if ( !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "seed") || !cJSON_HasObjectItem(d, "lockedFlags") || !cJSON_HasObjectItem(d, "setFlags") )
 	{
-		const rapidjson::Value& stats = d["base_stats"];
-		for ( auto itr = stats.MemberBegin(); itr != stats.MemberEnd(); ++itr )
+		printlog("[JSON]: Error: Scenario has no 'version' value in json file, or JSON syntax incorrect!");
+		cJSON_Delete(d);
+		reset();
+		return false;
+	}
+
+	cJSON* seedItem = cJSON_GetObjectItem(d, "seed");
+	if ( seedItem ) seed = (Uint32)seedItem->valuedouble;
+	cJSON* seedWordItem = cJSON_GetObjectItem(d, "seed_word");
+	if ( seedWordItem ) seed_word = seedWordItem->valuestring;
+	cJSON* lockedItem = cJSON_GetObjectItem(d, "lockedFlags");
+	if ( lockedItem ) lockedFlags = (Uint32)lockedItem->valuedouble;
+	cJSON* setFlagsItem = cJSON_GetObjectItem(d, "setFlags");
+	if ( setFlagsItem ) setFlags = (Uint32)setFlagsItem->valuedouble;
+	cJSON* lidItem = cJSON_GetObjectItem(d, "lid");
+	if ( lidItem ) lid = lidItem->valuestring;
+	cJSON* lidVerItem = cJSON_GetObjectItem(d, "lid_version");
+	if ( lidVerItem ) lid_version = lidVerItem->valueint;
+
+	cJSON* baseStatsObj = cJSON_GetObjectItem(d, "base_stats");
+	if ( baseStatsObj )
+	{
+		for ( cJSON* itr = baseStatsObj->child; itr; itr = itr->next )
 		{
-			std::string name = itr->name.GetString();
+			std::string name = itr->string;
 			if ( name.compare("enabled") == 0 )
 			{
-				customBaseStats = itr->value.GetInt() == 0 ? false : true;
+				customBaseStats = cJSON_IsTrue(itr);
 			}
 			else if ( name.compare("HP") == 0 )
 			{
-				baseStats->HP = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->HP = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("MAXHP") == 0 )
 			{
-				baseStats->MAXHP = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->MAXHP = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("MP") == 0 )
 			{
-				baseStats->MP = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->MP = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("MAXMP") == 0 )
 			{
-				baseStats->MAXMP = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->MAXMP = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("STR") == 0 )
 			{
-				baseStats->STR = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->STR = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("DEX") == 0 )
 			{
-				baseStats->DEX = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->DEX = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("CON") == 0 )
 			{
-				baseStats->CON = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->CON = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("INT") == 0 )
 			{
-				baseStats->INT = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->INT = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("PER") == 0 )
 			{
-				baseStats->PER = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->PER = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("CHR") == 0 )
 			{
-				baseStats->CHR = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->CHR = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("EXP") == 0 )
 			{
-				baseStats->EXP = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->EXP = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("LVL") == 0 )
 			{
-				baseStats->LVL = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->LVL = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("GOLD") == 0 )
 			{
-				baseStats->GOLD = static_cast<Sint32>(itr->value.GetInt());
+				baseStats->GOLD = static_cast<Sint32>(itr->valueint);
 			}
-			else if ( name.compare("PROFICIENCIES") == 0 )
+			else if ( name.compare("PROFICIENCIES") == 0 && cJSON_IsArray(itr) )
 			{
 				int index = -1;
-				for ( auto arr_itr = itr->value.Begin(); arr_itr != itr->value.End(); ++arr_itr )
+				cJSON* arr_itr = NULL;
+				cJSON_ArrayForEach(arr_itr, itr)
 				{
 					++index;
 					if ( index >= NUMPROFICIENCIES )
 					{
 						break;
 					}
-					baseStats->setProficiency(index, arr_itr->GetInt());
+					baseStats->setProficiency(index, arr_itr->valueint);
 				}
 			}
 		}
 	}
 
-	if ( d.HasMember("add_stats") )
+	cJSON* addStatsObj = cJSON_GetObjectItem(d, "add_stats");
+	if ( addStatsObj )
 	{
-		const rapidjson::Value& stats = d["add_stats"];
-		for ( auto itr = stats.MemberBegin(); itr != stats.MemberEnd(); ++itr )
+		for ( cJSON* itr = addStatsObj->child; itr; itr = itr->next )
 		{
-			std::string name = itr->name.GetString();
+			std::string name = itr->string;
 			if ( name.compare("enabled") == 0 )
 			{
-				customAddStats = itr->value.GetInt() == 0 ? false : true;
+				customAddStats = cJSON_IsTrue(itr);
 			}
 			else if ( name.compare("HP") == 0 )
 			{
-				addStats->HP = static_cast<Sint32>(itr->value.GetInt());
+				addStats->HP = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("MAXHP") == 0 )
 			{
-				addStats->MAXHP = static_cast<Sint32>(itr->value.GetInt());
+				addStats->MAXHP = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("MP") == 0 )
 			{
-				addStats->MP = static_cast<Sint32>(itr->value.GetInt());
+				addStats->MP = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("MAXMP") == 0 )
 			{
-				addStats->MAXMP = static_cast<Sint32>(itr->value.GetInt());
+				addStats->MAXMP = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("STR") == 0 )
 			{
-				addStats->STR = static_cast<Sint32>(itr->value.GetInt());
+				addStats->STR = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("DEX") == 0 )
 			{
-				addStats->DEX = static_cast<Sint32>(itr->value.GetInt());
+				addStats->DEX = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("CON") == 0 )
 			{
-				addStats->CON = static_cast<Sint32>(itr->value.GetInt());
+				addStats->CON = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("INT") == 0 )
 			{
-				addStats->INT = static_cast<Sint32>(itr->value.GetInt());
+				addStats->INT = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("PER") == 0 )
 			{
-				addStats->PER = static_cast<Sint32>(itr->value.GetInt());
+				addStats->PER = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("CHR") == 0 )
 			{
-				addStats->CHR = static_cast<Sint32>(itr->value.GetInt());
+				addStats->CHR = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("EXP") == 0 )
 			{
-				addStats->EXP = static_cast<Sint32>(itr->value.GetInt());
+				addStats->EXP = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("LVL") == 0 )
 			{
-				addStats->LVL = static_cast<Sint32>(itr->value.GetInt());
+				addStats->LVL = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("GOLD") == 0 )
 			{
-				addStats->GOLD = static_cast<Sint32>(itr->value.GetInt());
+				addStats->GOLD = static_cast<Sint32>(itr->valueint);
 			}
-			else if ( name.compare("PROFICIENCIES") == 0 )
+			else if ( name.compare("PROFICIENCIES") == 0 && cJSON_IsArray(itr) )
 			{
 				int index = -1;
-				for ( auto arr_itr = itr->value.Begin(); arr_itr != itr->value.End(); ++arr_itr )
+				cJSON* arr_itr = NULL;
+				cJSON_ArrayForEach(arr_itr, itr)
 				{
 					++index;
 					if ( index >= NUMPROFICIENCIES )
 					{
 						break;
 					}
-					addStats->setProficiency(index, arr_itr->GetInt());
+					addStats->setProficiency(index, arr_itr->valueint);
 				}
 			}
 		}
 	}
 
-	if ( d.HasMember("character") )
+	cJSON* charObj = cJSON_GetObjectItem(d, "character");
+	if ( charObj )
 	{
-		const rapidjson::Value& stats = d["character"];
-		for ( auto itr = stats.MemberBegin(); itr != stats.MemberEnd(); ++itr )
+		for ( cJSON* itr = charObj->child; itr; itr = itr->next )
 		{
-			std::string name = itr->name.GetString();
+			std::string name = itr->string;
 			if ( name.compare("class") == 0 )
 			{
-				classnum = static_cast<Sint32>(itr->value.GetInt());
+				classnum = static_cast<Sint32>(itr->valueint);
 			}
 			else if ( name.compare("race") == 0 )
 			{
-				race = static_cast<Sint32>(itr->value.GetInt());
+				race = static_cast<Sint32>(itr->valueint);
 			}
 		}
 	}
 
-	if ( d.HasMember("gameplay") )
+	cJSON* gameplayObj = cJSON_GetObjectItem(d, "gameplay");
+	if ( gameplayObj )
 	{
-		const rapidjson::Value& stats = d["gameplay"];
-		for ( auto itr = stats.MemberBegin(); itr != stats.MemberEnd(); ++itr )
+		for ( cJSON* itr = gameplayObj->child; itr; itr = itr->next )
 		{
-			std::string name = itr->name.GetString();
+			std::string name = itr->string;
 			if ( name.compare("winLevel") == 0 )
 			{
-				if ( itr->value.GetInt() >= 0 )
+				if ( itr->valueint >= 0 )
 				{
-					winLevel = static_cast<Sint32>(itr->value.GetInt());
+					winLevel = static_cast<Sint32>(itr->valueint);
 				}
 			}
 			else if ( name.compare("event_type") == 0 )
 			{
-				if ( itr->value.GetInt() >= 0 )
+				if ( itr->valueint >= 0 )
 				{
-					eventType = static_cast<Sint32>(itr->value.GetInt());
+					eventType = static_cast<Sint32>(itr->valueint);
 				}
 			}
 			else if ( name.compare("numKills") == 0 )
 			{
-				if ( itr->value.GetInt() >= 0 )
+				if ( itr->valueint >= 0 )
 				{
-					numKills = static_cast<Sint32>(itr->value.GetInt());
+					numKills = static_cast<Sint32>(itr->valueint);
 				}
 			}
 			else if ( name.compare("startLevel") == 0 )
 			{
-				if ( itr->value.GetInt() >= 0 )
+				if ( itr->valueint >= 0 )
 				{
-					startLevel = static_cast<Sint32>(itr->value.GetInt());
+					startLevel = static_cast<Sint32>(itr->valueint);
 				}
 			}
 			else if ( name.compare("winCondition") == 0 )
 			{
-				if ( itr->value.GetInt() >= 0 )
+				if ( itr->valueint >= 0 )
 				{
-					winCondition = static_cast<Sint32>(itr->value.GetInt());
+					winCondition = static_cast<Sint32>(itr->valueint);
 				}
 			}
 			else if ( name.compare("globalXPPercent") == 0 )
 			{
-				if ( itr->value.GetInt() >= 0 )
+				if ( itr->valueint >= 0 )
 				{
-					globalXPPercent = static_cast<Sint32>(itr->value.GetInt());
+					globalXPPercent = static_cast<Sint32>(itr->valueint);
 				}
 			}
 			else if ( name.compare("globalGoldPercent") == 0 )
 			{
-				if ( itr->value.GetInt() >= 0 )
+				if ( itr->valueint >= 0 )
 				{
-					globalGoldPercent = static_cast<Sint32>(itr->value.GetInt());
+					globalGoldPercent = static_cast<Sint32>(itr->valueint);
 				}
 			}
 			else if ( name.compare("playerWeightPercent") == 0 )
 			{
-				if ( itr->value.GetInt() >= 0 )
+				if ( itr->valueint >= 0 )
 				{
-					playerWeightPercent = static_cast<Sint32>(itr->value.GetInt());
+					playerWeightPercent = static_cast<Sint32>(itr->valueint);
 				}
 			}
 			else if ( name.compare("playerSpeedMax") == 0 )
 			{
-				if ( itr->value.GetFloat() >= 0 )
+				if ( itr->valuedouble >= 0 )
 				{
-					playerSpeedMax = static_cast<Sint32>(itr->value.GetFloat());
+					playerSpeedMax = static_cast<Sint32>(itr->valuedouble);
 				}
 			}
 		}
 	}
+	
+	cJSON_Delete(d);
 
 #ifndef NDEBUG
 	if ( *cvar_challengerace >= 0 )
@@ -1004,4 +1028,3 @@ bool GameModeManager_t::CurrentSession_t::ChallengeRun_t::loadScenario()
 
 	return true;
 }
-
