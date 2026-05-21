@@ -25986,9 +25986,11 @@ void loadHUDSettingsJSON()
 	if ( !PHYSFS_getRealDir("/data/HUD_settings.json") )
 	{
 		printlog("[JSON]: Error: Could not find file: data/HUD_settings.json");
+		return;
 	}
 	else
 	{
+		printlog("[JSON]: HUD file found...");
 		std::string inputPath = PHYSFS_getRealDir("/data/HUD_settings.json");
 		inputPath.append("/data/HUD_settings.json");
 
@@ -25996,20 +25998,32 @@ void loadHUDSettingsJSON()
 		if ( !fp )
 		{
 			printlog("[JSON]: Error: Could not open json file %s", inputPath.c_str());
+			return;
 		}
 		else
 		{
+			printlog("[JSON]: HUD file opened successfully...");
 			char buf[65536];
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
+			printlog("[JSON]: HUD file read, parsing JSON...");
 			cJSON* d = cJSON_Parse(buf);
+			printlog("[JSON]: HUD JSON parsed");
 			FileIO::close(fp);
-			if ( !d || !cJSON_HasObjectItem(d, "version") )
+			if ( !d )
+			{
+				printlog("[JSON]: Error: Could not parse JSON from %s", inputPath.c_str());
+				return;
+			}
+			if ( !cJSON_HasObjectItem(d, "version") )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+				cJSON_Delete(d);
+				return;
 			}
 			else
 			{
+				printlog("[JSON]: HUD version check passed, reading settings...");
 				if ( cJSON_HasObjectItem(d, "selected_cursor_opacity") )
 				{
 					selectedCursorOpacity = cJSON_GetObjectItem(d, "selected_cursor_opacity")->valueint;
@@ -27215,6 +27229,7 @@ void loadHUDSettingsJSON()
 #endif
 				}
 				printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
+				cJSON_Delete(d);
 			}
 		}
 	}
