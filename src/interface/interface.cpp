@@ -10,10 +10,7 @@
 -------------------------------------------------------------------------------*/
 
 #include "../main.hpp"
-#include "../rapidjson/document.h"
-#include "../rapidjson/filereadstream.h"
-#include "../rapidjson/filewritestream.h"
-#include "../rapidjson/prettywriter.h"
+
 #include "../files.hpp"
 #include "../game.hpp"
 #include "../stat.hpp"
@@ -51,7 +48,6 @@ view_t camera_charsheet;
 real_t camera_charsheet_offsetyaw = (330) * PI / 180;
 
 bool keepInventoryGlobal = false;
-
 
 list_t chestInv[MAXPLAYERS];
 
@@ -130,7 +126,6 @@ list_t chestInv[MAXPLAYERS];
 //SDL_Surface* hotbar_spell_img = NULL;
 
 int buttonclick = 0;
-
 
 bool auto_hotbar_new_items = true;
 bool auto_hotbar_categories[NUM_HOTBAR_CATEGORIES] = {	true, true, true, true, 
@@ -1655,169 +1650,166 @@ void FollowerRadialMenu::loadFollowerJSON()
 			char buf[65536];
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
-			FileIO::close(fp);
-			rapidjson::Document d;
-			d.ParseStream(is);
-			if ( !d.HasMember("version") )
+			cJSON* d = cJSON_Parse(buf);
+			if ( !cJSON_HasObjectItem(d, "version") )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
 			}
 			else
 			{
-				if ( d.HasMember("panel_center_x_offset") )
+				if ( cJSON_HasObjectItem(d, "panel_center_x_offset") )
 				{
-					FollowerRadialMenu::followerWheelFrameOffsetX = d["panel_center_x_offset"].GetInt();
+					FollowerRadialMenu::followerWheelFrameOffsetX = cJSON_GetObjectItem(d, "panel_center_x_offset")->valueint;
 				}
-				if ( d.HasMember("panel_center_y_offset") )
+				if ( cJSON_HasObjectItem(d, "panel_center_y_offset") )
 				{
-					FollowerRadialMenu::followerWheelFrameOffsetY = d["panel_center_y_offset"].GetInt();
+					FollowerRadialMenu::followerWheelFrameOffsetY = cJSON_GetObjectItem(d, "panel_center_y_offset")->valueint;
 				}
-				if ( d.HasMember("panel_radius") )
+				if ( cJSON_HasObjectItem(d, "panel_radius") )
 				{
-					FollowerRadialMenu::followerWheelRadius = d["panel_radius"].GetInt();
+					FollowerRadialMenu::followerWheelRadius = cJSON_GetObjectItem(d, "panel_radius")->valueint;
 				}
-				if ( d.HasMember("panel_button_thickness") )
+				if ( cJSON_HasObjectItem(d, "panel_button_thickness") )
 				{
-					FollowerRadialMenu::followerWheelButtonThickness = d["panel_button_thickness"].GetInt();
+					FollowerRadialMenu::followerWheelButtonThickness = cJSON_GetObjectItem(d, "panel_button_thickness")->valueint;
 				}
-				if ( d.HasMember("panel_inner_circle_radius_offset") )
+				if ( cJSON_HasObjectItem(d, "panel_inner_circle_radius_offset") )
 				{
-					FollowerRadialMenu::followerWheelInnerCircleRadiusOffset = d["panel_inner_circle_radius_offset"].GetInt();
+					FollowerRadialMenu::followerWheelInnerCircleRadiusOffset = cJSON_GetObjectItem(d, "panel_inner_circle_radius_offset")->valueint;
 				}
-				if ( d.HasMember("panel_inner_circle_radius_offset_alternate") )
+				if ( cJSON_HasObjectItem(d, "panel_inner_circle_radius_offset_alternate") )
 				{
-					FollowerRadialMenu::followerWheelInnerCircleRadiusOffsetAlternate = d["panel_inner_circle_radius_offset_alternate"].GetInt();
+					FollowerRadialMenu::followerWheelInnerCircleRadiusOffsetAlternate = cJSON_GetObjectItem(d, "panel_inner_circle_radius_offset_alternate")->valueint;
 				}
-				if ( d.HasMember("colors") )
+				if ( cJSON_HasObjectItem(d, "colors") )
 				{
-					if ( d["colors"].HasMember("banner_default") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_default") )
 					{
 						followerBannerTextColor = makeColor(
-							d["colors"]["banner_default"]["r"].GetInt(),
-							d["colors"]["banner_default"]["g"].GetInt(),
-							d["colors"]["banner_default"]["b"].GetInt(),
-							d["colors"]["banner_default"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_default"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_default"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_default"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_default"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("banner_highlight_default") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_highlight_default") )
 					{
 						followerBannerTextHighlightColor = makeColor(
-							d["colors"]["banner_highlight_default"]["r"].GetInt(),
-							d["colors"]["banner_highlight_default"]["g"].GetInt(),
-							d["colors"]["banner_highlight_default"]["b"].GetInt(),
-							d["colors"]["banner_highlight_default"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_highlight_default"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_highlight_default"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_highlight_default"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_highlight_default"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("title") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "title") )
 					{
 						followerTitleColor = makeColor(
-							d["colors"]["title"]["r"].GetInt(),
-							d["colors"]["title"]["g"].GetInt(),
-							d["colors"]["title"]["b"].GetInt(),
-							d["colors"]["title"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("title_creature_highlight") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "title_creature_highlight") )
 					{
 						followerTitleHighlightColor = makeColor(
-							d["colors"]["title_creature_highlight"]["r"].GetInt(),
-							d["colors"]["title_creature_highlight"]["g"].GetInt(),
-							d["colors"]["title_creature_highlight"]["b"].GetInt(),
-							d["colors"]["title_creature_highlight"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title_creature_highlight"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title_creature_highlight"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title_creature_highlight"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title_creature_highlight"), "a")->valueint);
 					}
 				}
-				if ( d.HasMember("panels") )
+				if ( cJSON_HasObjectItem(d, "panels") )
 				{
 					FollowerRadialMenu::panelEntries.clear();
-					for ( rapidjson::Value::ConstValueIterator itr = d["panels"].Begin();
-						itr != d["panels"].End(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "panels")->child;
+						itr != nullptr; ++itr )
 					{
 						FollowerRadialMenu::panelEntries.push_back(FollowerRadialMenu::PanelEntry());
 						auto& entry = FollowerRadialMenu::panelEntries[FollowerRadialMenu::panelEntries.size() - 1];
-						if ( (*itr).HasMember("x") )
+						if ( cJSON_HasObjectItem(itr, "x") )
 						{
-							entry.x = (*itr)["x"].GetInt();
+							entry.x = cJSON_GetObjectItem(itr, "x")->valueint;
 						}
-						if ( (*itr).HasMember("y") )
+						if ( cJSON_HasObjectItem(itr, "y") )
 						{
-							entry.y = (*itr)["y"].GetInt();
+							entry.y = cJSON_GetObjectItem(itr, "y")->valueint;
 						}
-						if ( (*itr).HasMember("path") )
+						if ( cJSON_HasObjectItem(itr, "path") )
 						{
-							entry.path = (*itr)["path"].GetString();
+							entry.path = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path"));
 						}
-						if ( (*itr).HasMember("path_locked") )
+						if ( cJSON_HasObjectItem(itr, "path_locked") )
 						{
-							entry.path_locked = (*itr)["path_locked"].GetString();
+							entry.path_locked = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_locked"));
 						}
-						if ( (*itr).HasMember("path_hover") )
+						if ( cJSON_HasObjectItem(itr, "path_hover") )
 						{
-							entry.path_hover = (*itr)["path_hover"].GetString();
+							entry.path_hover = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_hover"));
 						}
-						if ( (*itr).HasMember("path_locked_hover") )
+						if ( cJSON_HasObjectItem(itr, "path_locked_hover") )
 						{
-							entry.path_locked_hover = (*itr)["path_locked_hover"].GetString();
+							entry.path_locked_hover = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_locked_hover"));
 						}
-						if ( (*itr).HasMember("icon_offset_x") )
+						if ( cJSON_HasObjectItem(itr, "icon_offset_x") )
 						{
-							entry.icon_offsetx = (*itr)["icon_offset_x"].GetInt();
+							entry.icon_offsetx = cJSON_GetObjectItem(itr, "icon_offset_x")->valueint;
 						}
-						if ( (*itr).HasMember("icon_offset_y") )
+						if ( cJSON_HasObjectItem(itr, "icon_offset_y") )
 						{
-							entry.icon_offsety = (*itr)["icon_offset_y"].GetInt();
+							entry.icon_offsety = cJSON_GetObjectItem(itr, "icon_offset_y")->valueint;
 						}
 					}
 				}
-				if ( d.HasMember("panels_alternate") )
+				if ( cJSON_HasObjectItem(d, "panels_alternate") )
 				{
 					FollowerRadialMenu::panelEntriesAlternate.clear();
-					for ( rapidjson::Value::ConstValueIterator itr = d["panels_alternate"].Begin();
-						itr != d["panels_alternate"].End(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "panels_alternate")->child;
+						itr != nullptr; ++itr )
 					{
 						FollowerRadialMenu::panelEntriesAlternate.push_back(FollowerRadialMenu::PanelEntry());
 						auto& entry = FollowerRadialMenu::panelEntriesAlternate[FollowerRadialMenu::panelEntriesAlternate.size() - 1];
-						if ( (*itr).HasMember("x") )
+						if ( cJSON_HasObjectItem(itr, "x") )
 						{
-							entry.x = (*itr)["x"].GetInt();
+							entry.x = cJSON_GetObjectItem(itr, "x")->valueint;
 						}
-						if ( (*itr).HasMember("y") )
+						if ( cJSON_HasObjectItem(itr, "y") )
 						{
-							entry.y = (*itr)["y"].GetInt();
+							entry.y = cJSON_GetObjectItem(itr, "y")->valueint;
 						}
-						if ( (*itr).HasMember("path") )
+						if ( cJSON_HasObjectItem(itr, "path") )
 						{
-							entry.path = (*itr)["path"].GetString();
+							entry.path = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path"));
 						}
-						if ( (*itr).HasMember("path_locked") )
+						if ( cJSON_HasObjectItem(itr, "path_locked") )
 						{
-							entry.path_locked = (*itr)["path_locked"].GetString();
+							entry.path_locked = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_locked"));
 						}
-						if ( (*itr).HasMember("path_hover") )
+						if ( cJSON_HasObjectItem(itr, "path_hover") )
 						{
-							entry.path_hover = (*itr)["path_hover"].GetString();
+							entry.path_hover = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_hover"));
 						}
-						if ( (*itr).HasMember("path_locked_hover") )
+						if ( cJSON_HasObjectItem(itr, "path_locked_hover") )
 						{
-							entry.path_locked_hover = (*itr)["path_locked_hover"].GetString();
+							entry.path_locked_hover = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_locked_hover"));
 						}
-						if ( (*itr).HasMember("icon_offset_x") )
+						if ( cJSON_HasObjectItem(itr, "icon_offset_x") )
 						{
-							entry.icon_offsetx = (*itr)["icon_offset_x"].GetInt();
+							entry.icon_offsetx = cJSON_GetObjectItem(itr, "icon_offset_x")->valueint;
 						}
-						if ( (*itr).HasMember("icon_offset_y") )
+						if ( cJSON_HasObjectItem(itr, "icon_offset_y") )
 						{
-							entry.icon_offsety = (*itr)["icon_offset_y"].GetInt();
+							entry.icon_offsety = cJSON_GetObjectItem(itr, "icon_offset_y")->valueint;
 						}
 					}
 				}
-				if ( d.HasMember("icons") )
+				if ( cJSON_HasObjectItem(d, "icons") )
 				{
 					FollowerRadialMenu::iconEntries.clear();
-					for ( rapidjson::Value::ConstValueIterator itr = d["icons"].Begin();
-						itr != d["icons"].End(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "icons")->child;
+						itr != nullptr; ++itr )
 					{
 						std::string actionName = "";
-						if ( (*itr).HasMember("action") )
+						if ( cJSON_HasObjectItem(itr, "action") )
 						{
-							actionName = (*itr)["action"].GetString();
+							actionName = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "action"));
 						}
 						if ( actionName == "" )
 						{
@@ -1825,41 +1817,41 @@ void FollowerRadialMenu::loadFollowerJSON()
 						}
 						FollowerRadialMenu::iconEntries[actionName] = FollowerRadialMenu::IconEntry();
 						FollowerRadialMenu::iconEntries[actionName].name = actionName;
-						if ( (*itr).HasMember("id") )
+						if ( cJSON_HasObjectItem(itr, "id") )
 						{
-							FollowerRadialMenu::iconEntries[actionName].id = (*itr)["id"].GetInt();
+							FollowerRadialMenu::iconEntries[actionName].id = cJSON_GetObjectItem(itr, "id")->valueint;
 						}
-						if ( (*itr).HasMember("path") )
+						if ( cJSON_HasObjectItem(itr, "path") )
 						{
-							FollowerRadialMenu::iconEntries[actionName].path = (*itr)["path"].GetString();
+							FollowerRadialMenu::iconEntries[actionName].path = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path"));
 						}
-						if ( (*itr).HasMember("path_active") )
+						if ( cJSON_HasObjectItem(itr, "path_active") )
 						{
-							FollowerRadialMenu::iconEntries[actionName].path_active = (*itr)["path_active"].GetString();
+							FollowerRadialMenu::iconEntries[actionName].path_active = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_active"));
 						}
-						if ( (*itr).HasMember("path_hover") )
+						if ( cJSON_HasObjectItem(itr, "path_hover") )
 						{
-							FollowerRadialMenu::iconEntries[actionName].path_hover = (*itr)["path_hover"].GetString();
+							FollowerRadialMenu::iconEntries[actionName].path_hover = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_hover"));
 						}
-						if ( (*itr).HasMember("path_active_hover") )
+						if ( cJSON_HasObjectItem(itr, "path_active_hover") )
 						{
-							FollowerRadialMenu::iconEntries[actionName].path_active_hover = (*itr)["path_active_hover"].GetString();
+							FollowerRadialMenu::iconEntries[actionName].path_active_hover = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_active_hover"));
 						}
-						if ( (*itr).HasMember("text_maps") )
+						if ( cJSON_HasObjectItem(itr, "text_maps") )
 						{
-							for ( rapidjson::Value::ConstValueIterator itr2 = (*itr)["text_maps"].Begin();
-								itr2 != (*itr)["text_maps"].End(); ++itr2 )
+							for ( cJSON* itr2 = cJSON_GetObjectItem(itr, "text_maps")->child;
+								itr2 != nullptr; ++itr2 )
 							{
-								for ( rapidjson::Value::ConstMemberIterator itr3 = itr2->MemberBegin();
-									itr3 != itr2->MemberEnd(); ++itr3 )
+								for ( cJSON* itr3 = itr2->child;
+									itr3 != nullptr; ++itr3 )
 								{
-									std::string mapKey = itr3->name.GetString();
-									std::string mapText = itr3->value["text"].GetString();
+									std::string mapKey = itr3->string;
+									std::string mapText = cJSON_GetStringValue(cJSON_GetObjectItem(itr3, "text"));
 									std::set<int> mapHighlights;
-									for ( rapidjson::Value::ConstValueIterator highlightItr = itr3->value["word_highlights"].Begin();
-										highlightItr != itr3->value["word_highlights"].End(); ++highlightItr )
+									for ( cJSON* highlightItr = cJSON_GetObjectItem(itr3, "word_highlights")->child;
+										highlightItr != nullptr; ++highlightItr )
 									{
-										mapHighlights.insert(highlightItr->GetInt());
+										mapHighlights.insert(highlightItr->valueint);
 									}
 									FollowerRadialMenu::iconEntries[actionName].text_map[mapKey] = std::make_pair(mapText, mapHighlights);
 								}
@@ -4975,7 +4967,6 @@ void FollowerRadialMenu::monsterGyroBotConvertCommand(int* option)
 	}
 }
 
-
 bool FollowerRadialMenu::monsterGyroBotOnlyCommand(int option)
 {
 	switch ( option )
@@ -5104,7 +5095,6 @@ bool GenericGUIMenu::isItemDesecratable(const Item* item)
 	{
 		return true;
 	}
-
 
 	return false;
 }
@@ -5849,7 +5839,6 @@ void GenericGUIMenu::rebuildGUIInventory()
 		}*/
 	}
 }
-
 
 void GenericGUIMenu::updateGUI()
 {
@@ -9111,7 +9100,6 @@ void GenericGUIMenu::alchemyCookCombination()
 		skillLVL = stats[gui_player]->getModifiedProficiency(PRO_ALCHEMY) / 20; // 0 to 5;
 	}
 
-
 	if ( basePotionType == TOOL_TOWEL )
 	{
 		messagePlayerColor(gui_player, MESSAGE_INVENTORY, uint32ColorWhite, Language::get(6770),
@@ -12118,7 +12106,6 @@ bool GenericGUIMenu::tinkeringGetItemValue(const Item* item, int* metal, int* ma
 			*magic = 0;
 			break;
 	}
-
 
 	if ( *metal > 0 || *magic > 0 )
 	{
@@ -15264,7 +15251,6 @@ void GenericGUIMenu::TinkerGUI_t::updateTinkerMenu()
 			}
 		}
 
-
 		{
 			// item slot + frame
 			SDL_Rect slotFramePos = itemSlotFrame->getSize();
@@ -16434,7 +16420,6 @@ GenericGUIMenu::TinkerGUI_t::TinkerActions_t GenericGUIMenu::TinkerGUI_t::setIte
 		|| item->type == TOOL_SPELLBOT
 		|| item->type == TOOL_DUMMYBOT
 		|| item->type == TOOL_GYROBOT);
-
 
 	const int player = parentGUI.getPlayer();
 	bool tinkeringKitNeedsRepairs = parentGUI.tinkeringKitItem && parentGUI.tinkeringKitItem->status == BROKEN;
@@ -19716,7 +19701,6 @@ void GenericGUIMenu::AlchemyGUI_t::setItemDisplayNameAndPrice(Item* item, const 
 	return;
 }
 
-
 bool GenericGUIMenu::AlchemyGUI_t::inventoryItemAllowedInGUI(Item* item)
 {
 	if ( !item ) { return false; }
@@ -21427,13 +21411,13 @@ void GenericGUIMenu::FeatherGUI_t::updateScrolls()
 			if ( scroll.second.second )
 			{
 				std::string scrollShortName = items[scroll.second.first].getIdentifiedName();
-				if ( scrollShortName.find(ItemTooltips.adjectives["scroll_prefixes"]["scroll_of"]) != std::string::npos )
+				if ( scrollShortName.find(ItemTooltips.adjectives["scroll_prefixes"]["scroll_of"].c_str()) != std::string::npos )
 				{
-					scrollShortName = scrollShortName.substr(ItemTooltips.adjectives["scroll_prefixes"]["scroll_of"].size());
+					scrollShortName = scrollShortName.substr(strlen(ItemTooltips.adjectives["scroll_prefixes"]["scroll_of"].c_str()));
 				}
-				if ( scrollShortName.find(ItemTooltips.adjectives["scroll_prefixes"]["piece_of"]) != std::string::npos )
+				if ( scrollShortName.find(ItemTooltips.adjectives["scroll_prefixes"]["piece_of"].c_str()) != std::string::npos )
 				{
-					scrollShortName = scrollShortName.substr(ItemTooltips.adjectives["scroll_prefixes"]["piece_of"].size());
+					scrollShortName = scrollShortName.substr(strlen(ItemTooltips.adjectives["scroll_prefixes"]["piece_of"].c_str()));
 				}
 				camelCaseString(scrollShortName);
 				bodyTxt->setColor(hudColors.characterSheetOffWhiteText);
@@ -23105,7 +23089,6 @@ void GenericGUIMenu::FeatherGUI_t::updateFeatherMenu()
 	sliderCapTop->pos.y = sliderPos.y;
 	slider->setRailSize(sliderPos);
 
-
 	currentScrollRow = scrollSetpoint / inscriptionSlotHeight;
 
 	if ( bOpen && isInteractable )
@@ -23326,7 +23309,6 @@ void GenericGUIMenu::FeatherGUI_t::createFeatherMenu()
 		sliderCapBot->ontop = true;
 
 		{
-
 
 			auto sortTxt = drawerFrame->addField("sort txt", 128);
 			sortTxt->setFont("fonts/pixel_maz_multiline.ttf#16#2");
@@ -25690,13 +25672,13 @@ void GenericGUIMenu::ItemEffectGUI_t::updateItemEffectMenu()
 				if ( item->identified )
 				{
 					std::string scrollShortName = items[item->type].getIdentifiedName();
-					if ( scrollShortName.find(ItemTooltips.adjectives["scroll_prefixes"]["scroll_of"]) != std::string::npos )
+					if ( scrollShortName.find(ItemTooltips.adjectives["scroll_prefixes"]["scroll_of"].c_str()) != std::string::npos )
 					{
-						scrollShortName = scrollShortName.substr(ItemTooltips.adjectives["scroll_prefixes"]["scroll_of"].size());
+						scrollShortName = scrollShortName.substr(strlen(ItemTooltips.adjectives["scroll_prefixes"]["scroll_of"].c_str()));
 					}
-					if ( scrollShortName.find(ItemTooltips.adjectives["scroll_prefixes"]["piece_of"]) != std::string::npos )
+					if ( scrollShortName.find(ItemTooltips.adjectives["scroll_prefixes"]["piece_of"].c_str()) != std::string::npos )
 					{
-						scrollShortName = scrollShortName.substr(ItemTooltips.adjectives["scroll_prefixes"]["piece_of"].size());
+						scrollShortName = scrollShortName.substr(strlen(ItemTooltips.adjectives["scroll_prefixes"]["piece_of"].c_str()));
 					}
 					camelCaseString(scrollShortName);
 					if ( item->type == MAGICSTAFF_SCEPTER )
@@ -26534,7 +26516,6 @@ void GenericGUIMenu::ItemEffectGUI_t::updateItemEffectMenu()
 			}
 		}
 
-
 		{
 			// item slot + frame
 			SDL_Rect slotFramePos = itemSlotFrame->getSize();
@@ -27351,132 +27332,129 @@ void CalloutRadialMenu::loadCalloutJSON()
 			char buf[65536];
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
-			FileIO::close(fp);
-			rapidjson::Document d;
-			d.ParseStream(is);
-			if ( !d.HasMember("version") )
+			cJSON* d = cJSON_Parse(buf);
+			if ( !cJSON_HasObjectItem(d, "version") )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
 			}
 			else
 			{
-				if ( d.HasMember("panel_center_x_offset") )
+				if ( cJSON_HasObjectItem(d, "panel_center_x_offset") )
 				{
-					CalloutRadialMenu::followerWheelFrameOffsetX = d["panel_center_x_offset"].GetInt();
+					CalloutRadialMenu::followerWheelFrameOffsetX = cJSON_GetObjectItem(d, "panel_center_x_offset")->valueint;
 				}
-				if ( d.HasMember("panel_center_y_offset") )
+				if ( cJSON_HasObjectItem(d, "panel_center_y_offset") )
 				{
-					CalloutRadialMenu::followerWheelFrameOffsetY = d["panel_center_y_offset"].GetInt();
+					CalloutRadialMenu::followerWheelFrameOffsetY = cJSON_GetObjectItem(d, "panel_center_y_offset")->valueint;
 				}
-				if ( d.HasMember("panel_radius") )
+				if ( cJSON_HasObjectItem(d, "panel_radius") )
 				{
-					CalloutRadialMenu::followerWheelRadius = d["panel_radius"].GetInt();
+					CalloutRadialMenu::followerWheelRadius = cJSON_GetObjectItem(d, "panel_radius")->valueint;
 				}
-				if ( d.HasMember("panel_button_thickness") )
+				if ( cJSON_HasObjectItem(d, "panel_button_thickness") )
 				{
-					CalloutRadialMenu::followerWheelButtonThickness = d["panel_button_thickness"].GetInt();
+					CalloutRadialMenu::followerWheelButtonThickness = cJSON_GetObjectItem(d, "panel_button_thickness")->valueint;
 				}
-				if ( d.HasMember("panel_inner_circle_radius_offset") )
+				if ( cJSON_HasObjectItem(d, "panel_inner_circle_radius_offset") )
 				{
-					CalloutRadialMenu::followerWheelInnerCircleRadiusOffset = d["panel_inner_circle_radius_offset"].GetInt();
+					CalloutRadialMenu::followerWheelInnerCircleRadiusOffset = cJSON_GetObjectItem(d, "panel_inner_circle_radius_offset")->valueint;
 				}
-				if ( d.HasMember("colors") )
+				if ( cJSON_HasObjectItem(d, "colors") )
 				{
-					if ( d["colors"].HasMember("banner_default") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_default") )
 					{
 						followerBannerTextColor = makeColor(
-							d["colors"]["banner_default"]["r"].GetInt(),
-							d["colors"]["banner_default"]["g"].GetInt(),
-							d["colors"]["banner_default"]["b"].GetInt(),
-							d["colors"]["banner_default"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_default"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_default"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_default"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_default"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("banner_highlight_default") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_highlight_default") )
 					{
 						followerBannerTextHighlightColor = makeColor(
-							d["colors"]["banner_highlight_default"]["r"].GetInt(),
-							d["colors"]["banner_highlight_default"]["g"].GetInt(),
-							d["colors"]["banner_highlight_default"]["b"].GetInt(),
-							d["colors"]["banner_highlight_default"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_highlight_default"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_highlight_default"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_highlight_default"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "banner_highlight_default"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("title") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "title") )
 					{
 						followerTitleColor = makeColor(
-							d["colors"]["title"]["r"].GetInt(),
-							d["colors"]["title"]["g"].GetInt(),
-							d["colors"]["title"]["b"].GetInt(),
-							d["colors"]["title"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("title_creature_highlight") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "title_creature_highlight") )
 					{
 						followerTitleHighlightColor = makeColor(
-							d["colors"]["title_creature_highlight"]["r"].GetInt(),
-							d["colors"]["title_creature_highlight"]["g"].GetInt(),
-							d["colors"]["title_creature_highlight"]["b"].GetInt(),
-							d["colors"]["title_creature_highlight"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title_creature_highlight"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title_creature_highlight"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title_creature_highlight"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "title_creature_highlight"), "a")->valueint);
 					}
 				}
-				if ( d.HasMember("panels") )
+				if ( cJSON_HasObjectItem(d, "panels") )
 				{
 					CalloutRadialMenu::panelEntries.clear();
-					for ( rapidjson::Value::ConstValueIterator itr = d["panels"].Begin();
-						itr != d["panels"].End(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "panels")->child;
+						itr != nullptr; ++itr )
 					{
 						CalloutRadialMenu::panelEntries.push_back(CalloutRadialMenu::PanelEntry());
 						auto& entry = CalloutRadialMenu::panelEntries[CalloutRadialMenu::panelEntries.size() - 1];
-						if ( (*itr).HasMember("x") )
+						if ( cJSON_HasObjectItem(itr, "x") )
 						{
-							entry.x = (*itr)["x"].GetInt();
+							entry.x = cJSON_GetObjectItem(itr, "x")->valueint;
 						}
-						if ( (*itr).HasMember("y") )
+						if ( cJSON_HasObjectItem(itr, "y") )
 						{
-							entry.y = (*itr)["y"].GetInt();
+							entry.y = cJSON_GetObjectItem(itr, "y")->valueint;
 						}
-						if ( (*itr).HasMember("path") )
+						if ( cJSON_HasObjectItem(itr, "path") )
 						{
-							entry.path = (*itr)["path"].GetString();
+							entry.path = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path"));
 						}
-						if ( (*itr).HasMember("path_hover") )
+						if ( cJSON_HasObjectItem(itr, "path_hover") )
 						{
-							entry.path_hover = (*itr)["path_hover"].GetString();
+							entry.path_hover = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_hover"));
 						}
-						if ( (*itr).HasMember("icon_offset_x") )
+						if ( cJSON_HasObjectItem(itr, "icon_offset_x") )
 						{
-							entry.icon_offsetx = (*itr)["icon_offset_x"].GetInt();
+							entry.icon_offsetx = cJSON_GetObjectItem(itr, "icon_offset_x")->valueint;
 						}
-						if ( (*itr).HasMember("icon_offset_y") )
+						if ( cJSON_HasObjectItem(itr, "icon_offset_y") )
 						{
-							entry.icon_offsety = (*itr)["icon_offset_y"].GetInt();
+							entry.icon_offsety = cJSON_GetObjectItem(itr, "icon_offset_y")->valueint;
 						}
 					}
 				}
-				if ( d.HasMember("help_strings") )
+				if ( cJSON_HasObjectItem(d, "help_strings") )
 				{
 					CalloutRadialMenu::helpDescriptors.clear();
-					for ( rapidjson::Value::ConstMemberIterator itr = d["help_strings"].MemberBegin();
-						itr != d["help_strings"].MemberEnd(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "help_strings")->child;
+						itr != nullptr; ++itr )
 					{
-						CalloutRadialMenu::helpDescriptors[itr->name.GetString()] = itr->value.GetString();
+						CalloutRadialMenu::helpDescriptors[itr->string] = itr->valuestring;
 					}
 				}
-				if ( d.HasMember("world_icons") )
+				if ( cJSON_HasObjectItem(d, "world_icons") )
 				{
 					CalloutRadialMenu::worldIconEntries.clear();
 					CalloutRadialMenu::worldIconIDToEntryKey.clear();
 					int id = 0;
-					for ( rapidjson::Value::ConstMemberIterator itr = d["world_icons"].MemberBegin();
-						itr != d["world_icons"].MemberEnd(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "world_icons")->child;
+						itr != nullptr; ++itr )
 					{
-						std::string key = (*itr).name.GetString();
+						std::string key = itr->string;
 						auto& entry = worldIconEntries[key];
 
 						std::string basePath = "*images/ui/CalloutWheel/WorldIcons/";
-						entry.pathDefault = basePath + (*itr).value["default"].GetString();
-						entry.pathPlayer1 = basePath + (*itr).value["0"].GetString();
-						entry.pathPlayer2 = basePath + (*itr).value["1"].GetString();
-						entry.pathPlayer3 = basePath + (*itr).value["2"].GetString();
-						entry.pathPlayer4 = basePath + (*itr).value["3"].GetString();
-						entry.pathPlayerX = basePath + (*itr).value["4"].GetString();
+						entry.pathDefault = basePath + cJSON_GetStringValue(cJSON_GetObjectItem(itr, "default"));
+						entry.pathPlayer1 = basePath + cJSON_GetStringValue(cJSON_GetObjectItem(itr, "0"));
+						entry.pathPlayer2 = basePath + cJSON_GetStringValue(cJSON_GetObjectItem(itr, "1"));
+						entry.pathPlayer3 = basePath + cJSON_GetStringValue(cJSON_GetObjectItem(itr, "2"));
+						entry.pathPlayer4 = basePath + cJSON_GetStringValue(cJSON_GetObjectItem(itr, "3"));
+						entry.pathPlayerX = basePath + cJSON_GetStringValue(cJSON_GetObjectItem(itr, "4"));
 						entry.id = id;
 						CalloutRadialMenu::worldIconIDToEntryKey[id] = key;
 						++id;
@@ -27500,16 +27478,16 @@ void CalloutRadialMenu::loadCalloutJSON()
 						}*/
 					}
 				}
-				if ( d.HasMember("icons") )
+				if ( cJSON_HasObjectItem(d, "icons") )
 				{
 					CalloutRadialMenu::iconEntries.clear();
-					for ( rapidjson::Value::ConstValueIterator itr = d["icons"].Begin();
-						itr != d["icons"].End(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "icons")->child;
+						itr != nullptr; ++itr )
 					{
 						std::string actionName = "";
-						if ( (*itr).HasMember("action") )
+						if ( cJSON_HasObjectItem(itr, "action") )
 						{
-							actionName = (*itr)["action"].GetString();
+							actionName = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "action"));
 						}
 						if ( actionName == "" )
 						{
@@ -27517,41 +27495,41 @@ void CalloutRadialMenu::loadCalloutJSON()
 						}
 						CalloutRadialMenu::iconEntries[actionName] = CalloutRadialMenu::IconEntry();
 						CalloutRadialMenu::iconEntries[actionName].name = actionName;
-						if ( (*itr).HasMember("id") )
+						if ( cJSON_HasObjectItem(itr, "id") )
 						{
-							CalloutRadialMenu::iconEntries[actionName].id = (*itr)["id"].GetInt();
+							CalloutRadialMenu::iconEntries[actionName].id = cJSON_GetObjectItem(itr, "id")->valueint;
 						}
-						if ( (*itr).HasMember("path") )
+						if ( cJSON_HasObjectItem(itr, "path") )
 						{
-							CalloutRadialMenu::iconEntries[actionName].path = (*itr)["path"].GetString();
+							CalloutRadialMenu::iconEntries[actionName].path = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path"));
 						}
-						if ( (*itr).HasMember("path_active") )
+						if ( cJSON_HasObjectItem(itr, "path_active") )
 						{
-							CalloutRadialMenu::iconEntries[actionName].path_active = (*itr)["path_active"].GetString();
+							CalloutRadialMenu::iconEntries[actionName].path_active = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_active"));
 						}
-						if ( (*itr).HasMember("path_hover") )
+						if ( cJSON_HasObjectItem(itr, "path_hover") )
 						{
-							CalloutRadialMenu::iconEntries[actionName].path_hover = (*itr)["path_hover"].GetString();
+							CalloutRadialMenu::iconEntries[actionName].path_hover = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_hover"));
 						}
-						if ( (*itr).HasMember("path_active_hover") )
+						if ( cJSON_HasObjectItem(itr, "path_active_hover") )
 						{
-							CalloutRadialMenu::iconEntries[actionName].path_active_hover = (*itr)["path_active_hover"].GetString();
+							CalloutRadialMenu::iconEntries[actionName].path_active_hover = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "path_active_hover"));
 						}
-						if ( (*itr).HasMember("text_maps") )
+						if ( cJSON_HasObjectItem(itr, "text_maps") )
 						{
-							for ( rapidjson::Value::ConstValueIterator itr2 = (*itr)["text_maps"].Begin();
-								itr2 != (*itr)["text_maps"].End(); ++itr2 )
+							for ( cJSON* itr2 = cJSON_GetObjectItem(itr, "text_maps")->child;
+								itr2 != nullptr; ++itr2 )
 							{
-								for ( rapidjson::Value::ConstMemberIterator itr3 = itr2->MemberBegin();
-									itr3 != itr2->MemberEnd(); ++itr3 )
+								for ( cJSON* itr3 = itr2->child;
+									itr3 != nullptr; ++itr3 )
 								{
-									std::string mapKey = itr3->name.GetString();
-									std::string mapText = itr3->value["text"].GetString();
+									std::string mapKey = itr3->string;
+									std::string mapText = cJSON_GetStringValue(cJSON_GetObjectItem(itr3, "text"));
 									std::set<int> mapHighlights;
-									for ( rapidjson::Value::ConstValueIterator highlightItr = itr3->value["word_highlights"].Begin();
-										highlightItr != itr3->value["word_highlights"].End(); ++highlightItr )
+									for ( cJSON* highlightItr = cJSON_GetObjectItem(itr3, "word_highlights")->child;
+										highlightItr != nullptr; ++highlightItr )
 									{
-										mapHighlights.insert(highlightItr->GetInt());
+										mapHighlights.insert(highlightItr->valueint);
 									}
 									std::string worldMsg = "";
 									std::string worldMsgSays = "";
@@ -27560,33 +27538,33 @@ void CalloutRadialMenu::loadCalloutJSON()
 									std::string worldMsgEmoteToYou = "";
 									std::string worldIcon = "";
 									std::string worldIconMini = "";
-									if ( itr3->value.HasMember("msg") )
+									if ( cJSON_HasObjectItem(itr3, "msg") )
 									{
-										worldMsg = itr3->value["msg"].GetString();
+										worldMsg = cJSON_GetStringValue(cJSON_GetObjectItem(itr3, "msg"));
 									}
-									if ( itr3->value.HasMember("msg_says") )
+									if ( cJSON_HasObjectItem(itr3, "msg_says") )
 									{
-										worldMsgSays = itr3->value["msg_says"].GetString();
+										worldMsgSays = cJSON_GetStringValue(cJSON_GetObjectItem(itr3, "msg_says"));
 									}
-									if ( itr3->value.HasMember("msg_emote") )
+									if ( cJSON_HasObjectItem(itr3, "msg_emote") )
 									{
-										worldMsgEmote = itr3->value["msg_emote"].GetString();
+										worldMsgEmote = cJSON_GetStringValue(cJSON_GetObjectItem(itr3, "msg_emote"));
 									}
-									if ( itr3->value.HasMember("msg_emote_you") )
+									if ( cJSON_HasObjectItem(itr3, "msg_emote_you") )
 									{
-										worldMsgEmoteYou = itr3->value["msg_emote_you"].GetString();
+										worldMsgEmoteYou = cJSON_GetStringValue(cJSON_GetObjectItem(itr3, "msg_emote_you"));
 									}
-									if ( itr3->value.HasMember("msg_emote_to_you") )
+									if ( cJSON_HasObjectItem(itr3, "msg_emote_to_you") )
 									{
-										worldMsgEmoteToYou = itr3->value["msg_emote_to_you"].GetString();
+										worldMsgEmoteToYou = cJSON_GetStringValue(cJSON_GetObjectItem(itr3, "msg_emote_to_you"));
 									}
-									if ( itr3->value.HasMember("world_icon") )
+									if ( cJSON_HasObjectItem(itr3, "world_icon") )
 									{
-										worldIcon = itr3->value["world_icon"].GetString();
+										worldIcon = cJSON_GetStringValue(cJSON_GetObjectItem(itr3, "world_icon"));
 									}
-									if ( itr3->value.HasMember("world_icon_small") )
+									if ( cJSON_HasObjectItem(itr3, "world_icon_small") )
 									{
-										worldIconMini = itr3->value["world_icon_small"].GetString();
+										worldIconMini = cJSON_GetStringValue(cJSON_GetObjectItem(itr3, "world_icon_small"));
 									}
 									CalloutRadialMenu::iconEntries[actionName].text_map[mapKey] = CalloutRadialMenu::IconEntry::IconEntryText_t();
 									auto& entry = CalloutRadialMenu::iconEntries[actionName].text_map[mapKey];
@@ -27814,7 +27792,6 @@ std::string CalloutRadialMenu::setCalloutText(Field* field, const char* iconName
 		
 		int toPlayer = getPlayerForDirectPlayerCmd(getPlayer(), cmd);
 		key = "player_wave";
-
 
 		if ( toPlayer < 0 || toPlayer >= MAXPLAYERS 
 			|| client_disconnected[toPlayer] )
@@ -30041,7 +30018,6 @@ void CalloutRadialMenu::update()
 		}
 	}
 
-
 	if ( updatedThisTick == 0 || ticks != updatedThisTick )
 	{
 		updatedThisTick = ticks;
@@ -31125,7 +31101,6 @@ void CalloutRadialMenu::drawCalloutMenu()
 			{
 				panelImages[i]->path = getPanelEntriesForCallout()[i].path_hover;
 			}
-
 
 			if ( /*!lockedOption &&*/ panelIcons[i]->path != "" )
 			{
@@ -34485,7 +34460,6 @@ void GenericGUIMenu::AssistShrineGUI_t::createAssistShrine()
 			actionPromptGlyph->ontop = true;
 		}
 
-
 	}
 }
 
@@ -35426,7 +35400,6 @@ void GenericGUIMenu::AssistShrineGUI_t::updateAssistShrine()
 		sliderCapTop->pos.y = sliderPos.y;
 		slider->setRailSize(sliderPos);
 
-
 		currentScrollRow1 = scrollSetpoint1 / kClassSlotHeight;
 
 		if ( bOpen && isInteractable )
@@ -35649,7 +35622,6 @@ void GenericGUIMenu::AssistShrineGUI_t::updateAssistShrine()
 		}
 		sliderCapTop->pos.y = sliderPos.y;
 		slider->setRailSize(sliderPos);
-
 
 		currentScrollRow2 = scrollSetpoint2 / kRaceSlotHeight;
 

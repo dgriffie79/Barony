@@ -11,10 +11,7 @@
 #include "Widget.hpp"
 
 #include "../main.hpp"
-#include "../rapidjson/document.h"
-#include "../rapidjson/filereadstream.h"
-#include "../rapidjson/filewritestream.h"
-#include "../rapidjson/prettywriter.h"
+
 #include "../game.hpp"
 #include "../menu.hpp"
 #include "../interface/interface.hpp"
@@ -736,7 +733,6 @@ void createHPMPBars(const int player)
 		auto foregroundFrame = hud_t.hpFrame->addFrame("hp foreground frame");
 		foregroundFrame->setSize(SDL_Rect{ 0, 0, barWidth, barTotalHeight });
 
-
 		auto base = hud_t.hpFrame->addImage(SDL_Rect{ 54, 4, barWidth - 54, 26 }, 0xFFFFFFFF,
 			"*#images/ui/HUD/hpmpbars/HUD_Bars_Base_00.png", "hp img base");
 
@@ -804,7 +800,6 @@ void createHPMPBars(const int player)
 
 		auto foregroundFrame = hud_t.mpFrame->addFrame("mp foreground frame");
 		foregroundFrame->setSize(SDL_Rect{ 0, 0, barWidth, barTotalHeight });
-
 
 		auto base = hud_t.mpFrame->addImage(SDL_Rect{ 54, 4, barWidth - 54, 26 }, 0xFFFFFFFF,
 			"*#images/ui/HUD/hpmpbars/HUD_Bars_Base_00.png", "mp img base");
@@ -980,7 +975,6 @@ Frame* createVoicePromptFrame(const int player, Frame* baseFrame)
 	icon2->disabled = true;
 	return frame;
 }
-
 
 const int kPlayerBarsEntryFrameWidth = 214;
 
@@ -1160,7 +1154,6 @@ void updateVoicePromptFrame(const int player, Frame* baseFrame, Frame* allyFrame
 	frame->setDisabled(true);
 	return;
 #else
-
 
 	if ( !VoiceChat.bRecordingInit )
 	{
@@ -2112,7 +2105,6 @@ void updateAllyBarFrame(const int player, Frame* baseFrame, int activeBars, int 
 			}
 		}
 		entryFrame->setOpacity(baseFrame->getOpacity());
-
 
 		if ( followerBar.expired && ((ticks - followerBar.expiredTicks) > TICKS_PER_SECOND / 2) )
 		{
@@ -3365,7 +3357,6 @@ void updateAllyBarFrame(const int player, Frame* baseFrame, int activeBars, int 
 		baseFrame->getActualSize().w ,
 		infiniteScrolling ? baseFramePos.h * 10 : currentY });
 
-
 	if ( !bPlayerBars && titleFrame && hud_t.allyFollowerGlyphFrame && !hud_t.allyFollowerGlyphFrame->isDisabled() )
 	{
 		static ConsoleVariable<int> followerMenuCommandGlyphX("/followermenu_cmd_glyph_x", -96);
@@ -4498,7 +4489,6 @@ void createXPBar(const int player)
 
 	auto xpProgressEndCap = hud_t.xpFrame->addImage(SDL_Rect{ 0, 6, 38, progressBarHeight }, 0xFFFFFFFF,
 		playerXPCapPaths[xpPathNum][0].c_str(), "xp img progress endcap");
-
 
 	const int endCapWidth = 26;
 	SDL_Rect endCapPos {0, 0, endCapWidth, xpBarTotalHeight};
@@ -5841,12 +5831,8 @@ void StatusEffectQueue_t::loadStatusEffectsJSON()
 			char buf[65536];
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
-			FileIO::close(fp);
-
-			rapidjson::Document d;
-			d.ParseStream(is);
-			if ( !d.HasMember("version") )
+			cJSON* d = cJSON_Parse(buf);
+			if ( !cJSON_HasObjectItem(d, "version") )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
 			}
@@ -5854,75 +5840,75 @@ void StatusEffectQueue_t::loadStatusEffectsJSON()
 			{
 				StatusEffectDefinitions_t::reset();
 				int defaultTooltipWidth = 200;
-				if ( d.HasMember("default_tooltip_width") )
+				if ( cJSON_HasObjectItem(d, "default_tooltip_width") )
 				{
-					defaultTooltipWidth = d["default_tooltip_width"].GetInt();
+					defaultTooltipWidth = cJSON_GetObjectItem(d, "default_tooltip_width")->valueint;
 				}
-				if ( d.HasMember("colors") )
+				if ( cJSON_HasObjectItem(d, "colors") )
 				{
-					if ( d["colors"].HasMember("notification_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "notification_text") )
 					{
 						StatusEffectDefinitions_t::notificationTextColor = makeColor(
-							d["colors"]["notification_text"]["r"].GetInt(),
-							d["colors"]["notification_text"]["g"].GetInt(),
-							d["colors"]["notification_text"]["b"].GetInt(),
-							d["colors"]["notification_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "notification_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "notification_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "notification_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "notification_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("tooltip_desc_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "tooltip_desc_text") )
 					{
 						StatusEffectDefinitions_t::tooltipDescColor = makeColor(
-							d["colors"]["tooltip_desc_text"]["r"].GetInt(),
-							d["colors"]["tooltip_desc_text"]["g"].GetInt(),
-							d["colors"]["tooltip_desc_text"]["b"].GetInt(),
-							d["colors"]["tooltip_desc_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "tooltip_desc_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "tooltip_desc_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "tooltip_desc_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "tooltip_desc_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("tooltip_heading_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "tooltip_heading_text") )
 					{
 						StatusEffectDefinitions_t::tooltipHeadingColor = makeColor(
-							d["colors"]["tooltip_heading_text"]["r"].GetInt(),
-							d["colors"]["tooltip_heading_text"]["g"].GetInt(),
-							d["colors"]["tooltip_heading_text"]["b"].GetInt(),
-							d["colors"]["tooltip_heading_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "tooltip_heading_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "tooltip_heading_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "tooltip_heading_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "tooltip_heading_text"), "a")->valueint);
 					}
 				}
-				if ( d.HasMember("notification_font") )
+				if ( cJSON_HasObjectItem(d, "notification_font") )
 				{
-					StatusEffectDefinitions_t::notificationFont = d["notification_font"].GetString();
+					StatusEffectDefinitions_t::notificationFont = cJSON_GetStringValue(cJSON_GetObjectItem(d, "notification_font"));
 				}
-				if ( d.HasMember("sustained_effects") )
+				if ( cJSON_HasObjectItem(d, "sustained_effects") )
 				{
-					for ( rapidjson::Value::ConstMemberIterator itr = d["sustained_effects"].MemberBegin();
-						itr != d["sustained_effects"].MemberEnd(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "sustained_effects")->child;
+						itr != nullptr; ++itr )
 					{
 						int id = -1;
-						if ( itr->value.HasMember("id") )
+						if ( cJSON_HasObjectItem(itr, "id") )
 						{
-							id = itr->value["id"].GetInt();
+							id = cJSON_GetObjectItem(itr, "id")->valueint;
 						}
 						int spellID = -1;
-						if ( itr->value.HasMember("spell_id") )
+						if ( cJSON_HasObjectItem(itr, "spell_id") )
 						{
-							spellID = itr->value["spell_id"].GetInt();
+							spellID = cJSON_GetObjectItem(itr, "spell_id")->valueint;
 						}
 						StatusEffectDefinitions_t::allSustainedSpells.insert(
 							std::make_pair(spellID, EffectDefinitionEntry_t()));
 						auto& entry = StatusEffectDefinitions_t::allSustainedSpells[spellID];
 						entry.effect_id = id;
 						entry.spell_id = spellID;
-						entry.internal_name = itr->name.GetString();
-						if ( itr->value["name"].IsArray() )
+						entry.internal_name = itr->string;
+						if ( cJSON_IsArray(cJSON_GetObjectItem(itr, "name")) )
 						{
-							for ( auto arr = itr->value["name"].Begin();
-								arr != itr->value["name"].End(); ++arr )
+							for ( auto arr = cJSON_GetObjectItem(itr, "name")->child;
+								arr != nullptr; ++arr )
 							{
-								entry.nameVariations.push_back(arr->GetString());
+								entry.nameVariations.push_back(arr->valuestring);
 							}
 						}
 						else
 						{
-							entry.name = itr->value["name"].GetString();
+							entry.name = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "name"));
 						}
-						std::string buf = itr->value["desc"].GetString();
+						std::string buf = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "desc"));
 						entry.desc = "\x1E ";
 						int index = 0;
 						for ( auto s : buf )
@@ -5947,52 +5933,52 @@ void StatusEffectQueue_t::loadStatusEffectsJSON()
 							}
 							++index;
 						}
-						entry.imgPath = itr->value["img_path"].GetString();
-						entry.useSpellIDForImg = itr->value["img_from_spell_id"].GetInt();
+						entry.imgPath = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "img_path"));
+						entry.useSpellIDForImg = cJSON_GetObjectItem(itr, "img_from_spell_id")->valueint;
 						entry.neverDisplay = false;
-						if ( itr->value.HasMember("never_display") )
+						if ( cJSON_HasObjectItem(itr, "never_display") )
 						{
-							entry.neverDisplay = itr->value["never_display"].GetBool();
+							entry.neverDisplay = cJSON_IsTrue(cJSON_GetObjectItem(itr, "never_display"));
 						}
 						entry.tooltipWidth = defaultTooltipWidth;
-						if ( itr->value.HasMember("tooltip_width") )
+						if ( cJSON_HasObjectItem(itr, "tooltip_width") )
 						{
-							entry.tooltipWidth = itr->value["tooltip_width"].GetInt();
+							entry.tooltipWidth = cJSON_GetObjectItem(itr, "tooltip_width")->valueint;
 						}
 					}
 				}
-				if ( d.HasMember("effects") )
+				if ( cJSON_HasObjectItem(d, "effects") )
 				{
-					for ( rapidjson::Value::ConstMemberIterator itr = d["effects"].MemberBegin();
-						itr != d["effects"].MemberEnd(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "effects")->child;
+						itr != nullptr; ++itr )
 					{
 						int id = -1;
-						if ( itr->value.HasMember("id") )
+						if ( cJSON_HasObjectItem(itr, "id") )
 						{
-							id = itr->value["id"].GetInt();
+							id = cJSON_GetObjectItem(itr, "id")->valueint;
 						}
 						StatusEffectDefinitions_t::allEffects.insert(
 							std::make_pair(id, EffectDefinitionEntry_t()));
 						auto& entry = StatusEffectDefinitions_t::allEffects[id];
 						entry.effect_id = id;
-						if ( itr->value["name"].IsArray() )
+						if ( cJSON_IsArray(cJSON_GetObjectItem(itr, "name")) )
 						{
-							for ( auto arr = itr->value["name"].Begin();
-								arr != itr->value["name"].End(); ++arr )
+							for ( auto arr = cJSON_GetObjectItem(itr, "name")->child;
+								arr != nullptr; ++arr )
 							{
-								entry.nameVariations.push_back(arr->GetString());
+								entry.nameVariations.push_back(arr->valuestring);
 							}
 						}
 						else
 						{
-							entry.name = itr->value["name"].GetString();
+							entry.name = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "name"));
 						}
-						if ( itr->value["desc"].IsArray() )
+						if ( cJSON_IsArray(cJSON_GetObjectItem(itr, "desc")) )
 						{
-							for ( auto arr = itr->value["desc"].Begin();
-								arr != itr->value["desc"].End(); ++arr )
+							for ( auto arr = cJSON_GetObjectItem(itr, "desc")->child;
+								arr != nullptr; ++arr )
 							{
-								std::string buf = arr->GetString();
+								std::string buf = arr->valuestring;
 								int index = 0;
 								std::string formattedStr = "\x1E ";
 								for ( auto s : buf )
@@ -6022,7 +6008,7 @@ void StatusEffectQueue_t::loadStatusEffectsJSON()
 						}
 						else
 						{
-							std::string buf = itr->value["desc"].GetString();
+							std::string buf = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "desc"));
 							entry.desc = "\x1E ";
 							int index = 0;
 							for ( auto s : buf )
@@ -6048,45 +6034,45 @@ void StatusEffectQueue_t::loadStatusEffectsJSON()
 								++index;
 							}
 						}
-						entry.internal_name = itr->name.GetString();
-						if ( itr->value["img_path"].IsArray() )
+						entry.internal_name = itr->string;
+						if ( cJSON_IsArray(cJSON_GetObjectItem(itr, "img_path")) )
 						{
-							for ( auto arr = itr->value["img_path"].Begin();
-								arr != itr->value["img_path"].End(); ++arr )
+							for ( auto arr = cJSON_GetObjectItem(itr, "img_path")->child;
+								arr != nullptr; ++arr )
 							{
-								entry.imgPathVariations.push_back(arr->GetString());
+								entry.imgPathVariations.push_back(arr->valuestring);
 							}
 						}
 						else
 						{
-							entry.imgPath = itr->value["img_path"].GetString();
+							entry.imgPath = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "img_path"));
 						}
-						if ( itr->value["img_from_spell_id"].IsArray() )
+						if ( cJSON_IsArray(cJSON_GetObjectItem(itr, "img_from_spell_id")) )
 						{
-							for ( auto arr = itr->value["img_from_spell_id"].Begin();
-								arr != itr->value["img_from_spell_id"].End(); ++arr )
+							for ( auto arr = cJSON_GetObjectItem(itr, "img_from_spell_id")->child;
+								arr != nullptr; ++arr )
 							{
-								entry.useSpellIDForImgVariations.push_back(arr->GetInt());
+								entry.useSpellIDForImgVariations.push_back(arr->valueint);
 							}
 						}
 						else
 						{
-							entry.useSpellIDForImg = itr->value["img_from_spell_id"].GetInt();
+							entry.useSpellIDForImg = cJSON_GetObjectItem(itr, "img_from_spell_id")->valueint;
 						}
 						entry.sustainedSpellID = -1;
-						if ( itr->value.HasMember("use_entry_for_sustained_spell") )
+						if ( cJSON_HasObjectItem(itr, "use_entry_for_sustained_spell") )
 						{
-							entry.sustainedSpellID = itr->value["use_entry_for_sustained_spell"].GetInt();
+							entry.sustainedSpellID = cJSON_GetObjectItem(itr, "use_entry_for_sustained_spell")->valueint;
 						}
 						entry.neverDisplay = false;
-						if ( itr->value.HasMember("never_display") )
+						if ( cJSON_HasObjectItem(itr, "never_display") )
 						{
-							entry.neverDisplay = itr->value["never_display"].GetBool();
+							entry.neverDisplay = cJSON_IsTrue(cJSON_GetObjectItem(itr, "never_display"));
 						}
 						entry.tooltipWidth = defaultTooltipWidth;
-						if ( itr->value.HasMember("tooltip_width") )
+						if ( cJSON_HasObjectItem(itr, "tooltip_width") )
 						{
-							entry.tooltipWidth = itr->value["tooltip_width"].GetInt();
+							entry.tooltipWidth = cJSON_GetObjectItem(itr, "tooltip_width")->valueint;
 						}
 					}
 				}
@@ -7424,7 +7410,6 @@ void Player::HUD_t::updateStatusEffectFocusedWindow()
 		destPos.h += offsetH;
 		destFrame->setSize(destPos);
 
-
 		const real_t fpsScale = getFPSScale(50.0); // ported from 50Hz
 		real_t setpointDiffX = fpsScale * std::max(.1, (1.0 - animBackground)) / (2.5);
 
@@ -8155,7 +8140,6 @@ bool StatusEffectQueue_t::doStatusEffectTooltip(StatusEffectQueueEntry_t& entry,
 					uppercaseString(newHeader);
 					tooltipHeader->setText(newHeader.c_str());
 
-
 					std::string descStr = "";
 					char buf[128];
 					memset(buf, 0, sizeof(buf));
@@ -8352,7 +8336,6 @@ void StatusEffectQueue_t::handleNavigation(std::map<int, StatusEffectQueueEntry_
 	{
 		return;
 	}
-
 
 	StatusEffectQueueEntry_t::Dir_t inputDirection = StatusEffectQueueEntry_t::Dir_t::NONE;
 	if ( Input::inputs[player].consumeBinaryToggle("InventoryMoveUp") )
@@ -9398,7 +9381,6 @@ void StatusEffectQueue_t::updateAllQueuedEffects()
 		notificationFrame->setSize(SDL_Rect{ 0, 0, statusEffectFrame->getSize().w, statusEffectFrame->getSize().h });
 	}
 
-
 	auto innerFrame = statusEffectFrame->findFrame("effects");
 	int numFrameImages = innerFrame->getImages().size();
 	while ( effectQueue.size() > numFrameImages )
@@ -9680,7 +9662,6 @@ void StatusEffectQueue_t::updateAllQueuedEffects()
 
 		assert(grid.find(gridx + gridy * 10000) == grid.end());
 		grid[gridx + gridy * 10000] = &q;
-
 
 		++gridx;
 		movex += spacing;
@@ -9968,7 +9949,6 @@ void updateStatusEffectQueue(const int player)
 		}
 		StatusEffectQueueEntry_t* entry = nullptr;
 		StatusEffectQueueEntry_t* notif = nullptr;
-
 
 		for ( auto& q : statusEffectQueue.effectQueue )
 		{
@@ -11850,7 +11830,6 @@ void Player::HUD_t::updateActionPrompts()
 		}
 	}
 
-
 	int playercount = 0;
 	for (int c = 0; c < MAXPLAYERS; ++c) {
 	    if (!client_disconnected[c] && players[c]->isLocalPlayer()) {
@@ -12953,7 +12932,6 @@ void Player::MessageZone_t::processChatbox()
 	    0,
 		player.camera_virtualWidth() - leftAlignedPaddingX * 2,
 		player.camera_virtualHeight() - leftAlignedBottomY };
-
 
 	SDL_Rect messageBoxSize = bottomAlignedMessages ?
 	    messageboxLeftAlignedPos : messageboxTopAlignedPos;
@@ -14368,52 +14346,49 @@ void Player::CharacterSheet_t::loadCharacterSheetJSON()
 			char buf[65536];
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
-			FileIO::close(fp);
-			rapidjson::Document d;
-			d.ParseStream(is);
-			if ( !d.HasMember("version") )
+			cJSON* d = cJSON_Parse(buf);
+			if ( !cJSON_HasObjectItem(d, "version") )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
 			}
 			else
 			{
-				if ( d.HasMember("level_strings") )
+				if ( cJSON_HasObjectItem(d, "level_strings") )
 				{
 					mapDisplayNamesDescriptions.clear();
-					for ( rapidjson::Value::ConstMemberIterator itr = d["level_strings"].MemberBegin();
-						itr != d["level_strings"].MemberEnd(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "level_strings")->child;
+						itr != nullptr; ++itr )
 					{
 						std::string name = "";
 						std::string desc = "";
-						if ( itr->value.HasMember("display_name") )
+						if ( cJSON_HasObjectItem(itr, "display_name") )
 						{
-							name = itr->value["display_name"].GetString();
+							name = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "display_name"));
 						}
-						if ( itr->value.HasMember("description") )
+						if ( cJSON_HasObjectItem(itr, "description") )
 						{
-							desc = itr->value["description"].GetString();
+							desc = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "description"));
 						}
-						mapDisplayNamesDescriptions[itr->name.GetString()] = std::make_pair(name, desc);
+						mapDisplayNamesDescriptions[itr->string] = std::make_pair(name, desc);
 					}
 				}
-				if ( d.HasMember("hover_text") )
+				if ( cJSON_HasObjectItem(d, "hover_text") )
 				{
 					hoverTextStrings.clear();
-					for ( rapidjson::Value::ConstMemberIterator itr = d["hover_text"].MemberBegin();
-						itr != d["hover_text"].MemberEnd(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "hover_text")->child;
+						itr != nullptr; ++itr )
 					{
-						if ( itr->value.IsObject() )
+						if ( cJSON_IsObject(itr) )
 						{
-							for ( rapidjson::Value::ConstMemberIterator inner_itr = itr->value.MemberBegin();
-								inner_itr != itr->value.MemberEnd(); ++inner_itr )
+							for ( cJSON* inner_itr = itr->child;
+								inner_itr != nullptr; ++inner_itr )
 							{
-								hoverTextStrings[inner_itr->name.GetString()] = inner_itr->value.GetString();
+								hoverTextStrings[inner_itr->string] = inner_itr->valuestring;
 							}
 						}
 						else
 						{
-							hoverTextStrings[itr->name.GetString()] = itr->value.GetString();
+							hoverTextStrings[itr->string] = itr->valuestring;
 						}
 					}
 				}
@@ -14708,7 +14683,6 @@ void Player::CharacterSheet_t::createCharacterSheet()
 		{
 			//characterInnerFrame->addImage(SDL_Rect{ 0, 0, characterInnerFrame->getSize().w, characterInnerFrame->getSize().h }, 0xFFFFFFFF,
 			//	"*#images/ui/CharSheet/HUD_CharSheet_Window_01A_TopTmp.png", "character info tmp img");
-
 
 			SDL_Rect characterTextPos{ 2, 0, 198, 24 };
 			auto nameText = characterInnerFrame->addField("character name text", 32);
@@ -15387,7 +15361,6 @@ void Player::CharacterSheet_t::createCharacterSheet()
 				makeColor(49, 53, 61, 255),
 				"images/system/white.png", "tooltip divider 2");
 			div->disabled = true;
-
 
 			for ( int i = 1; i <= NUM_CHARSHEET_TOOLTIP_BACKING_FRAMES; ++i )
 			{
@@ -16555,7 +16528,6 @@ void Player::GUIDropdown_t::close()
 	currentName = "";
 	bClosedThisTick = true;
 }
-
 
 void Player::GUI_t::closeDropdowns()
 {
@@ -17950,7 +17922,6 @@ void Player::CharacterSheet_t::updateCharacterSheetTooltip(SheetElements element
 	{
 		return;
 	}
-
 
 	Uint32 defaultColor = hudColors.characterSheetNeutral;
 	auto txt = tooltipFrame->findField("tooltip text");
@@ -22395,7 +22366,6 @@ void Player::CharacterSheet_t::updateAttributes()
 		}
 	}
 
-
 	if ( auto field = attributesInnerFrame->findField("weight text stat") )
 	{
 		Sint32 weight = player.movement.getCharacterWeight();
@@ -23920,7 +23890,6 @@ void createInventoryTooltipFrame(const int player,
 		interactFrame->addImage(SDL_Rect{ 6, optionHeight - 16, 20, 22 },
 			hudColors.itemContextMenuOptionSelectedImg, "*#images/ui/Inventory/tooltips/HoverItemMenu_SelectBack_R03.png", "interact selected highlight right");
 
-
 		const char* interactFont = "fonts/pixel_maz.ttf#32#2";
 
 		auto interactText = interactFrame->addField("interact text", 32);
@@ -24585,7 +24554,6 @@ void glDrawWorldTile(view_t* camera, int mode, map_t& map)
 	auto& shader = worldShader;
 	shader.bind();
 
-
 	// upload uniforms for core shader
 	if ( &shader != &worldDarkShader ) {
 		const GLfloat light[4] = { (float)getLightAtModifier, (float)getLightAtModifier, (float)getLightAtModifier, 1.f };
@@ -24882,7 +24850,6 @@ void drawObjectPreview(std::string modelsPath, Entity* object, SDL_Rect pos, rea
 		object = &(limbsArray->at(0));
 		camera = &entry.currentCamera;
 	}
-
 
 	if ( !object )
 	{
@@ -25598,100 +25565,97 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 			char buf[65536];
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
-			FileIO::close(fp);
-			rapidjson::Document d;
-			d.ParseStream(is);
-			if ( !d.HasMember("version") )
+			cJSON* d = cJSON_Parse(buf);
+			if ( !cJSON_HasObjectItem(d, "version") )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
 			}
 			else
 			{
-				if ( d.HasMember("skills") )
+				if ( cJSON_HasObjectItem(d, "skills") )
 				{
 					auto& allEntries = skillSheetData.skillEntries;
 					allEntries.clear();
-					for ( rapidjson::Value::ConstValueIterator itr = d["skills"].Begin();
-						itr != d["skills"].End(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "skills")->child;
+						itr != nullptr; ++itr )
 					{
 						allEntries.push_back(SkillSheetData_t::SkillEntry_t());
 						auto& entry = allEntries[allEntries.size() - 1];
 						entry.setSkillName("");
 						entry.setSkillShortName("");
-						if ( (*itr).HasMember("name") )
+						if ( cJSON_HasObjectItem(itr, "name") )
 						{
-							entry.setSkillName((*itr)["name"].GetString());
+							entry.setSkillName(cJSON_GetStringValue(cJSON_GetObjectItem(itr, "name")));
 						}
-						if ( (*itr).HasMember("shortname") )
+						if ( cJSON_HasObjectItem(itr, "shortname") )
 						{
-							entry.setSkillShortName((*itr)["shortname"].GetString());
+							entry.setSkillShortName(cJSON_GetStringValue(cJSON_GetObjectItem(itr, "shortname")));
 						}
-						if ( (*itr).HasMember("id") )
+						if ( cJSON_HasObjectItem(itr, "id") )
 						{
-							entry.skillId = (*itr)["id"].GetInt();
+							entry.skillId = cJSON_GetObjectItem(itr, "id")->valueint;
 						}
-						if ( (*itr).HasMember("sfx") )
+						if ( cJSON_HasObjectItem(itr, "sfx") )
 						{
-							entry.skillSfx = (*itr)["sfx"].GetInt();
+							entry.skillSfx = cJSON_GetObjectItem(itr, "sfx")->valueint;
 						}
-						if ( (*itr).HasMember("icon_base_path") )
+						if ( cJSON_HasObjectItem(itr, "icon_base_path") )
 						{
-							entry.skillIconPath = (*itr)["icon_base_path"].GetString();
+							entry.skillIconPath = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "icon_base_path"));
 						}
-						if ( (*itr).HasMember("icon_legend_path") )
+						if ( cJSON_HasObjectItem(itr, "icon_legend_path") )
 						{
-							entry.skillIconPathLegend = (*itr)["icon_legend_path"].GetString();
+							entry.skillIconPathLegend = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "icon_legend_path"));
 						}
-						if ( (*itr).HasMember("icon_base_path_32px") )
+						if ( cJSON_HasObjectItem(itr, "icon_base_path_32px") )
 						{
-							entry.skillIconPath32px = (*itr)["icon_base_path_32px"].GetString();
+							entry.skillIconPath32px = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "icon_base_path_32px"));
 						}
-						if ( (*itr).HasMember("icon_legend_path_32px") )
+						if ( cJSON_HasObjectItem(itr, "icon_legend_path_32px") )
 						{
-							entry.skillIconPathLegend32px = (*itr)["icon_legend_path_32px"].GetString();
+							entry.skillIconPathLegend32px = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "icon_legend_path_32px"));
 						}
-						if ( (*itr).HasMember("icon_stat_path") )
+						if ( cJSON_HasObjectItem(itr, "icon_stat_path") )
 						{
-							entry.statIconPath = (*itr)["icon_stat_path"].GetString();
+							entry.statIconPath = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "icon_stat_path"));
 						}
-						if ( (*itr).HasMember("description") )
+						if ( cJSON_HasObjectItem(itr, "description") )
 						{
-							entry.description = (*itr)["description"].GetString();
+							entry.description = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "description"));
 						}
-						if ( (*itr).HasMember("legend_text") )
+						if ( cJSON_HasObjectItem(itr, "legend_text") )
 						{
-							entry.legendaryDescription = (*itr)["legend_text"].GetString();
+							entry.legendaryDescription = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "legend_text"));
 						}
-						if ( (*itr).HasMember("effects") )
+						if ( cJSON_HasObjectItem(itr, "effects") )
 						{
-							for ( rapidjson::Value::ConstValueIterator eff_itr = (*itr)["effects"].Begin(); eff_itr != (*itr)["effects"].End(); ++eff_itr )
+							for ( cJSON* eff_itr = cJSON_GetObjectItem(itr, "effects")->child; eff_itr; eff_itr = eff_itr->next )
 							{
 								entry.effects.push_back(SkillSheetData_t::SkillEntry_t::SkillEffect_t());
 								auto& effect = entry.effects[entry.effects.size() - 1];
-								effect.tag = (*eff_itr)["tag"].GetString();
-								effect.title = (*eff_itr)["title"].GetString();
-								if ( (*eff_itr).HasMember("title_short") )
+								effect.tag = cJSON_GetStringValue(cJSON_GetObjectItem(eff_itr, "tag"));
+								effect.title = cJSON_GetStringValue(cJSON_GetObjectItem(eff_itr, "title"));
+								if ( cJSON_HasObjectItem(eff_itr, "title_short") )
 								{
-									effect.titleShort = (*eff_itr)["title_short"].GetString();
+									effect.titleShort = cJSON_GetStringValue(cJSON_GetObjectItem(eff_itr, "title_short"));
 								}
-								effect.rawValue = (*eff_itr)["value"].GetString();
+								effect.rawValue = cJSON_GetStringValue(cJSON_GetObjectItem(eff_itr, "value"));
 								effect.valueCustomWidthOffset = 0;
-								if ( (*eff_itr).HasMember("custom_value_width_offset") )
+								if ( cJSON_HasObjectItem(eff_itr, "custom_value_width_offset") )
 								{
-									effect.valueCustomWidthOffset = (*eff_itr)["custom_value_width_offset"].GetInt();
+									effect.valueCustomWidthOffset = cJSON_GetObjectItem(eff_itr, "custom_value_width_offset")->valueint;
 								}
-								if ( (*eff_itr).HasMember("auto_resize_value") )
+								if ( cJSON_HasObjectItem(eff_itr, "auto_resize_value") )
 								{
-									effect.bAllowAutoResizeValue = (*eff_itr)["auto_resize_value"].GetBool();
+									effect.bAllowAutoResizeValue = cJSON_IsTrue(cJSON_GetObjectItem(eff_itr, "auto_resize_value"));
 								}
 								else
 								{
 									effect.bAllowAutoResizeValue = false;
 								}
-								if ( (*eff_itr).HasMember("realtime_update") )
+								if ( cJSON_HasObjectItem(eff_itr, "realtime_update") )
 								{
-									effect.bAllowRealtimeUpdate = (*eff_itr)["realtime_update"].GetBool();
+									effect.bAllowRealtimeUpdate = cJSON_IsTrue(cJSON_GetObjectItem(eff_itr, "realtime_update"));
 								}
 								else
 								{
@@ -25699,150 +25663,150 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 								}
 							}
 						}
-						if ( (*itr).HasMember("effects_position") )
+						if ( cJSON_HasObjectItem(itr, "effects_position") )
 						{
-							for ( rapidjson::Value::ConstMemberIterator effPos_itr = (*itr)["effects_position"].MemberBegin(); 
-								effPos_itr != (*itr)["effects_position"].MemberEnd(); ++effPos_itr )
+							for ( cJSON* effPos_itr = cJSON_GetObjectItem(itr, "effects_position")->child; 
+								effPos_itr != nullptr; ++effPos_itr )
 							{
-								std::string memberName = effPos_itr->name.GetString();
+								std::string memberName = effPos_itr->string;
 								if ( memberName == "effect_start_offset_x" )
 								{
-									entry.effectStartOffsetX = effPos_itr->value.GetInt();
+									entry.effectStartOffsetX = effPos_itr->valueint;
 								}
 								else if ( memberName == "effect_background_offset_x" )
 								{
-									entry.effectBackgroundOffsetX = effPos_itr->value.GetInt();
+									entry.effectBackgroundOffsetX = effPos_itr->valueint;
 								}
 								else if ( memberName == "effect_background_width" )
 								{
-									entry.effectBackgroundWidth = effPos_itr->value.GetInt();
+									entry.effectBackgroundWidth = effPos_itr->valueint;
 								}
 							}
 						}
 					}
 				}
-				if ( d.HasMember("window_scaling") )
+				if ( cJSON_HasObjectItem(d, "window_scaling") )
 				{
-					if ( d["window_scaling"].HasMember("standard_scale_modifier_x") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "window_scaling"), "standard_scale_modifier_x") )
 					{
-						windowHeightScaleX = d["window_scaling"]["standard_scale_modifier_x"].GetDouble();
+						windowHeightScaleX = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "window_scaling"), "standard_scale_modifier_x")->valuedouble;
 					}
-					if ( d["window_scaling"].HasMember("standard_scale_modifier_y") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "window_scaling"), "standard_scale_modifier_y") )
 					{
-						windowHeightScaleY = d["window_scaling"]["standard_scale_modifier_y"].GetDouble();
+						windowHeightScaleY = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "window_scaling"), "standard_scale_modifier_y")->valuedouble;
 					}
-					if ( d["window_scaling"].HasMember("compact_scale_modifier_x") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "window_scaling"), "compact_scale_modifier_x") )
 					{
-						windowCompactHeightScaleX = d["window_scaling"]["compact_scale_modifier_x"].GetDouble();
+						windowCompactHeightScaleX = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "window_scaling"), "compact_scale_modifier_x")->valuedouble;
 					}
-					if ( d["window_scaling"].HasMember("compact_scale_modifier_y") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "window_scaling"), "compact_scale_modifier_y") )
 					{
-						windowCompactHeightScaleY = d["window_scaling"]["compact_scale_modifier_y"].GetDouble();
+						windowCompactHeightScaleY = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "window_scaling"), "compact_scale_modifier_y")->valuedouble;
 					}
 				}
-				if ( d.HasMember("skill_select_images") )
+				if ( cJSON_HasObjectItem(d, "skill_select_images") )
 				{
-					if ( d["skill_select_images"].HasMember("highlight_left") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "skill_select_images"), "highlight_left") )
 					{
-						skillSheetData.highlightSkillImg = d["skill_select_images"]["highlight_left"].GetString();
+						skillSheetData.highlightSkillImg = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "skill_select_images"), "highlight_left"));
 					}
-					if ( d["skill_select_images"].HasMember("selected_left") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "skill_select_images"), "selected_left") )
 					{
-						skillSheetData.selectSkillImg = d["skill_select_images"]["selected_left"].GetString();
+						skillSheetData.selectSkillImg = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "skill_select_images"), "selected_left"));
 					}
-					if ( d["skill_select_images"].HasMember("highlight_right") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "skill_select_images"), "highlight_right") )
 					{
-						skillSheetData.highlightSkillImg_Right = d["skill_select_images"]["highlight_right"].GetString();
+						skillSheetData.highlightSkillImg_Right = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "skill_select_images"), "highlight_right"));
 					}
-					if ( d["skill_select_images"].HasMember("selected_right") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "skill_select_images"), "selected_right") )
 					{
-						skillSheetData.selectSkillImg_Right = d["skill_select_images"]["selected_right"].GetString();
+						skillSheetData.selectSkillImg_Right = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "skill_select_images"), "selected_right"));
 					}
 				}
-				if ( d.HasMember("skill_background_icons") )
+				if ( cJSON_HasObjectItem(d, "skill_background_icons") )
 				{
-					if ( d["skill_background_icons"].HasMember("default") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "default") )
 					{
-						skillSheetData.iconBgPathDefault = d["skill_background_icons"]["default"].GetString();
+						skillSheetData.iconBgPathDefault = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "default"));
 					}
-					if ( d["skill_background_icons"].HasMember("default_selected") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "default_selected") )
 					{
-						skillSheetData.iconBgSelectedPathDefault = d["skill_background_icons"]["default_selected"].GetString();
+						skillSheetData.iconBgSelectedPathDefault = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "default_selected"));
 					}
-					if ( d["skill_background_icons"].HasMember("novice") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "novice") )
 					{
-						skillSheetData.iconBgPathNovice = d["skill_background_icons"]["novice"].GetString();
+						skillSheetData.iconBgPathNovice = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "novice"));
 					}
-					if ( d["skill_background_icons"].HasMember("novice_selected") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "novice_selected") )
 					{
-						skillSheetData.iconBgSelectedPathNovice = d["skill_background_icons"]["novice_selected"].GetString();
+						skillSheetData.iconBgSelectedPathNovice = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "novice_selected"));
 					}
-					if ( d["skill_background_icons"].HasMember("expert") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "expert") )
 					{
-						skillSheetData.iconBgPathExpert = d["skill_background_icons"]["expert"].GetString();
+						skillSheetData.iconBgPathExpert = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "expert"));
 					}
-					if ( d["skill_background_icons"].HasMember("expert_selected") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "expert_selected") )
 					{
-						skillSheetData.iconBgSelectedPathExpert = d["skill_background_icons"]["expert_selected"].GetString();
+						skillSheetData.iconBgSelectedPathExpert = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "expert_selected"));
 					}
-					if ( d["skill_background_icons"].HasMember("legend") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "legend") )
 					{
-						skillSheetData.iconBgPathLegend = d["skill_background_icons"]["legend"].GetString();
+						skillSheetData.iconBgPathLegend = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "legend"));
 					}
-					if ( d["skill_background_icons"].HasMember("legend_selected") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "legend_selected") )
 					{
-						skillSheetData.iconBgSelectedPathLegend = d["skill_background_icons"]["legend_selected"].GetString();
+						skillSheetData.iconBgSelectedPathLegend = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "skill_background_icons"), "legend_selected"));
 					}
 				}
-				if ( d.HasMember("alchemy_potion_names_to_filter") )
+				if ( cJSON_HasObjectItem(d, "alchemy_potion_names_to_filter") )
 				{
 					skillSheetData.potionNamesToFilter.clear();
-					if ( d["alchemy_potion_names_to_filter"].IsString() )
+					if ( cJSON_IsString(cJSON_GetObjectItem(d, "alchemy_potion_names_to_filter")) )
 					{
-						skillSheetData.potionNamesToFilter.push_back(d["alchemy_potion_names_to_filter"].GetString());
+						skillSheetData.potionNamesToFilter.push_back(cJSON_GetStringValue(cJSON_GetObjectItem(d, "alchemy_potion_names_to_filter")));
 					}
-					else if ( d["alchemy_potion_names_to_filter"].IsArray() )
+					else if ( cJSON_IsArray(cJSON_GetObjectItem(d, "alchemy_potion_names_to_filter")) )
 					{
-						for ( rapidjson::Value::ConstValueIterator pot_itr = d["alchemy_potion_names_to_filter"].Begin(); 
-							pot_itr != d["alchemy_potion_names_to_filter"].End(); ++pot_itr )
+						for ( cJSON* pot_itr = cJSON_GetObjectItem(d, "alchemy_potion_names_to_filter")->child; 
+							pot_itr != nullptr; ++pot_itr )
 						{
-							skillSheetData.potionNamesToFilter.push_back(pot_itr->GetString());
+							skillSheetData.potionNamesToFilter.push_back(pot_itr->valuestring);
 						}
 					}
 				}
-				if ( d.HasMember("colors") )
+				if ( cJSON_HasObjectItem(d, "colors") )
 				{
-					if ( d["colors"].HasMember("default") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "default") )
 					{
 						skillSheetData.defaultTextColor = makeColor(
-							d["colors"]["default"]["r"].GetInt(),
-							d["colors"]["default"]["g"].GetInt(),
-							d["colors"]["default"]["b"].GetInt(),
-							d["colors"]["default"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "default"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "default"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "default"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "default"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("novice") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "novice") )
 					{
 						skillSheetData.noviceTextColor = makeColor(
-							d["colors"]["novice"]["r"].GetInt(),
-							d["colors"]["novice"]["g"].GetInt(),
-							d["colors"]["novice"]["b"].GetInt(),
-							d["colors"]["novice"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "novice"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "novice"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "novice"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "novice"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("expert") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "expert") )
 					{
 						skillSheetData.expertTextColor = makeColor(
-							d["colors"]["expert"]["r"].GetInt(),
-							d["colors"]["expert"]["g"].GetInt(),
-							d["colors"]["expert"]["b"].GetInt(),
-							d["colors"]["expert"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "expert"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "expert"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "expert"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "expert"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("legend") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "legend") )
 					{
 						skillSheetData.legendTextColor = makeColor(
-							d["colors"]["legend"]["r"].GetInt(),
-							d["colors"]["legend"]["g"].GetInt(),
-							d["colors"]["legend"]["b"].GetInt(),
-							d["colors"]["legend"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "legend"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "legend"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "legend"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "legend"), "a")->valueint);
 					}
 				}
 				printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
@@ -25869,25 +25833,21 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 			char buf[65536];
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
-			FileIO::close(fp);
-
-			rapidjson::Document d;
-			d.ParseStream(is);
-			if ( !d.HasMember("version") )
+			cJSON* d = cJSON_Parse(buf);
+			if ( !cJSON_HasObjectItem(d, "version") )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
 			}
 			else
 			{
-				if ( d.HasMember("leadership_allies_base") )
+				if ( cJSON_HasObjectItem(d, "leadership_allies_base") )
 				{
 					auto& allyTable = skillSheetData.leadershipAllyTableBase;
 					allyTable.clear();
-					for ( rapidjson::Value::ConstMemberIterator itr = d["leadership_allies_base"].MemberBegin();
-						itr != d["leadership_allies_base"].MemberEnd(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "leadership_allies_base")->child;
+						itr != nullptr; ++itr )
 					{
-						std::string monsterName = itr->name.GetString();
+						std::string monsterName = itr->string;
 						int monsterType = -1;
 						for ( int i = 0; i < NUMMONSTERS; ++i )
 						{
@@ -25898,12 +25858,12 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 							}
 						}
 						if ( monsterType < 0 ) { continue; }
-						if ( itr->value.IsArray() )
+						if ( cJSON_IsArray(itr) )
 						{
-							for ( rapidjson::Value::ConstValueIterator ally_itr = itr->value.Begin();
-								ally_itr != itr->value.End(); ++ally_itr )
+							for ( cJSON* ally_itr = itr->child;
+								ally_itr != nullptr; ++ally_itr )
 							{
-								std::string allyName = ally_itr->GetString();
+								std::string allyName = ally_itr->valuestring;
 								int allyType = -1;
 								for ( int i = 0; i < NUMMONSTERS; ++i )
 								{
@@ -25921,14 +25881,14 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 						}
 					}
 				}
-				if ( d.HasMember("leadership_allies_legendary") )
+				if ( cJSON_HasObjectItem(d, "leadership_allies_legendary") )
 				{
 					auto& allyTable = skillSheetData.leadershipAllyTableLegendary;
 					allyTable.clear();
-					for ( rapidjson::Value::ConstMemberIterator itr = d["leadership_allies_legendary"].MemberBegin();
-						itr != d["leadership_allies_legendary"].MemberEnd(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "leadership_allies_legendary")->child;
+						itr != nullptr; ++itr )
 					{
-						std::string monsterName = itr->name.GetString();
+						std::string monsterName = itr->string;
 						int monsterType = -1;
 						for ( int i = 0; i < NUMMONSTERS; ++i )
 						{
@@ -25939,12 +25899,12 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 							}
 						}
 						if ( monsterType < 0 ) { continue; }
-						if ( itr->value.IsArray() )
+						if ( cJSON_IsArray(itr) )
 						{
-							for ( rapidjson::Value::ConstValueIterator ally_itr = itr->value.Begin();
-								ally_itr != itr->value.End(); ++ally_itr )
+							for ( cJSON* ally_itr = itr->child;
+								ally_itr != nullptr; ++ally_itr )
 							{
-								std::string allyName = ally_itr->GetString();
+								std::string allyName = ally_itr->valuestring;
 								int allyType = -1;
 								for ( int i = 0; i < NUMMONSTERS; ++i )
 								{
@@ -25962,14 +25922,14 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 						}
 					}
 				}
-				if ( d.HasMember("leadership_allies_unique_recruits") )
+				if ( cJSON_HasObjectItem(d, "leadership_allies_unique_recruits") )
 				{
 					auto& allyTable = skillSheetData.leadershipAllyTableSpecialRecruitment;
 					allyTable.clear();
-					for ( rapidjson::Value::ConstMemberIterator itr = d["leadership_allies_unique_recruits"].MemberBegin();
-						itr != d["leadership_allies_unique_recruits"].MemberEnd(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "leadership_allies_unique_recruits")->child;
+						itr != nullptr; ++itr )
 					{
-						std::string monsterName = itr->name.GetString();
+						std::string monsterName = itr->string;
 						int monsterType = -1;
 						for ( int i = 0; i < NUMMONSTERS; ++i )
 						{
@@ -25980,15 +25940,15 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 							}
 						}
 						if ( monsterType < 0 ) { continue; }
-						if ( itr->value.IsArray() )
+						if ( cJSON_IsArray(itr) )
 						{
-							for ( rapidjson::Value::ConstValueIterator ally_itr = itr->value.Begin();
-								ally_itr != itr->value.End(); ++ally_itr )
+							for ( cJSON* ally_itr = itr->child;
+								ally_itr != nullptr; ++ally_itr )
 							{
-								for ( rapidjson::Value::ConstMemberIterator entry_itr = ally_itr->MemberBegin();
-									entry_itr != ally_itr->MemberEnd(); ++entry_itr )
+								for ( cJSON* entry_itr = ally_itr->child;
+									entry_itr != nullptr; ++entry_itr )
 								{
-									std::string allyName = entry_itr->name.GetString();
+									std::string allyName = entry_itr->string;
 									int allyType = -1;
 									for ( int i = 0; i < NUMMONSTERS; ++i )
 									{
@@ -26000,7 +25960,7 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 									}
 									if ( allyType >= 0 )
 									{
-										allyTable[(Monster)monsterType].push_back(std::make_pair((Monster)allyType, entry_itr->value.GetString()));
+										allyTable[(Monster)monsterType].push_back(std::make_pair((Monster)allyType, entry_itr->valuestring));
 									}
 								}
 							}
@@ -26034,660 +25994,656 @@ void loadHUDSettingsJSON()
 			char buf[65536];
 			int count = fp->read(buf, sizeof(buf[0]), sizeof(buf));
 			buf[count] = '\0';
-			rapidjson::StringStream is(buf);
-			FileIO::close(fp);
-
-			rapidjson::Document d;
-			d.ParseStream(is);
-			if ( !d.HasMember("version") )
+			cJSON* d = cJSON_Parse(buf);
+			if ( !cJSON_HasObjectItem(d, "version") )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
 			}
 			else
 			{
-				if ( d.HasMember("selected_cursor_opacity") )
+				if ( cJSON_HasObjectItem(d, "selected_cursor_opacity") )
 				{
-					selectedCursorOpacity = d["selected_cursor_opacity"].GetInt();
+					selectedCursorOpacity = cJSON_GetObjectItem(d, "selected_cursor_opacity")->valueint;
 				}
-				if ( d.HasMember("selected_old_cursor_opacity") )
+				if ( cJSON_HasObjectItem(d, "selected_old_cursor_opacity") )
 				{
-					oldSelectedCursorOpacity = d["selected_old_cursor_opacity"].GetInt();
+					oldSelectedCursorOpacity = cJSON_GetObjectItem(d, "selected_old_cursor_opacity")->valueint;
 				}
-				if ( d.HasMember("hotbar") )
+				if ( cJSON_HasObjectItem(d, "hotbar") )
 				{
-					if ( d["hotbar"].HasMember("hotbar_slot_opacity") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_slot_opacity") )
 					{
-						hotbarSlotOpacity = d["hotbar"]["hotbar_slot_opacity"].GetInt();
+						hotbarSlotOpacity = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_slot_opacity")->valueint;
 					}
-					if ( d["hotbar"].HasMember("hotbar_selected_slot_opacity") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_selected_slot_opacity") )
 					{
-						hotbarSelectedSlotOpacity = d["hotbar"]["hotbar_selected_slot_opacity"].GetInt();
+						hotbarSelectedSlotOpacity = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_selected_slot_opacity")->valueint;
 					}
-					if ( d["hotbar"].HasMember("hotbar_compact_x_offset") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_compact_x_offset") )
 					{
-						hotbarCompactOffsetX = d["hotbar"]["hotbar_compact_x_offset"].GetInt();
+						hotbarCompactOffsetX = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_compact_x_offset")->valueint;
 					}
-					if ( d["hotbar"].HasMember("hotbar_compact_slot_overlap") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_compact_slot_overlap") )
 					{
-						hotbarCompactSlotOverlapPercent = d["hotbar"]["hotbar_compact_slot_overlap"].GetDouble();
+						hotbarCompactSlotOverlapPercent = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_compact_slot_overlap")->valuedouble;
 					}
-					if ( d["hotbar"].HasMember("hotbar_compact_inactive_slot_movement_x") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_compact_inactive_slot_movement_x") )
 					{
-						hotbarCompactInactiveSlotMovementX = d["hotbar"]["hotbar_compact_inactive_slot_movement_x"].GetInt();
+						hotbarCompactInactiveSlotMovementX = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_compact_inactive_slot_movement_x")->valueint;
 					}
-					if ( d["hotbar"].HasMember("hotbar_compact_expanded_x_offset") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_compact_expanded_x_offset") )
 					{
-						hotbarCompactExpandedOffsetX = d["hotbar"]["hotbar_compact_expanded_x_offset"].GetInt();
+						hotbarCompactExpandedOffsetX = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_compact_expanded_x_offset")->valueint;
 					}
-					if ( d["hotbar"].HasMember("hotbar_y_offset") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_y_offset") )
 					{
-						hotbarOffsetY = d["hotbar"]["hotbar_y_offset"].GetInt();
+						hotbarOffsetY = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_y_offset")->valueint;
 					}
-					if ( d["hotbar"].HasMember("hotbar_compact_y_offset") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_compact_y_offset") )
 					{
-						hotbarCompactOffsetY = d["hotbar"]["hotbar_compact_y_offset"].GetInt();
-					}
-				}
-				if ( d.HasMember("xpbar") )
-				{
-					if ( d["xpbar"].HasMember("xpbar_width_offset") )
-					{
-						xpbarOffsetWidth = d["xpbar"]["xpbar_width_offset"].GetInt();
-					}
-					if ( d["xpbar"].HasMember("xpbar_compact_width_offset") )
-					{
-						xpbarCompactOffsetWidth = d["xpbar"]["xpbar_compact_width_offset"].GetInt();
-					}
-					if ( d["xpbar"].HasMember("xpbar_y_offset") )
-					{
-						xpbarOffsetY = d["xpbar"]["xpbar_y_offset"].GetInt();
-					}
-					if ( d["xpbar"].HasMember("xpbar_compact_y_offset") )
-					{
-						xpbarCompactOffsetY = d["xpbar"]["xpbar_compact_y_offset"].GetInt();
+						hotbarCompactOffsetY = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hotbar"), "hotbar_compact_y_offset")->valueint;
 					}
 				}
-				if ( d.HasMember("hpmpbar") )
+				if ( cJSON_HasObjectItem(d, "xpbar") )
 				{
-					if ( d["hpmpbar"].HasMember("hpmpbar_width_offset") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "xpbar"), "xpbar_width_offset") )
 					{
-						hpmpbarOffsetWidth = d["hpmpbar"]["hpmpbar_width_offset"].GetInt();
+						xpbarOffsetWidth = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "xpbar"), "xpbar_width_offset")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_x_offset") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "xpbar"), "xpbar_compact_width_offset") )
 					{
-						hpmpbarOffsetX = d["hpmpbar"]["hpmpbar_x_offset"].GetInt();
+						xpbarCompactOffsetWidth = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "xpbar"), "xpbar_compact_width_offset")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_y_offset") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "xpbar"), "xpbar_y_offset") )
 					{
-						hpmpbarOffsetY = d["hpmpbar"]["hpmpbar_y_offset"].GetInt();
+						xpbarOffsetY = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "xpbar"), "xpbar_y_offset")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_width_offset") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "xpbar"), "xpbar_compact_y_offset") )
 					{
-						hpmpbarCompactOffsetWidth = d["hpmpbar"]["hpmpbar_compact_width_offset"].GetInt();
+						xpbarCompactOffsetY = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "xpbar"), "xpbar_compact_y_offset")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_x_offset") )
+				}
+				if ( cJSON_HasObjectItem(d, "hpmpbar") )
+				{
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_width_offset") )
 					{
-						hpmpbarCompactOffsetX = d["hpmpbar"]["hpmpbar_compact_x_offset"].GetInt();
+						hpmpbarOffsetWidth = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_width_offset")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_y_offset") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_x_offset") )
 					{
-						hpmpbarCompactOffsetY = d["hpmpbar"]["hpmpbar_compact_y_offset"].GetInt();
+						hpmpbarOffsetX = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_x_offset")->valueint;
+					}
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_y_offset") )
+					{
+						hpmpbarOffsetY = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_y_offset")->valueint;
+					}
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_width_offset") )
+					{
+						hpmpbarCompactOffsetWidth = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_width_offset")->valueint;
+					}
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_x_offset") )
+					{
+						hpmpbarCompactOffsetX = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_x_offset")->valueint;
+					}
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_y_offset") )
+					{
+						hpmpbarCompactOffsetY = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_y_offset")->valueint;
 					}
 
-					if ( d["hpmpbar"].HasMember("hpmpbar_max_amount_threshold") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_max_amount_threshold") )
 					{
-						hpmpbarMaxWidthAmount = d["hpmpbar"]["hpmpbar_max_amount_threshold"].GetInt();
+						hpmpbarMaxWidthAmount = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_max_amount_threshold")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_interval_to_increase_width") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_interval_to_increase_width") )
 					{
 						hpmpbarIntervalToIncreaseWidth 
-							= d["hpmpbar"]["hpmpbar_interval_to_increase_width"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_interval_to_increase_width")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_base_percent") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_base_percent") )
 					{
-						hpmpbarBasePercentSize = d["hpmpbar"]["hpmpbar_base_percent"].GetInt();
+						hpmpbarBasePercentSize = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_base_percent")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_interval_start_value") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_interval_start_value") )
 					{
-						hpmpbarIntervalStartValue = d["hpmpbar"]["hpmpbar_interval_start_value"].GetInt();
+						hpmpbarIntervalStartValue = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_interval_start_value")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_width_increase_percent_on_interval") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_width_increase_percent_on_interval") )
 					{
 						hpmpbarWidthIncreasePercentOnInterval = 
-							d["hpmpbar"]["hpmpbar_width_increase_percent_on_interval"].GetDouble();
+							cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_width_increase_percent_on_interval")->valuedouble;
 					}
 
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_max_amount_threshold") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_max_amount_threshold") )
 					{
-						hpmpbarCompactMaxWidthAmount = d["hpmpbar"]["hpmpbar_compact_max_amount_threshold"].GetInt();
+						hpmpbarCompactMaxWidthAmount = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_max_amount_threshold")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_interval_to_increase_width") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_interval_to_increase_width") )
 					{
 						hpmpbarCompactIntervalToIncreaseWidth = 
-							d["hpmpbar"]["hpmpbar_compact_interval_to_increase_width"].GetInt();
+							cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_interval_to_increase_width")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_base_percent") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_base_percent") )
 					{
-						hpmpbarCompactBasePercentSize = d["hpmpbar"]["hpmpbar_compact_base_percent"].GetInt();
+						hpmpbarCompactBasePercentSize = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_base_percent")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_interval_start_value") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_interval_start_value") )
 					{
-						hpmpbarCompactIntervalStartValue = d["hpmpbar"]["hpmpbar_compact_interval_start_value"].GetInt();
+						hpmpbarCompactIntervalStartValue = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_interval_start_value")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_width_increase_percent_on_interval") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_width_increase_percent_on_interval") )
 					{
 						hpmpbarCompactWidthIncreasePercentOnInterval = 
-							d["hpmpbar"]["hpmpbar_compact_width_increase_percent_on_interval"].GetDouble();
+							cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_width_increase_percent_on_interval")->valuedouble;
 					}
 				}
-				if ( d.HasMember("allybars") )
+				if ( cJSON_HasObjectItem(d, "allybars") )
 				{
-					for ( auto ally_itr = d["allybars"].MemberBegin(); ally_itr != d["allybars"].MemberEnd(); ++ally_itr )
+					for ( cJSON* ally_itr = cJSON_GetObjectItem(d, "allybars")->child; ally_itr; ally_itr = ally_itr->next )
 					{
-						std::string type = ally_itr->name.GetString();
+						std::string type = ally_itr->string;
 						if ( type == "followers" )
 						{
-							if ( ally_itr->value.HasMember("entry_height") )
+							if ( cJSON_HasObjectItem(ally_itr, "entry_height") )
 							{
-								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.entryHeight = ally_itr->value["entry_height"].GetInt();
+								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.entryHeight = cJSON_GetObjectItem(ally_itr, "entry_height")->valueint;
 							}
-							if ( ally_itr->value.HasMember("entry_compact_height") )
+							if ( cJSON_HasObjectItem(ally_itr, "entry_compact_height") )
 							{
-								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.entryCompactHeight = ally_itr->value["entry_compact_height"].GetInt();
+								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.entryCompactHeight = cJSON_GetObjectItem(ally_itr, "entry_compact_height")->valueint;
 							}
-							if ( ally_itr->value.HasMember("infinite_scroll") )
+							if ( cJSON_HasObjectItem(ally_itr, "infinite_scroll") )
 							{
-								Player::HUD_t::FollowerDisplay_t::infiniteScrolling = ally_itr->value["infinite_scroll"].GetBool();
+								Player::HUD_t::FollowerDisplay_t::infiniteScrolling = cJSON_IsTrue(cJSON_GetObjectItem(ally_itr, "infinite_scroll"));
 							}
-							if ( ally_itr->value.HasMember("max_finite_bars") )
+							if ( cJSON_HasObjectItem(ally_itr, "max_finite_bars") )
 							{
-								Player::HUD_t::FollowerDisplay_t::numFiniteBars = ally_itr->value["max_finite_bars"].GetInt();
+								Player::HUD_t::FollowerDisplay_t::numFiniteBars = cJSON_GetObjectItem(ally_itr, "max_finite_bars")->valueint;
 							}
-							if ( ally_itr->value.HasMember("max_fullsize_bars") )
+							if ( cJSON_HasObjectItem(ally_itr, "max_fullsize_bars") )
 							{
-								Player::HUD_t::FollowerDisplay_t::numInfiniteFullsizeBars = ally_itr->value["max_fullsize_bars"].GetInt();
+								Player::HUD_t::FollowerDisplay_t::numInfiniteFullsizeBars = cJSON_GetObjectItem(ally_itr, "max_fullsize_bars")->valueint;
 							}
-							if ( ally_itr->value.HasMember("max_compact_bars") )
+							if ( cJSON_HasObjectItem(ally_itr, "max_compact_bars") )
 							{
-								Player::HUD_t::FollowerDisplay_t::numInfiniteCompactBars = ally_itr->value["max_compact_bars"].GetInt();
+								Player::HUD_t::FollowerDisplay_t::numInfiniteCompactBars = cJSON_GetObjectItem(ally_itr, "max_compact_bars")->valueint;
 							}
-							if ( ally_itr->value.HasMember("splitscreen_max_fullsize_bars") )
+							if ( cJSON_HasObjectItem(ally_itr, "splitscreen_max_fullsize_bars") )
 							{
-								Player::HUD_t::FollowerDisplay_t::numInfiniteSplitscreenFullsizeBars = ally_itr->value["splitscreen_max_fullsize_bars"].GetInt();
+								Player::HUD_t::FollowerDisplay_t::numInfiniteSplitscreenFullsizeBars = cJSON_GetObjectItem(ally_itr, "splitscreen_max_fullsize_bars")->valueint;
 							}
-							if ( ally_itr->value.HasMember("splitscreen_max_compact_bars") )
+							if ( cJSON_HasObjectItem(ally_itr, "splitscreen_max_compact_bars") )
 							{
-								Player::HUD_t::FollowerDisplay_t::numInfiniteSplitscreenCompactBars = ally_itr->value["splitscreen_max_compact_bars"].GetInt();
+								Player::HUD_t::FollowerDisplay_t::numInfiniteSplitscreenCompactBars = cJSON_GetObjectItem(ally_itr, "splitscreen_max_compact_bars")->valueint;
 							}
-							if ( ally_itr->value.HasMember("max_fullsize_name_len") )
+							if ( cJSON_HasObjectItem(ally_itr, "max_fullsize_name_len") )
 							{
-								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.maxNameLengthFullsize = ally_itr->value["max_fullsize_name_len"].GetInt();
+								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.maxNameLengthFullsize = cJSON_GetObjectItem(ally_itr, "max_fullsize_name_len")->valueint;
 							}
-							if ( ally_itr->value.HasMember("max_compact_name_len") )
+							if ( cJSON_HasObjectItem(ally_itr, "max_compact_name_len") )
 							{
-								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.maxNameLengthCompact = ally_itr->value["max_compact_name_len"].GetInt();
+								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.maxNameLengthCompact = cJSON_GetObjectItem(ally_itr, "max_compact_name_len")->valueint;
 							}
-							if ( ally_itr->value.HasMember("max_splitscreen_fullsize_name_len") )
+							if ( cJSON_HasObjectItem(ally_itr, "max_splitscreen_fullsize_name_len") )
 							{
-								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.maxNameLengthSplitscreenFullsize = ally_itr->value["max_splitscreen_fullsize_name_len"].GetInt();
+								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.maxNameLengthSplitscreenFullsize = cJSON_GetObjectItem(ally_itr, "max_splitscreen_fullsize_name_len")->valueint;
 							}
-							if ( ally_itr->value.HasMember("max_splitscreen_compact_name_len") )
+							if ( cJSON_HasObjectItem(ally_itr, "max_splitscreen_compact_name_len") )
 							{
-								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.maxNameLengthSplitscreenCompact = ally_itr->value["max_splitscreen_compact_name_len"].GetInt();
+								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.maxNameLengthSplitscreenCompact = cJSON_GetObjectItem(ally_itr, "max_splitscreen_compact_name_len")->valueint;
 							}
-							if ( ally_itr->value.HasMember("base_y_pos") )
+							if ( cJSON_HasObjectItem(ally_itr, "base_y_pos") )
 							{
-								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.baseY = ally_itr->value["base_y_pos"].GetInt();
+								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.baseY = cJSON_GetObjectItem(ally_itr, "base_y_pos")->valueint;
 							}
-							if ( ally_itr->value.HasMember("base_y_pos_splitscreen") )
+							if ( cJSON_HasObjectItem(ally_itr, "base_y_pos_splitscreen") )
 							{
-								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.baseYSplitscreen = ally_itr->value["base_y_pos_splitscreen"].GetInt();
+								AllyStatusBarSettings_t::FollowerBars_t::entrySettings.baseYSplitscreen = cJSON_GetObjectItem(ally_itr, "base_y_pos_splitscreen")->valueint;
 							}
-							if ( ally_itr->value.HasMember("hp") )
+							if ( cJSON_HasObjectItem(ally_itr, "hp") )
 							{
-								for ( auto val_itr = ally_itr->value["hp"].MemberBegin();
-									val_itr != ally_itr->value["hp"].MemberEnd(); ++val_itr )
+								for ( auto val_itr = cJSON_GetObjectItem(ally_itr, "hp")->child;
+									val_itr != nullptr; ++val_itr )
 								{
-									std::string key = val_itr->name.GetString();
+									std::string key = val_itr->string;
 									auto& bar = AllyStatusBarSettings_t::FollowerBars_t::hpBar;
 									if ( key == "bar_pixel_width" )
 									{
-										bar.barPixelWidth = val_itr->value.GetInt();
+										bar.barPixelWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_pixel_width" )
 									{
-										bar.barCompactPixelWidth = val_itr->value.GetInt();
+										bar.barCompactPixelWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_splitscreen_pixel_width_offset" )
 									{
-										bar.barSplitscreenPixelWidthOffset = val_itr->value.GetInt();
+										bar.barSplitscreenPixelWidthOffset = val_itr->valueint;
 									}
 									else if ( key == "bar_max_amount_threshold" )
 									{
-										bar.barMaxWidthAmount = val_itr->value.GetInt();
+										bar.barMaxWidthAmount = val_itr->valueint;
 									}
 									else if ( key == "bar_interval_to_increase_width" )
 									{
-										bar.barIntervalToIncreaseWidth = val_itr->value.GetInt();
+										bar.barIntervalToIncreaseWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_interval_start_value" )
 									{
-										bar.barIntervalStartValue = val_itr->value.GetInt();
+										bar.barIntervalStartValue = val_itr->valueint;
 									}
 									else if ( key == "bar_width_increase_percent_on_interval" )
 									{
-										bar.barWidthIncreasePercentOnInterval = val_itr->value.GetDouble();
+										bar.barWidthIncreasePercentOnInterval = val_itr->valuedouble;
 									}
 									else if ( key == "bar_base_percent" )
 									{
-										bar.barBasePercentSize = val_itr->value.GetInt();
+										bar.barBasePercentSize = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_max_amount_threshold" )
 									{
-										bar.barCompactMaxWidthAmount = val_itr->value.GetInt();
+										bar.barCompactMaxWidthAmount = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_interval_to_increase_width" )
 									{
-										bar.barCompactIntervalToIncreaseWidth = val_itr->value.GetInt();
+										bar.barCompactIntervalToIncreaseWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_interval_start_value" )
 									{
-										bar.barCompactIntervalStartValue = val_itr->value.GetInt();
+										bar.barCompactIntervalStartValue = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_width_increase_percent_on_interval" )
 									{
-										bar.barCompactWidthIncreasePercentOnInterval = val_itr->value.GetDouble();
+										bar.barCompactWidthIncreasePercentOnInterval = val_itr->valuedouble;
 									}
 									else if ( key == "bar_compact_base_percent" )
 									{
-										bar.barCompactBasePercentSize = val_itr->value.GetInt();
+										bar.barCompactBasePercentSize = val_itr->valueint;
 									}
 								}
 							}
-							if ( ally_itr->value.HasMember("mp") )
+							if ( cJSON_HasObjectItem(ally_itr, "mp") )
 							{
-								for ( auto val_itr = ally_itr->value["mp"].MemberBegin();
-									val_itr != ally_itr->value["mp"].MemberEnd(); ++val_itr )
+								for ( auto val_itr = cJSON_GetObjectItem(ally_itr, "mp")->child;
+									val_itr != nullptr; ++val_itr )
 								{
-									std::string key = val_itr->name.GetString();
+									std::string key = val_itr->string;
 									auto& bar = AllyStatusBarSettings_t::FollowerBars_t::mpBar;
 									if ( key == "bar_pixel_width" )
 									{
-										bar.barPixelWidth = val_itr->value.GetInt();
+										bar.barPixelWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_pixel_width" )
 									{
-										bar.barCompactPixelWidth = val_itr->value.GetInt();
+										bar.barCompactPixelWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_max_amount_threshold" )
 									{
-										bar.barMaxWidthAmount = val_itr->value.GetInt();
+										bar.barMaxWidthAmount = val_itr->valueint;
 									}
 									else if ( key == "bar_interval_to_increase_width" )
 									{
-										bar.barIntervalToIncreaseWidth = val_itr->value.GetInt();
+										bar.barIntervalToIncreaseWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_interval_start_value" )
 									{
-										bar.barIntervalStartValue = val_itr->value.GetInt();
+										bar.barIntervalStartValue = val_itr->valueint;
 									}
 									else if ( key == "bar_width_increase_percent_on_interval" )
 									{
-										bar.barWidthIncreasePercentOnInterval = val_itr->value.GetDouble();
+										bar.barWidthIncreasePercentOnInterval = val_itr->valuedouble;
 									}
 									else if ( key == "bar_base_percent" )
 									{
-										bar.barBasePercentSize = val_itr->value.GetInt();
+										bar.barBasePercentSize = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_max_amount_threshold" )
 									{
-										bar.barCompactMaxWidthAmount = val_itr->value.GetInt();
+										bar.barCompactMaxWidthAmount = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_interval_to_increase_width" )
 									{
-										bar.barCompactIntervalToIncreaseWidth = val_itr->value.GetInt();
+										bar.barCompactIntervalToIncreaseWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_interval_start_value" )
 									{
-										bar.barCompactIntervalStartValue = val_itr->value.GetInt();
+										bar.barCompactIntervalStartValue = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_width_increase_percent_on_interval" )
 									{
-										bar.barCompactWidthIncreasePercentOnInterval = val_itr->value.GetDouble();
+										bar.barCompactWidthIncreasePercentOnInterval = val_itr->valuedouble;
 									}
 									else if ( key == "bar_compact_base_percent" )
 									{
-										bar.barCompactBasePercentSize = val_itr->value.GetInt();
+										bar.barCompactBasePercentSize = val_itr->valueint;
 									}
 								}
 							}
 						}
 						else if ( type == "players" )
 						{
-							if ( ally_itr->value.HasMember("entry_height") )
+							if ( cJSON_HasObjectItem(ally_itr, "entry_height") )
 							{
-								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.entryHeight = ally_itr->value["entry_height"].GetInt();
+								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.entryHeight = cJSON_GetObjectItem(ally_itr, "entry_height")->valueint;
 							}
-							if ( ally_itr->value.HasMember("entry_compact_height") )
+							if ( cJSON_HasObjectItem(ally_itr, "entry_compact_height") )
 							{
-								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.entryCompactHeight = ally_itr->value["entry_compact_height"].GetInt();
+								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.entryCompactHeight = cJSON_GetObjectItem(ally_itr, "entry_compact_height")->valueint;
 							}
-							if ( ally_itr->value.HasMember("max_fullsize_name_len") )
+							if ( cJSON_HasObjectItem(ally_itr, "max_fullsize_name_len") )
 							{
-								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.maxNameLengthFullsize = ally_itr->value["max_fullsize_name_len"].GetInt();
+								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.maxNameLengthFullsize = cJSON_GetObjectItem(ally_itr, "max_fullsize_name_len")->valueint;
 							}
-							if ( ally_itr->value.HasMember("max_compact_name_len") )
+							if ( cJSON_HasObjectItem(ally_itr, "max_compact_name_len") )
 							{
-								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.maxNameLengthCompact = ally_itr->value["max_compact_name_len"].GetInt();
+								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.maxNameLengthCompact = cJSON_GetObjectItem(ally_itr, "max_compact_name_len")->valueint;
 							}
-							if ( ally_itr->value.HasMember("max_splitscreen_fullsize_name_len") )
+							if ( cJSON_HasObjectItem(ally_itr, "max_splitscreen_fullsize_name_len") )
 							{
-								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.maxNameLengthSplitscreenFullsize = ally_itr->value["max_splitscreen_fullsize_name_len"].GetInt();
+								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.maxNameLengthSplitscreenFullsize = cJSON_GetObjectItem(ally_itr, "max_splitscreen_fullsize_name_len")->valueint;
 							}
-							if ( ally_itr->value.HasMember("max_splitscreen_compact_name_len") )
+							if ( cJSON_HasObjectItem(ally_itr, "max_splitscreen_compact_name_len") )
 							{
-								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.maxNameLengthSplitscreenCompact = ally_itr->value["max_splitscreen_compact_name_len"].GetInt();
+								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.maxNameLengthSplitscreenCompact = cJSON_GetObjectItem(ally_itr, "max_splitscreen_compact_name_len")->valueint;
 							}
-							if ( ally_itr->value.HasMember("base_y_pos") )
+							if ( cJSON_HasObjectItem(ally_itr, "base_y_pos") )
 							{
-								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.baseY = ally_itr->value["base_y_pos"].GetInt();
+								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.baseY = cJSON_GetObjectItem(ally_itr, "base_y_pos")->valueint;
 							}
-							if ( ally_itr->value.HasMember("base_y_pos_splitscreen") )
+							if ( cJSON_HasObjectItem(ally_itr, "base_y_pos_splitscreen") )
 							{
-								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.baseYSplitscreen = ally_itr->value["base_y_pos_splitscreen"].GetInt();
+								AllyStatusBarSettings_t::PlayerBars_t::entrySettings.baseYSplitscreen = cJSON_GetObjectItem(ally_itr, "base_y_pos_splitscreen")->valueint;
 							}
-							if ( ally_itr->value.HasMember("hp") )
+							if ( cJSON_HasObjectItem(ally_itr, "hp") )
 							{
-								for ( auto val_itr = ally_itr->value["hp"].MemberBegin();
-									val_itr != ally_itr->value["hp"].MemberEnd(); ++val_itr )
+								for ( auto val_itr = cJSON_GetObjectItem(ally_itr, "hp")->child;
+									val_itr != nullptr; ++val_itr )
 								{
-									std::string key = val_itr->name.GetString();
+									std::string key = val_itr->string;
 									auto& bar = AllyStatusBarSettings_t::PlayerBars_t::hpBar;
 									if ( key == "bar_pixel_width" )
 									{
-										bar.barPixelWidth = val_itr->value.GetInt();
+										bar.barPixelWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_pixel_width" )
 									{
-										bar.barCompactPixelWidth = val_itr->value.GetInt();
+										bar.barCompactPixelWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_max_amount_threshold" )
 									{
-										bar.barMaxWidthAmount = val_itr->value.GetInt();
+										bar.barMaxWidthAmount = val_itr->valueint;
 									}
 									else if ( key == "bar_interval_to_increase_width" )
 									{
-										bar.barIntervalToIncreaseWidth = val_itr->value.GetInt();
+										bar.barIntervalToIncreaseWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_interval_start_value" )
 									{
-										bar.barIntervalStartValue = val_itr->value.GetInt();
+										bar.barIntervalStartValue = val_itr->valueint;
 									}
 									else if ( key == "bar_width_increase_percent_on_interval" )
 									{
-										bar.barWidthIncreasePercentOnInterval = val_itr->value.GetDouble();
+										bar.barWidthIncreasePercentOnInterval = val_itr->valuedouble;
 									}
 									else if ( key == "bar_base_percent" )
 									{
-										bar.barBasePercentSize = val_itr->value.GetInt();
+										bar.barBasePercentSize = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_max_amount_threshold" )
 									{
-										bar.barCompactMaxWidthAmount = val_itr->value.GetInt();
+										bar.barCompactMaxWidthAmount = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_interval_to_increase_width" )
 									{
-										bar.barCompactIntervalToIncreaseWidth = val_itr->value.GetInt();
+										bar.barCompactIntervalToIncreaseWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_interval_start_value" )
 									{
-										bar.barCompactIntervalStartValue = val_itr->value.GetInt();
+										bar.barCompactIntervalStartValue = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_width_increase_percent_on_interval" )
 									{
-										bar.barCompactWidthIncreasePercentOnInterval = val_itr->value.GetDouble();
+										bar.barCompactWidthIncreasePercentOnInterval = val_itr->valuedouble;
 									}
 									else if ( key == "bar_compact_base_percent" )
 									{
-										bar.barCompactBasePercentSize = val_itr->value.GetInt();
+										bar.barCompactBasePercentSize = val_itr->valueint;
 									}
 								}
 							}
-							if ( ally_itr->value.HasMember("mp") )
+							if ( cJSON_HasObjectItem(ally_itr, "mp") )
 							{
-								for ( auto val_itr = ally_itr->value["mp"].MemberBegin();
-									val_itr != ally_itr->value["mp"].MemberEnd(); ++val_itr )
+								for ( auto val_itr = cJSON_GetObjectItem(ally_itr, "mp")->child;
+									val_itr != nullptr; ++val_itr )
 								{
-									std::string key = val_itr->name.GetString();
+									std::string key = val_itr->string;
 									auto& bar = AllyStatusBarSettings_t::PlayerBars_t::mpBar;
 									if ( key == "bar_pixel_width" )
 									{
-										bar.barPixelWidth = val_itr->value.GetInt();
+										bar.barPixelWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_pixel_width" )
 									{
-										bar.barCompactPixelWidth = val_itr->value.GetInt();
+										bar.barCompactPixelWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_max_amount_threshold" )
 									{
-										bar.barMaxWidthAmount = val_itr->value.GetInt();
+										bar.barMaxWidthAmount = val_itr->valueint;
 									}
 									else if ( key == "bar_interval_to_increase_width" )
 									{
-										bar.barIntervalToIncreaseWidth = val_itr->value.GetInt();
+										bar.barIntervalToIncreaseWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_interval_start_value" )
 									{
-										bar.barIntervalStartValue = val_itr->value.GetInt();
+										bar.barIntervalStartValue = val_itr->valueint;
 									}
 									else if ( key == "bar_width_increase_percent_on_interval" )
 									{
-										bar.barWidthIncreasePercentOnInterval = val_itr->value.GetDouble();
+										bar.barWidthIncreasePercentOnInterval = val_itr->valuedouble;
 									}
 									else if ( key == "bar_base_percent" )
 									{
-										bar.barBasePercentSize = val_itr->value.GetInt();
+										bar.barBasePercentSize = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_max_amount_threshold" )
 									{
-										bar.barCompactMaxWidthAmount = val_itr->value.GetInt();
+										bar.barCompactMaxWidthAmount = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_interval_to_increase_width" )
 									{
-										bar.barCompactIntervalToIncreaseWidth = val_itr->value.GetInt();
+										bar.barCompactIntervalToIncreaseWidth = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_interval_start_value" )
 									{
-										bar.barCompactIntervalStartValue = val_itr->value.GetInt();
+										bar.barCompactIntervalStartValue = val_itr->valueint;
 									}
 									else if ( key == "bar_compact_width_increase_percent_on_interval" )
 									{
-										bar.barCompactWidthIncreasePercentOnInterval = val_itr->value.GetDouble();
+										bar.barCompactWidthIncreasePercentOnInterval = val_itr->valuedouble;
 									}
 									else if ( key == "bar_compact_base_percent" )
 									{
-										bar.barCompactBasePercentSize = val_itr->value.GetInt();
+										bar.barCompactBasePercentSize = val_itr->valueint;
 									}
 								}
 							}
 						}
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_max_amount_threshold") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_max_amount_threshold") )
 					{
-						hpmpbarMaxWidthAmount = d["hpmpbar"]["hpmpbar_max_amount_threshold"].GetInt();
+						hpmpbarMaxWidthAmount = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_max_amount_threshold")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_interval_to_increase_width") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_interval_to_increase_width") )
 					{
 						hpmpbarIntervalToIncreaseWidth
-							= d["hpmpbar"]["hpmpbar_interval_to_increase_width"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_interval_to_increase_width")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_base_percent") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_base_percent") )
 					{
-						hpmpbarBasePercentSize = d["hpmpbar"]["hpmpbar_base_percent"].GetInt();
+						hpmpbarBasePercentSize = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_base_percent")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_interval_start_value") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_interval_start_value") )
 					{
-						hpmpbarIntervalStartValue = d["hpmpbar"]["hpmpbar_interval_start_value"].GetInt();
+						hpmpbarIntervalStartValue = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_interval_start_value")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_width_increase_percent_on_interval") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_width_increase_percent_on_interval") )
 					{
 						hpmpbarWidthIncreasePercentOnInterval =
-							d["hpmpbar"]["hpmpbar_width_increase_percent_on_interval"].GetDouble();
+							cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_width_increase_percent_on_interval")->valuedouble;
 					}
 
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_max_amount_threshold") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_max_amount_threshold") )
 					{
-						hpmpbarCompactMaxWidthAmount = d["hpmpbar"]["hpmpbar_compact_max_amount_threshold"].GetInt();
+						hpmpbarCompactMaxWidthAmount = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_max_amount_threshold")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_interval_to_increase_width") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_interval_to_increase_width") )
 					{
 						hpmpbarCompactIntervalToIncreaseWidth =
-							d["hpmpbar"]["hpmpbar_compact_interval_to_increase_width"].GetInt();
+							cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_interval_to_increase_width")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_base_percent") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_base_percent") )
 					{
-						hpmpbarCompactBasePercentSize = d["hpmpbar"]["hpmpbar_compact_base_percent"].GetInt();
+						hpmpbarCompactBasePercentSize = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_base_percent")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_interval_start_value") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_interval_start_value") )
 					{
-						hpmpbarCompactIntervalStartValue = d["hpmpbar"]["hpmpbar_compact_interval_start_value"].GetInt();
+						hpmpbarCompactIntervalStartValue = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_interval_start_value")->valueint;
 					}
-					if ( d["hpmpbar"].HasMember("hpmpbar_compact_width_increase_percent_on_interval") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_width_increase_percent_on_interval") )
 					{
 						hpmpbarCompactWidthIncreasePercentOnInterval =
-							d["hpmpbar"]["hpmpbar_compact_width_increase_percent_on_interval"].GetDouble();
+							cJSON_GetObjectItem(cJSON_GetObjectItem(d, "hpmpbar"), "hpmpbar_compact_width_increase_percent_on_interval")->valuedouble;
 					}
 				}
-				if ( d.HasMember("action_prompts") )
+				if ( cJSON_HasObjectItem(d, "action_prompts") )
 				{
-					if ( d["action_prompts"].HasMember("x_offset") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "x_offset") )
 					{
-						Player::HUD_t::actionPromptOffsetX = d["action_prompts"]["x_offset"].GetInt();
+						Player::HUD_t::actionPromptOffsetX = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "x_offset")->valueint;
 					}
-					if ( d["action_prompts"].HasMember("x_offset_ghost_prompts") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "x_offset_ghost_prompts") )
 					{
-						Player::HUD_t::actionPromptOffsetXGhostPrompts = d["action_prompts"]["x_offset_ghost_prompts"].GetInt();
+						Player::HUD_t::actionPromptOffsetXGhostPrompts = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "x_offset_ghost_prompts")->valueint;
 					}
-					if ( d["action_prompts"].HasMember("y_offset") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "y_offset") )
 					{
-						Player::HUD_t::actionPromptOffsetY = d["action_prompts"]["y_offset"].GetInt();
+						Player::HUD_t::actionPromptOffsetY = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "y_offset")->valueint;
 					}
-					if ( d["action_prompts"].HasMember("icon_size") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "icon_size") )
 					{
-						Player::HUD_t::actionPromptIconSize = d["action_prompts"]["icon_size"].GetInt();
+						Player::HUD_t::actionPromptIconSize = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "icon_size")->valueint;
 					}
-					if ( d["action_prompts"].HasMember("icon_backing_size") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "icon_backing_size") )
 					{
-						Player::HUD_t::actionPromptBackingSize = d["action_prompts"]["icon_backing_size"].GetInt();
+						Player::HUD_t::actionPromptBackingSize = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "icon_backing_size")->valueint;
 					}
-					if ( d["action_prompts"].HasMember("icon_opacity") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "icon_opacity") )
 					{
-						Player::HUD_t::actionPromptIconOpacity = d["action_prompts"]["icon_opacity"].GetInt();
+						Player::HUD_t::actionPromptIconOpacity = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "icon_opacity")->valueint;
 					}
-					if ( d["action_prompts"].HasMember("icon_backing_opacity") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "icon_backing_opacity") )
 					{
-						Player::HUD_t::actionPromptIconBackingOpacity = d["action_prompts"]["icon_backing_opacity"].GetInt();
+						Player::HUD_t::actionPromptIconBackingOpacity = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "icon_backing_opacity")->valueint;
 					}
-					if ( d["action_prompts"].HasMember("prompt_img_00") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "prompt_img_00") )
 					{
-						actionPromptBackingIconPath00 = d["action_prompts"]["prompt_img_00"].GetString();
+						actionPromptBackingIconPath00 = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "prompt_img_00"));
 					}
-					if ( d["action_prompts"].HasMember("prompt_img_20") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "prompt_img_20") )
 					{
-						actionPromptBackingIconPath20 = d["action_prompts"]["prompt_img_20"].GetString();
+						actionPromptBackingIconPath20 = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "prompt_img_20"));
 					}
-					if ( d["action_prompts"].HasMember("prompt_img_60") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "prompt_img_60") )
 					{
-						actionPromptBackingIconPath60 = d["action_prompts"]["prompt_img_60"].GetString();
+						actionPromptBackingIconPath60 = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "prompt_img_60"));
 					}
-					if ( d["action_prompts"].HasMember("prompt_img_100") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "prompt_img_100") )
 					{
-						actionPromptBackingIconPath100 = d["action_prompts"]["prompt_img_100"].GetString();
+						actionPromptBackingIconPath100 = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "action_prompts"), "prompt_img_100"));
 					}
 				}
-				if ( d.HasMember("world_items") )
+				if ( cJSON_HasObjectItem(d, "world_items") )
 				{
-					if ( d["world_items"].HasMember("scale_modifier") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "world_items"), "scale_modifier") )
 					{
-						Player::WorldUI_t::WorldTooltipItem_t::WorldItemSettings_t::scaleMod = d["world_items"]["scale_modifier"].GetDouble();
+						Player::WorldUI_t::WorldTooltipItem_t::WorldItemSettings_t::scaleMod = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "world_items"), "scale_modifier")->valuedouble;
 					}
-					if ( d["world_items"].HasMember("tooltip_opacity") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "world_items"), "tooltip_opacity") )
 					{
-						Player::WorldUI_t::WorldTooltipItem_t::WorldItemSettings_t::opacity = d["world_items"]["tooltip_opacity"].GetDouble();
+						Player::WorldUI_t::WorldTooltipItem_t::WorldItemSettings_t::opacity = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "world_items"), "tooltip_opacity")->valuedouble;
 					}
 				}
-				if ( d.HasMember("minimap") )
+				if ( cJSON_HasObjectItem(d, "minimap") )
 				{
-					if ( d["minimap"].HasMember("minimap_full_default_size") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "minimap"), "minimap_full_default_size") )
 					{
-						Player::Minimap_t::fullSize = d["minimap"]["minimap_full_default_size"].GetInt();
+						Player::Minimap_t::fullSize = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "minimap"), "minimap_full_default_size")->valueint;
 					}
-					if ( d["minimap"].HasMember("minimap_compact_default_size") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "minimap"), "minimap_compact_default_size") )
 					{
-						Player::Minimap_t::compactSize = d["minimap"]["minimap_compact_default_size"].GetInt();
+						Player::Minimap_t::compactSize = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "minimap"), "minimap_compact_default_size")->valueint;
 					}
-					if ( d["minimap"].HasMember("minimap_compact_2p_vertical_size") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "minimap"), "minimap_compact_2p_vertical_size") )
 					{
-						Player::Minimap_t::compact2pVerticalSize = d["minimap"]["minimap_compact_2p_vertical_size"].GetInt();
+						Player::Minimap_t::compact2pVerticalSize = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "minimap"), "minimap_compact_2p_vertical_size")->valueint;
 					}
 
-					if ( d["minimap"].HasMember("minimap_full_big_scale") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "minimap"), "minimap_full_big_scale") )
 					{
-						Player::Minimap_t::fullBigScale = d["minimap"]["minimap_full_big_scale"].GetDouble();
+						Player::Minimap_t::fullBigScale = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "minimap"), "minimap_full_big_scale")->valuedouble;
 					}
-					if ( d["minimap"].HasMember("minimap_compact_big_scale") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "minimap"), "minimap_compact_big_scale") )
 					{
-						Player::Minimap_t::compactBigScale = d["minimap"]["minimap_compact_big_scale"].GetDouble();
+						Player::Minimap_t::compactBigScale = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "minimap"), "minimap_compact_big_scale")->valuedouble;
 					}
-					if ( d["minimap"].HasMember("minimap_compact_2p_vertical_big_scale") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "minimap"), "minimap_compact_2p_vertical_big_scale") )
 					{
-						Player::Minimap_t::compact2pVerticalBigScale = d["minimap"]["minimap_compact_2p_vertical_big_scale"].GetDouble();
+						Player::Minimap_t::compact2pVerticalBigScale = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "minimap"), "minimap_compact_2p_vertical_big_scale")->valuedouble;
 					}
 				}
-				if ( d.HasMember("levelup_anim_curve") )
+				if ( cJSON_HasObjectItem(d, "levelup_anim_curve") )
 				{
 					LevelUpAnimBreakpoints.clear();
-					for ( auto it = d["levelup_anim_curve"].Begin(); it != d["levelup_anim_curve"].End(); ++it )
+					for ( cJSON* it = cJSON_GetObjectItem(d, "levelup_anim_curve")->child; it; it = it->next )
 					{
-						LevelUpAnimBreakpoints.push_back(it->GetInt());
+						LevelUpAnimBreakpoints.push_back(it->valueint);
 					}
 				}
-				if ( d.HasMember("dmg_number_anim_curve") )
+				if ( cJSON_HasObjectItem(d, "dmg_number_anim_curve") )
 				{
 					EnemyHPDamageBarHandler::damageGibAnimCurves.clear();
-					for ( auto it = d["dmg_number_anim_curve"].MemberBegin(); it != d["dmg_number_anim_curve"].MemberEnd(); ++it )
+					for ( cJSON* it = cJSON_GetObjectItem(d, "dmg_number_anim_curve")->child; it; it = it->next )
 					{
-						std::string name = it->name.GetString();
+						std::string name = it->string;
 						if ( name == "default" )
 						{
-							for ( auto it2 = it->value.Begin(); it2 != it->value.End(); ++it2 )
+							for ( cJSON* it2 = it->child; it2; it2 = it2->next )
 							{
-								EnemyHPDamageBarHandler::damageGibAnimCurves[DMG_DEFAULT].push_back(it2->GetInt());
+								EnemyHPDamageBarHandler::damageGibAnimCurves[DMG_DEFAULT].push_back(it2->valueint);
 							}
 						}
 					}
 				}
-				if ( d.HasMember("damage_indicators") )
+				if ( cJSON_HasObjectItem(d, "damage_indicators") )
 				{
 					damageIndicatorSettings.settings.clear();
-					if ( d["damage_indicators"].HasMember("delete_after_ticks") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "delete_after_ticks") )
 					{
-						damageIndicatorSettings.deleteAfterTicks = d["damage_indicators"]["delete_after_ticks"].GetUint();
+						damageIndicatorSettings.deleteAfterTicks = (unsigned int)cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "delete_after_ticks")->valueint;
 					}
-					if ( d["damage_indicators"].HasMember("fade_after_ticks") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "fade_after_ticks") )
 					{
-						damageIndicatorSettings.fadeAfterTicks = d["damage_indicators"]["fade_after_ticks"].GetUint();
+						damageIndicatorSettings.fadeAfterTicks = (unsigned int)cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "fade_after_ticks")->valueint;
 					}
-					if ( d["damage_indicators"].HasMember("fade_speed") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "fade_speed") )
 					{
-						damageIndicatorSettings.fadeSpeed = d["damage_indicators"]["fade_speed"].GetDouble();
+						damageIndicatorSettings.fadeSpeed = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "fade_speed")->valuedouble;
 					}
-					if ( d["damage_indicators"].HasMember("animation_on_damage") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "animation_on_damage") )
 					{
 						int index = 0;
-						for ( auto it = d["damage_indicators"]["animation_on_damage"].Begin(); it != d["damage_indicators"]["animation_on_damage"].End(); ++it )
+						for ( cJSON* it = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "animation_on_damage")->child; it; it = it->next )
 						{
-							damageIndicatorSettings.indicatorDamageFramePaths[index] = it->GetString();
+							damageIndicatorSettings.indicatorDamageFramePaths[index] = it->valuestring;
 							++index;
 							if ( index >= 4 )
 							{
@@ -26695,12 +26651,12 @@ void loadHUDSettingsJSON()
 							}
 						}
 					}
-					if ( d["damage_indicators"].HasMember("animation_on_blocking") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "animation_on_blocking") )
 					{
 						int index = 0;
-						for ( auto it = d["damage_indicators"]["animation_on_blocking"].Begin(); it != d["damage_indicators"]["animation_on_blocking"].End(); ++it )
+						for ( cJSON* it = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "animation_on_blocking")->child; it; it = it->next )
 						{
-							damageIndicatorSettings.indicatorBlockedFramePaths[index] = it->GetString();
+							damageIndicatorSettings.indicatorBlockedFramePaths[index] = it->valuestring;
 							++index;
 							if ( index >= 4 )
 							{
@@ -26708,52 +26664,52 @@ void loadHUDSettingsJSON()
 							}
 						}
 					}
-					if ( d["damage_indicators"].HasMember("layout_default") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_default") )
 					{
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_DEFAULT] =
 							DamageIndicatorSettings_t::Layout_t();
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_DEFAULT].image_size
-							= d["damage_indicators"]["layout_default"]["image_size"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_default"), "image_size")->valueint;
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_DEFAULT].radius_x
-							= d["damage_indicators"]["layout_default"]["radius_x"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_default"), "radius_x")->valueint;
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_DEFAULT].radius_y
-							= d["damage_indicators"]["layout_default"]["radius_y"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_default"), "radius_y")->valueint;
 					}
-					if ( d["damage_indicators"].HasMember("layout_2p_tall") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_2p_tall") )
 					{
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_2P_TALL] =
 							DamageIndicatorSettings_t::Layout_t();
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_2P_TALL].image_size
-							= d["damage_indicators"]["layout_2p_tall"]["image_size"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_2p_tall"), "image_size")->valueint;
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_2P_TALL].radius_x
-							= d["damage_indicators"]["layout_2p_tall"]["radius_x"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_2p_tall"), "radius_x")->valueint;
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_2P_TALL].radius_y
-							= d["damage_indicators"]["layout_2p_tall"]["radius_y"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_2p_tall"), "radius_y")->valueint;
 					}
-					if ( d["damage_indicators"].HasMember("layout_2p_wide") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_2p_wide") )
 					{
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_2P_WIDE] =
 							DamageIndicatorSettings_t::Layout_t();
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_2P_WIDE].image_size
-							= d["damage_indicators"]["layout_2p_wide"]["image_size"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_2p_wide"), "image_size")->valueint;
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_2P_WIDE].radius_x
-							= d["damage_indicators"]["layout_2p_wide"]["radius_x"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_2p_wide"), "radius_x")->valueint;
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_2P_WIDE].radius_y
-							= d["damage_indicators"]["layout_2p_wide"]["radius_y"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_2p_wide"), "radius_y")->valueint;
 					}
-					if ( d["damage_indicators"].HasMember("layout_4p") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_4p") )
 					{
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_4P] =
 							DamageIndicatorSettings_t::Layout_t();
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_4P].image_size
-							= d["damage_indicators"]["layout_4p"]["image_size"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_4p"), "image_size")->valueint;
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_4P].radius_x
-							= d["damage_indicators"]["layout_4p"]["radius_x"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_4p"), "radius_x")->valueint;
 						damageIndicatorSettings.settings[DamageIndicatorSettings_t::LAYOUT_4P].radius_y
-							= d["damage_indicators"]["layout_4p"]["radius_y"].GetInt();
+							= cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "damage_indicators"), "layout_4p"), "radius_y")->valueint;
 					}
 				}
-				if ( d.HasMember("messages") )
+				if ( cJSON_HasObjectItem(d, "messages") )
 				{
 					messageZoneSettings.settings.clear();
 					std::vector<std::pair<const char*, MessageZoneSettings_t::HotbarTypes_t>> hotbarTypeStrings = {
@@ -26764,12 +26720,12 @@ void loadHUDSettingsJSON()
 
 					for ( auto pair : hotbarTypeStrings )
 					{
-						if ( d["messages"].HasMember(pair.first) )
+						if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "messages"), pair.first) )
 						{
-							for ( rapidjson::Value::ConstMemberIterator itr = d["messages"][pair.first].MemberBegin();
-								itr != d["messages"][pair.first].MemberEnd(); ++itr )
+							for ( cJSON* itr = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "messages"), pair.first)->child;
+								itr != nullptr; ++itr )
 							{
-								std::string alignmentStr = itr->name.GetString();
+								std::string alignmentStr = itr->string;
 								auto alignment = Player::MessageZone_t::ALIGN_LEFT_BOTTOM;
 								if ( alignmentStr == "left_top" )
 								{
@@ -26789,10 +26745,10 @@ void loadHUDSettingsJSON()
 								}
 
 								auto& setting = messageZoneSettings.addSetting(pair.second, alignment);
-								for ( rapidjson::Value::ConstMemberIterator itr2 = itr->value.MemberBegin();
-									itr2 != itr->value.MemberEnd(); ++itr2 )
+								for ( cJSON* itr2 = itr->child;
+									itr2 != nullptr; ++itr2 )
 								{
-									std::string layoutStr = itr2->name.GetString();
+									std::string layoutStr = itr2->string;
 									auto layout = MessageZoneSettings_t::MessageSettings_t::LAYOUT_DEFAULT;
 									if ( layoutStr == "default" )
 									{
@@ -26807,21 +26763,21 @@ void loadHUDSettingsJSON()
 										continue;
 									}
 									setting.layouts[layout].layoutType = layout;
-									setting.layouts[layout].offsetY = itr2->value["y_offset"].GetInt();
-									setting.layouts[layout].maxMessages = itr2->value["max_messages"].GetInt();
+									setting.layouts[layout].offsetY = cJSON_GetObjectItem(itr2, "y_offset")->valueint;
+									setting.layouts[layout].maxMessages = cJSON_GetObjectItem(itr2, "max_messages")->valueint;
 								}
 							}
 						}
 					}
 				}
-				if ( d.HasMember("world_dialogue") )
+				if ( cJSON_HasObjectItem(d, "world_dialogue") )
 				{
-					if ( d["world_dialogue"].HasMember("types") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "world_dialogue"), "types") )
 					{
-						for ( rapidjson::Value::ConstMemberIterator itr = d["world_dialogue"]["types"].MemberBegin();
-							itr != d["world_dialogue"]["types"].MemberEnd(); ++itr )
+						for ( cJSON* itr = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "world_dialogue"), "types")->child;
+							itr != nullptr; ++itr )
 						{
-							std::string type = itr->name.GetString();
+							std::string type = itr->string;
 							auto dialogueType = Player::WorldUI_t::WorldTooltipDialogue_t::DIALOGUE_NONE;
 							if ( type == "default" )
 							{
@@ -26857,317 +26813,317 @@ void loadHUDSettingsJSON()
 							}
 
 							auto& settings = Player::WorldUI_t::WorldTooltipDialogue_t::WorldDialogueSettings_t::settings[dialogueType];
-							if ( itr->value.HasMember("z_offset") )
+							if ( cJSON_HasObjectItem(itr, "z_offset") )
 							{
-								settings.offsetZ = itr->value["z_offset"].GetDouble();
+								settings.offsetZ = cJSON_GetObjectItem(itr, "z_offset")->valuedouble;
 							}
-							if ( itr->value.HasMember("text_delay") )
+							if ( cJSON_HasObjectItem(itr, "text_delay") )
 							{
-								settings.textDelay = itr->value["text_delay"].GetInt();
+								settings.textDelay = cJSON_GetObjectItem(itr, "text_delay")->valueint;
 							}
-							if ( itr->value.HasMember("follow_entity") )
+							if ( cJSON_HasObjectItem(itr, "follow_entity") )
 							{
-								settings.followEntity = itr->value["follow_entity"].GetBool();
+								settings.followEntity = cJSON_IsTrue(cJSON_GetObjectItem(itr, "follow_entity"));
 							}
-							if ( itr->value.HasMember("fade_dist") )
+							if ( cJSON_HasObjectItem(itr, "fade_dist") )
 							{
-								settings.fadeDist = itr->value["fade_dist"].GetDouble();
+								settings.fadeDist = cJSON_GetObjectItem(itr, "fade_dist")->valuedouble;
 							}
-							if ( itr->value.HasMember("base_ticks_to_display") )
+							if ( cJSON_HasObjectItem(itr, "base_ticks_to_display") )
 							{
-								settings.baseTicksToDisplay = itr->value["base_ticks_to_display"].GetUint();
+								settings.baseTicksToDisplay = (unsigned int)cJSON_GetObjectItem(itr, "base_ticks_to_display")->valueint;
 							}
-							if ( itr->value.HasMember("extra_ticks_per_line") )
+							if ( cJSON_HasObjectItem(itr, "extra_ticks_per_line") )
 							{
-								settings.extraTicksPerLine = itr->value["extra_ticks_per_line"].GetUint();
+								settings.extraTicksPerLine = (unsigned int)cJSON_GetObjectItem(itr, "extra_ticks_per_line")->valueint;
 							}
-							if ( itr->value.HasMember("max_width") )
+							if ( cJSON_HasObjectItem(itr, "max_width") )
 							{
-								settings.maxWidth = itr->value["max_width"].GetInt();
+								settings.maxWidth = cJSON_GetObjectItem(itr, "max_width")->valueint;
 							}
-							if ( itr->value.HasMember("padx") )
+							if ( cJSON_HasObjectItem(itr, "padx") )
 							{
-								settings.padx = itr->value["padx"].GetInt();
+								settings.padx = cJSON_GetObjectItem(itr, "padx")->valueint;
 							}
-							if ( itr->value.HasMember("pady") )
+							if ( cJSON_HasObjectItem(itr, "pady") )
 							{
-								settings.pady = itr->value["pady"].GetInt();
+								settings.pady = cJSON_GetObjectItem(itr, "pady")->valueint;
 							}
-							if ( itr->value.HasMember("pad_after_first_line") )
+							if ( cJSON_HasObjectItem(itr, "pad_after_first_line") )
 							{
-								settings.padAfterFirstLine = itr->value["pad_after_first_line"].GetInt();
+								settings.padAfterFirstLine = cJSON_GetObjectItem(itr, "pad_after_first_line")->valueint;
 							}
-							if ( itr->value.HasMember("scale_modifier") )
+							if ( cJSON_HasObjectItem(itr, "scale_modifier") )
 							{
-								settings.scaleMod = itr->value["scale_modifier"].GetDouble();
+								settings.scaleMod = cJSON_GetObjectItem(itr, "scale_modifier")->valuedouble;
 							}
 						}
 					}
 				}
-				if ( d.HasMember("enemy_hp_bars") )
+				if ( cJSON_HasObjectItem(d, "enemy_hp_bars") )
 				{
-					if ( d["enemy_hp_bars"].HasMember("world_height_offsets") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "world_height_offsets") )
 					{
 						enemyBarSettings.heightOffsets.clear();
-						for ( rapidjson::Value::ConstMemberIterator itr = d["enemy_hp_bars"]["world_height_offsets"].MemberBegin();
-							itr != d["enemy_hp_bars"]["world_height_offsets"].MemberEnd(); ++itr )
+						for ( cJSON* itr = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "world_height_offsets")->child;
+							itr != nullptr; ++itr )
 						{
-							enemyBarSettings.heightOffsets[itr->name.GetString()] = itr->value.GetFloat();
+							enemyBarSettings.heightOffsets[itr->string] = itr->valuedouble;
 						}
 					}
-					if ( d["enemy_hp_bars"].HasMember("screen_depth_distance_offset") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "screen_depth_distance_offset") )
 					{
 						enemyBarSettings.screenDistanceOffsets.clear();
-						for ( rapidjson::Value::ConstMemberIterator itr = d["enemy_hp_bars"]["screen_depth_distance_offset"].MemberBegin();
-							itr != d["enemy_hp_bars"]["screen_depth_distance_offset"].MemberEnd(); ++itr )
+						for ( cJSON* itr = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "screen_depth_distance_offset")->child;
+							itr != nullptr; ++itr )
 						{
-							enemyBarSettings.screenDistanceOffsets[itr->name.GetString()] = itr->value.GetFloat();
+							enemyBarSettings.screenDistanceOffsets[itr->string] = itr->valuedouble;
 						}
 					}
-					if ( d["enemy_hp_bars"].HasMember("monster_bar_width_to_hp_intervals") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "monster_bar_width_to_hp_intervals") )
 					{
 						EnemyHPDamageBarHandler::widthHealthBreakpointsMonsters.clear();
-						for ( rapidjson::Value::ConstValueIterator itr = d["enemy_hp_bars"]["monster_bar_width_to_hp_intervals"].Begin();
-							itr != d["enemy_hp_bars"]["monster_bar_width_to_hp_intervals"].End(); ++itr )
+						for ( cJSON* itr = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "monster_bar_width_to_hp_intervals")->child;
+							itr != nullptr; ++itr )
 						{
 							// you need to FindMember() if getting objects from an array...
-							auto widthPercentMember = itr->FindMember("width_percent");
-							auto hpThresholdMember = itr->FindMember("hp_threshold");
-							if ( !widthPercentMember->value.IsInt() || !hpThresholdMember->value.IsInt() )
+							auto widthPercentMember = cJSON_GetObjectItem(itr, "width_percent");
+							auto hpThresholdMember = cJSON_GetObjectItem(itr, "hp_threshold");
+							if ( !cJSON_IsNumber(widthPercentMember) || !cJSON_IsNumber(hpThresholdMember) )
 							{
 								printlog("[JSON]: Error: Enemy bar HP or width was not int!");
 								continue;
 							}
-							real_t widthPercent = widthPercentMember->value.GetInt();
+							real_t widthPercent = widthPercentMember->valueint;
 							widthPercent /= 100.0;
-							int hpThreshold = hpThresholdMember->value.GetInt();
+							int hpThreshold = hpThresholdMember->valueint;
 							EnemyHPDamageBarHandler::widthHealthBreakpointsMonsters.push_back(
 								std::make_pair(widthPercent, hpThreshold));
 						}
 					}
-					if ( d["enemy_hp_bars"].HasMember("furniture_bar_width_to_hp_intervals") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "furniture_bar_width_to_hp_intervals") )
 					{
 						EnemyHPDamageBarHandler::widthHealthBreakpointsFurniture.clear();
-						for ( rapidjson::Value::ConstValueIterator itr = d["enemy_hp_bars"]["furniture_bar_width_to_hp_intervals"].Begin();
-							itr != d["enemy_hp_bars"]["furniture_bar_width_to_hp_intervals"].End(); ++itr )
+						for ( cJSON* itr = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "furniture_bar_width_to_hp_intervals")->child;
+							itr != nullptr; ++itr )
 						{
 							// you need to FindMember() if getting objects from an array...
-							auto widthPercentMember = itr->FindMember("width_percent");
-							auto hpThresholdMember = itr->FindMember("hp_threshold");
-							if ( !widthPercentMember->value.IsInt() || !hpThresholdMember->value.IsInt() )
+							auto widthPercentMember = cJSON_GetObjectItem(itr, "width_percent");
+							auto hpThresholdMember = cJSON_GetObjectItem(itr, "hp_threshold");
+							if ( !cJSON_IsNumber(widthPercentMember) || !cJSON_IsNumber(hpThresholdMember) )
 							{
 								printlog("[JSON]: Error: Enemy bar HP or width was not int!");
 								continue;
 							}
-							real_t widthPercent = widthPercentMember->value.GetInt();
+							real_t widthPercent = widthPercentMember->valueint;
 							widthPercent /= 100.0;
-							int hpThreshold = hpThresholdMember->value.GetInt();
+							int hpThreshold = hpThresholdMember->valueint;
 							EnemyHPDamageBarHandler::widthHealthBreakpointsFurniture.push_back(
 								std::make_pair(widthPercent, hpThreshold));
 						}
 					}
-					if ( d["enemy_hp_bars"].HasMember("monster_bar_lifetime_ticks") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "monster_bar_lifetime_ticks") )
 					{
-						EnemyHPDamageBarHandler::maxTickLifetime = d["enemy_hp_bars"]["monster_bar_lifetime_ticks"].GetInt();
+						EnemyHPDamageBarHandler::maxTickLifetime = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "monster_bar_lifetime_ticks")->valueint;
 					}
-					if ( d["enemy_hp_bars"].HasMember("furniture_bar_lifetime_ticks") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "furniture_bar_lifetime_ticks") )
 					{
-						EnemyHPDamageBarHandler::maxTickFurnitureLifetime = d["enemy_hp_bars"]["furniture_bar_lifetime_ticks"].GetInt();
+						EnemyHPDamageBarHandler::maxTickFurnitureLifetime = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "furniture_bar_lifetime_ticks")->valueint;
 					}
-					if ( d["enemy_hp_bars"].HasMember("quick_fade_delay_ticks") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "quick_fade_delay_ticks") )
 					{
-						EnemyHPDamageBarHandler::shortDistanceHPBarFadeTicks = d["enemy_hp_bars"]["quick_fade_delay_ticks"].GetInt();
+						EnemyHPDamageBarHandler::shortDistanceHPBarFadeTicks = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "quick_fade_delay_ticks")->valueint;
 					}
-					if ( d["enemy_hp_bars"].HasMember("quick_fade_distance_from_player_multiplier") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "quick_fade_distance_from_player_multiplier") )
 					{
-						if ( d["enemy_hp_bars"]["quick_fade_distance_from_player_multiplier"].IsDouble() )
+						if ( cJSON_IsNumber(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "quick_fade_distance_from_player_multiplier")) )
 						{
-							EnemyHPDamageBarHandler::shortDistanceHPBarFadeDistance = d["enemy_hp_bars"]["quick_fade_distance_from_player_multiplier"].GetDouble();
+							EnemyHPDamageBarHandler::shortDistanceHPBarFadeDistance = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "quick_fade_distance_from_player_multiplier")->valuedouble;
 						}
 						else
 						{
-							EnemyHPDamageBarHandler::shortDistanceHPBarFadeDistance = d["enemy_hp_bars"]["quick_fade_distance_from_player_multiplier"].GetInt();
+							EnemyHPDamageBarHandler::shortDistanceHPBarFadeDistance = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "enemy_hp_bars"), "quick_fade_distance_from_player_multiplier")->valueint;
 						}
 					}
 				}
-				if ( d.HasMember("colors") )
+				if ( cJSON_HasObjectItem(d, "colors") )
 				{
-					if ( d["colors"].HasMember("itemmenu_heading_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_heading_text") )
 					{
 						hudColors.itemContextMenuHeadingText = makeColor(
-							d["colors"]["itemmenu_heading_text"]["r"].GetInt(),
-							d["colors"]["itemmenu_heading_text"]["g"].GetInt(),
-							d["colors"]["itemmenu_heading_text"]["b"].GetInt(),
-							d["colors"]["itemmenu_heading_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_heading_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_heading_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_heading_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_heading_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("itemmenu_option_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_option_text") )
 					{
 						hudColors.itemContextMenuOptionText = makeColor(
-							d["colors"]["itemmenu_option_text"]["r"].GetInt(),
-							d["colors"]["itemmenu_option_text"]["g"].GetInt(),
-							d["colors"]["itemmenu_option_text"]["b"].GetInt(),
-							d["colors"]["itemmenu_option_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_option_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_option_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_option_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_option_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("itemmenu_selected_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_selected_text") )
 					{
 						hudColors.itemContextMenuOptionSelectedText = makeColor(
-							d["colors"]["itemmenu_selected_text"]["r"].GetInt(),
-							d["colors"]["itemmenu_selected_text"]["g"].GetInt(),
-							d["colors"]["itemmenu_selected_text"]["b"].GetInt(),
-							d["colors"]["itemmenu_selected_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_selected_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_selected_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_selected_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_selected_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("itemmenu_selected_img") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_selected_img") )
 					{
 						hudColors.itemContextMenuOptionSelectedImg = makeColor(
-							d["colors"]["itemmenu_selected_img"]["r"].GetInt(),
-							d["colors"]["itemmenu_selected_img"]["g"].GetInt(),
-							d["colors"]["itemmenu_selected_img"]["b"].GetInt(),
-							d["colors"]["itemmenu_selected_img"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_selected_img"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_selected_img"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_selected_img"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_selected_img"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("itemmenu_option_img") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_option_img") )
 					{
 						hudColors.itemContextMenuOptionImg = makeColor(
-							d["colors"]["itemmenu_option_img"]["r"].GetInt(),
-							d["colors"]["itemmenu_option_img"]["g"].GetInt(),
-							d["colors"]["itemmenu_option_img"]["b"].GetInt(),
-							d["colors"]["itemmenu_option_img"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_option_img"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_option_img"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_option_img"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "itemmenu_option_img"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_neutral_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_text") )
 					{
 						hudColors.characterSheetNeutral = makeColor(
-							d["colors"]["charsheet_neutral_text"]["r"].GetInt(),
-							d["colors"]["charsheet_neutral_text"]["g"].GetInt(),
-							d["colors"]["charsheet_neutral_text"]["b"].GetInt(),
-							d["colors"]["charsheet_neutral_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_neutral_light_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_light_text") )
 					{
 						hudColors.characterSheetLightNeutral = makeColor(
-							d["colors"]["charsheet_neutral_light_text"]["r"].GetInt(),
-							d["colors"]["charsheet_neutral_light_text"]["g"].GetInt(),
-							d["colors"]["charsheet_neutral_light_text"]["b"].GetInt(),
-							d["colors"]["charsheet_neutral_light_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_light_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_light_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_light_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_light_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_neutral_lighter1_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_lighter1_text") )
 					{
 						hudColors.characterSheetLighter1Neutral = makeColor(
-							d["colors"]["charsheet_neutral_lighter1_text"]["r"].GetInt(),
-							d["colors"]["charsheet_neutral_lighter1_text"]["g"].GetInt(),
-							d["colors"]["charsheet_neutral_lighter1_text"]["b"].GetInt(),
-							d["colors"]["charsheet_neutral_lighter1_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_lighter1_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_lighter1_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_lighter1_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_lighter1_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_neutral_darker1_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_darker1_text") )
 					{
 						hudColors.characterSheetDarker1Neutral = makeColor(
-							d["colors"]["charsheet_neutral_darker1_text"]["r"].GetInt(),
-							d["colors"]["charsheet_neutral_darker1_text"]["g"].GetInt(),
-							d["colors"]["charsheet_neutral_darker1_text"]["b"].GetInt(),
-							d["colors"]["charsheet_neutral_darker1_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_darker1_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_darker1_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_darker1_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_neutral_darker1_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_positive_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_positive_text") )
 					{
 						hudColors.characterSheetGreen = makeColor(
-							d["colors"]["charsheet_positive_text"]["r"].GetInt(),
-							d["colors"]["charsheet_positive_text"]["g"].GetInt(),
-							d["colors"]["charsheet_positive_text"]["b"].GetInt(),
-							d["colors"]["charsheet_positive_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_positive_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_positive_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_positive_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_positive_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_negative_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_negative_text") )
 					{
 						hudColors.characterSheetRed = makeColor(
-							d["colors"]["charsheet_negative_text"]["r"].GetInt(),
-							d["colors"]["charsheet_negative_text"]["g"].GetInt(),
-							d["colors"]["charsheet_negative_text"]["b"].GetInt(),
-							d["colors"]["charsheet_negative_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_negative_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_negative_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_negative_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_negative_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_faint_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_faint_text") )
 					{
 						hudColors.characterSheetFaintText = makeColor(
-							d["colors"]["charsheet_faint_text"]["r"].GetInt(),
-							d["colors"]["charsheet_faint_text"]["g"].GetInt(),
-							d["colors"]["charsheet_faint_text"]["b"].GetInt(),
-							d["colors"]["charsheet_faint_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_faint_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_faint_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_faint_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_faint_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_off_white_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_off_white_text") )
 					{
 						hudColors.characterSheetOffWhiteText = makeColor(
-							d["colors"]["charsheet_off_white_text"]["r"].GetInt(),
-							d["colors"]["charsheet_off_white_text"]["g"].GetInt(),
-							d["colors"]["charsheet_off_white_text"]["b"].GetInt(),
-							d["colors"]["charsheet_off_white_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_off_white_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_off_white_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_off_white_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_off_white_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_heading_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_heading_text") )
 					{
 						hudColors.characterSheetHeadingText = makeColor(
-							d["colors"]["charsheet_heading_text"]["r"].GetInt(),
-							d["colors"]["charsheet_heading_text"]["g"].GetInt(),
-							d["colors"]["charsheet_heading_text"]["b"].GetInt(),
-							d["colors"]["charsheet_heading_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_heading_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_heading_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_heading_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_heading_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_highlight_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_highlight_text") )
 					{
 						hudColors.characterSheetHighlightText = makeColor(
-							d["colors"]["charsheet_highlight_text"]["r"].GetInt(),
-							d["colors"]["charsheet_highlight_text"]["g"].GetInt(),
-							d["colors"]["charsheet_highlight_text"]["b"].GetInt(),
-							d["colors"]["charsheet_highlight_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_highlight_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_highlight_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_highlight_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_highlight_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_base_class_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_base_class_text") )
 					{
 						hudColors.characterBaseClassText = makeColor(
-							d["colors"]["charsheet_base_class_text"]["r"].GetInt(),
-							d["colors"]["charsheet_base_class_text"]["g"].GetInt(),
-							d["colors"]["charsheet_base_class_text"]["b"].GetInt(),
-							d["colors"]["charsheet_base_class_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_base_class_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_base_class_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_base_class_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_base_class_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_dlc1_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc1_text") )
 					{
 						hudColors.characterDLC1ClassText = makeColor(
-							d["colors"]["charsheet_dlc1_text"]["r"].GetInt(),
-							d["colors"]["charsheet_dlc1_text"]["g"].GetInt(),
-							d["colors"]["charsheet_dlc1_text"]["b"].GetInt(),
-							d["colors"]["charsheet_dlc1_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc1_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc1_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc1_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc1_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_dlc2_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc2_text") )
 					{
 						hudColors.characterDLC2ClassText = makeColor(
-							d["colors"]["charsheet_dlc2_text"]["r"].GetInt(),
-							d["colors"]["charsheet_dlc2_text"]["g"].GetInt(),
-							d["colors"]["charsheet_dlc2_text"]["b"].GetInt(),
-							d["colors"]["charsheet_dlc2_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc2_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc2_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc2_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc2_text"), "a")->valueint);
 					}
-					if ( d["colors"].HasMember("charsheet_dlc3_text") )
+					if ( cJSON_HasObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc3_text") )
 					{
 						hudColors.characterDLC3ClassText = makeColor(
-							d["colors"]["charsheet_dlc3_text"]["r"].GetInt(),
-							d["colors"]["charsheet_dlc3_text"]["g"].GetInt(),
-							d["colors"]["charsheet_dlc3_text"]["b"].GetInt(),
-							d["colors"]["charsheet_dlc3_text"]["a"].GetInt());
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc3_text"), "r")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc3_text"), "g")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc3_text"), "b")->valueint,
+							cJSON_GetObjectItem(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "colors"), "charsheet_dlc3_text"), "a")->valueint);
 					}
 				}
-				if ( d.HasMember("dropdowns") )
+				if ( cJSON_HasObjectItem(d, "dropdowns") )
 				{
 					Player::GUIDropdown_t::allDropDowns.clear();
-					for ( rapidjson::Value::ConstMemberIterator itr = d["dropdowns"].MemberBegin();
-						itr != d["dropdowns"].MemberEnd(); ++itr )
+					for ( cJSON* itr = cJSON_GetObjectItem(d, "dropdowns")->child;
+						itr != nullptr; ++itr )
 					{
-						auto& dropdown = Player::GUIDropdown_t::allDropDowns[itr->name.GetString()];
-						dropdown.internalName = itr->name.GetString();
-						if ( itr->value.HasMember("title") )
+						auto& dropdown = Player::GUIDropdown_t::allDropDowns[itr->string];
+						dropdown.internalName = itr->string;
+						if ( cJSON_HasObjectItem(itr, "title") )
 						{
-							dropdown.title = itr->value["title"].GetString();
+							dropdown.title = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "title"));
 						}
 						else
 						{
 							dropdown.title = Language::get(4040); // "interact"
 						}
-						if ( itr->value.HasMember("align_right") )
+						if ( cJSON_HasObjectItem(itr, "align_right") )
 						{
-							dropdown.alignRight = itr->value["align_right"].GetBool();
+							dropdown.alignRight = cJSON_IsTrue(cJSON_GetObjectItem(itr, "align_right"));
 						}
-						if ( itr->value.HasMember("gui_module") )
+						if ( cJSON_HasObjectItem(itr, "gui_module") )
 						{
-							std::string moduleName = itr->value["gui_module"].GetString();
+							std::string moduleName = cJSON_GetStringValue(cJSON_GetObjectItem(itr, "gui_module"));
 							if ( moduleName == "character_sheet" )
 							{
 								dropdown.module = Player::GUI_t::MODULE_CHARACTERSHEET;
@@ -27193,60 +27149,60 @@ void loadHUDSettingsJSON()
 								dropdown.module = Player::GUI_t::MODULE_NONE;
 							}
 						}
-						if ( itr->value.HasMember("default_option") )
+						if ( cJSON_HasObjectItem(itr, "default_option") )
 						{
-							dropdown.defaultOption = itr->value["default_option"].GetInt();
+							dropdown.defaultOption = cJSON_GetObjectItem(itr, "default_option")->valueint;
 						}
 						else
 						{
 							dropdown.defaultOption = 0;
 						}
-						for ( rapidjson::Value::ConstValueIterator options_itr = itr->value["options"].Begin();
-							options_itr != itr->value["options"].End(); ++options_itr )
+						for ( cJSON* options_itr = cJSON_GetObjectItem(itr, "options")->child;
+							options_itr != nullptr; ++options_itr )
 						{
 							std::string text = "";
 							std::string controller_glyph = "";
 							std::string keyboard_glyph = "";
 							std::string action = "no_action";
-							if ( options_itr->HasMember("text") )
+							if ( cJSON_HasObjectItem(options_itr, "text") )
 							{
-								text = (*options_itr)["text"].GetString();
+								text = cJSON_GetStringValue(cJSON_GetObjectItem(options_itr, "text"));
 							}
-							if ( options_itr->HasMember("controller_glyph") )
+							if ( cJSON_HasObjectItem(options_itr, "controller_glyph") )
 							{
-								controller_glyph = (*options_itr)["controller_glyph"].GetString();
+								controller_glyph = cJSON_GetStringValue(cJSON_GetObjectItem(options_itr, "controller_glyph"));
 							}
-							if ( options_itr->HasMember("keyboard_glyph") )
+							if ( cJSON_HasObjectItem(options_itr, "keyboard_glyph") )
 							{
-								keyboard_glyph = (*options_itr)["keyboard_glyph"].GetString();
+								keyboard_glyph = cJSON_GetStringValue(cJSON_GetObjectItem(options_itr, "keyboard_glyph"));
 							}
-							if ( options_itr->HasMember("action") )
+							if ( cJSON_HasObjectItem(options_itr, "action") )
 							{
-								action = (*options_itr)["action"].GetString();
+								action = cJSON_GetStringValue(cJSON_GetObjectItem(options_itr, "action"));
 							}
 							dropdown.options.push_back(Player::GUIDropdown_t::DropdownOption_t(text, keyboard_glyph, controller_glyph, action));
 						}
 					}
 				}
-				if ( d.HasMember("ping_status") )
+				if ( cJSON_HasObjectItem(d, "ping_status") )
 				{
-					PingNetworkStatus_t::bEnabled = d["ping_status"]["enabled"].GetBool();
+					PingNetworkStatus_t::bEnabled = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "ping_status"), "enabled"));
 
-					PingNetworkStatus_t::pingLimitGreen = d["ping_status"]["limit_green"].GetInt();
-					PingNetworkStatus_t::pingLimitYellow = d["ping_status"]["limit_yellow"].GetInt();
-					PingNetworkStatus_t::pingLimitOrange = d["ping_status"]["limit_orange"].GetInt();
+					PingNetworkStatus_t::pingLimitGreen = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "ping_status"), "limit_green")->valueint;
+					PingNetworkStatus_t::pingLimitYellow = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "ping_status"), "limit_yellow")->valueint;
+					PingNetworkStatus_t::pingLimitOrange = cJSON_GetObjectItem(cJSON_GetObjectItem(d, "ping_status"), "limit_orange")->valueint;
 
-					PingNetworkStatus_t::pingHUDDisplayGreen = d["ping_status"]["show_green_always"].GetBool();
-					PingNetworkStatus_t::pingHUDDisplayYellow = d["ping_status"]["show_yellow_always"].GetBool();
-					PingNetworkStatus_t::pingHUDDisplayOrange = d["ping_status"]["show_orange_always"].GetBool();
-					PingNetworkStatus_t::pingHUDDisplayRed = d["ping_status"]["show_red_always"].GetBool();
-					PingNetworkStatus_t::pingHUDShowOKBriefly = d["ping_status"]["show_green_yellow_briefly"].GetBool();
-					PingNetworkStatus_t::pingHUDShowNumericValue = d["ping_status"]["show_numeric_on_hud"].GetBool();
+					PingNetworkStatus_t::pingHUDDisplayGreen = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "ping_status"), "show_green_always"));
+					PingNetworkStatus_t::pingHUDDisplayYellow = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "ping_status"), "show_yellow_always"));
+					PingNetworkStatus_t::pingHUDDisplayOrange = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "ping_status"), "show_orange_always"));
+					PingNetworkStatus_t::pingHUDDisplayRed = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "ping_status"), "show_red_always"));
+					PingNetworkStatus_t::pingHUDShowOKBriefly = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "ping_status"), "show_green_yellow_briefly"));
+					PingNetworkStatus_t::pingHUDShowNumericValue = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "ping_status"), "show_numeric_on_hud"));
 				}
-				if ( d.HasMember("voice_record") )
+				if ( cJSON_HasObjectItem(d, "voice_record") )
 				{
 #ifdef USE_FMOD
-					VoiceChat.useSystem = d["voice_record"]["enabled"].GetBool();
+					VoiceChat.useSystem = cJSON_IsTrue(cJSON_GetObjectItem(cJSON_GetObjectItem(d, "voice_record"), "enabled")));
 #endif
 				}
 				printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
@@ -28780,7 +28736,6 @@ void Player::Inventory_t::updateItemContextMenu()
 		itemMenuOpen = false;
 		return;
 	}
-
 
 	if ( !item || !itemMenuOpen )
 	{
@@ -30932,7 +30887,6 @@ void Player::HUD_t::resetBars()
 	}
 }
 
-
 void Player::HUD_t::updateMinimapPrompts()
 {
 	if ( !mapPromptFrame )
@@ -31640,7 +31594,6 @@ void Player::HUD_t::updateXPBar()
 			}
 		}
 	}
-
 
 	real_t percent = xpBar.animateValue / 1000.0;
 	xpProgress->pos.w = std::max(1, static_cast<int>((xpBg->pos.w - xpProgressEndCap->pos.w) * percent));
@@ -32810,7 +32763,6 @@ void Player::HUD_t::updateEnemyBar2(Frame* whichFrame, void* enemyHPDetails)
 		}
 		enemyDetails->animator.maxValue = enemyDetails->enemy_maxhp;
 
-
 		if ( hpForegroundValue < enemyDetails->animator.setpoint ) // gaining HP, animate
 		{
 			real_t setpointDiff = std::max(0.01, enemyDetails->animator.setpoint - hpForegroundValue);
@@ -32984,7 +32936,6 @@ void Player::HUD_t::updateEnemyBar2(Frame* whichFrame, void* enemyHPDetails)
 		}
 	}
 
-
 	bool oldBlitType = EnemyHPDamageBarHandler::bEnemyBarSimpleBlit;
 	EnemyHPDamageBarHandler::bEnemyBarSimpleBlit = *cvar_enemybar_simple_blit;
 
@@ -33056,8 +33007,6 @@ void Player::HUD_t::updateEnemyBar2(Frame* whichFrame, void* enemyHPDetails)
 		//float msTotal = 1000 * std::chrono::duration_cast<std::chrono::duration<double>>(blit4 - blit).count();
 		//printTextFormatted(font16x16_bmp, 8, 8 + 4 * 16, "Total: %.4f\n ms1: %.4f\n ms2: %.4f\nms3: %.4f", msTotal, ms1, ms2, ms3);
 	}
-
-
 
 	whichFrame->setDisabled(true);
 	if ( !enemyDetails->displayOnHUD )
@@ -33261,7 +33210,6 @@ void Player::HUD_t::updateEnemyBar(Frame* whichFrame)
 		}
 		enemyBar->maxValue = enemyDetails->enemy_maxhp;
 	}
-
 
 	if ( hpForegroundValue < enemyBar->animateSetpoint ) // gaining HP, animate
 	{
@@ -35529,7 +35477,6 @@ void Player::SkillSheet_t::createSkillSheet()
 				color, "*#images/ui/SkillSheet/UI_Skills_LegendBox_B_00.png", Player::GUI_t::tooltipEffectBackgroundImages[Player::GUI_t::BOTTOM].c_str());
 			Player::GUI_t::imageSetWidthHeight9x9(skillDescriptionBgFrame, Player::GUI_t::tooltipEffectBackgroundImages);
 		}
-
 
 		int txtHeight = skillDescriptionTxt->getNumTextLines() * actualFont->height(true);
 
@@ -37853,7 +37800,6 @@ void Player::SkillSheet_t::processSkillSheet()
 		flourishTop->disabled = true;
 		flourishBottom->disabled = true;
 
-
 		bgImgFramePos.x = innerFrame->getSize().w / 2 - backgroundWidth / 2;
 		if ( skillSlideDirection != 0 )
 		{
@@ -38756,7 +38702,6 @@ void Player::SkillSheet_t::processSkillSheet()
 								}*/
 							}
 
-
 						}
 					}
 
@@ -38939,10 +38884,8 @@ void Player::SkillSheet_t::processSkillSheet()
 				bm->pos.w = legendPos.w - bl->pos.w - br->pos.w;
 				br->pos.x = legendPos.w - br->pos.w;
 
-
 				legendPos.h = bl->pos.y + bl->pos.h - 4;
 				legendFrame->setSize(legendPos);
-
 
 				if ( proficiencyValue < SKILL_LEVEL_LEGENDARY )
 				{
@@ -40222,7 +40165,6 @@ void Player::Inventory_t::ChestGUI_t::updateChest()
 		closeBtnPos.y = titlePos.y + titlePos.h / 2 - closeBtnPos.h / 2;
 		closeBtn->setSize(closeBtnPos);
 
-
 		if ( player.GUI.bModuleAccessibleWithMouse(Player::GUI_t::MODULE_CHEST)
 			&& inputs.getVirtualMouse(player.playernum)->draw_cursor && !drawGlyphs )
 		{
@@ -41151,7 +41093,6 @@ bool Player::WorldUI_t::WorldTooltipItem_t::isItemSameAsCurrent(Item* item)
 	return false;
 }
 
-
 SDL_Surface* Player::WorldUI_t::WorldTooltipItem_t::blitItemWorldTooltip(Item* item)
 {
 	if ( !item )
@@ -41499,20 +41440,20 @@ SDL_Surface* Player::WorldUI_t::WorldTooltipItem_t::blitItemWorldTooltip(Item* i
 
 	{
 		SDL_Rect identifyPos = pos;
-		std::string identifyStr = ItemTooltips.adjectives["item_identified_status"]["unidentified"];
+		std::string identifyStr = ItemTooltips.adjectives["item_identified_status"]["unidentified"].c_str();
 		if ( item->identified )
 		{
 			if ( item->beatitude > 0 )
 			{
-				identifyStr = ItemTooltips.adjectives["item_identified_status"]["blessed"];
+				identifyStr = ItemTooltips.adjectives["item_identified_status"]["blessed"].c_str();
 			}
 			else if ( item->beatitude < 0 )
 			{
-				identifyStr = ItemTooltips.adjectives["item_identified_status"]["cursed"];
+				identifyStr = ItemTooltips.adjectives["item_identified_status"]["cursed"].c_str();
 			}
 			else
 			{
-				identifyStr = ItemTooltips.adjectives["item_identified_status"]["uncursed"];
+				identifyStr = ItemTooltips.adjectives["item_identified_status"]["uncursed"].c_str();
 			}
 		}
 		identifyPos.y = headerSize;
@@ -41710,7 +41651,6 @@ void Player::WorldUI_t::WorldTooltipDialogue_t::Dialogue_t::update()
 		active = false;
 		expired = true;
 	}
-
 
 	auto& setting = WorldDialogueSettings_t::settings[dialogueType];
 	updateWorldCoordinates();
@@ -43007,7 +42947,6 @@ void updateLevelUpFrame(const int player)
 	}
 	hud_t.levelupFrame->setDisabled(false);
 	const int frameWidth = 600;
-
 
 	auto lvlupImg = hud_t.levelupFrame->findImage("lvl up img");
 	lvlupImg->disabled = false;
