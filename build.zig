@@ -211,7 +211,7 @@ pub fn build(b: *std.Build) void {
     const zig_mod = b.createModule(.{
         .target = target,
         .optimize = optimize,
-        .root_source_file = b.path("src/zighello.zig"),
+        .root_source_file = b.path("src/zig_utils.zig"),
     });
 
     const zig_obj = b.addObject(.{

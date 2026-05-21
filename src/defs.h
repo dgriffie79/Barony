@@ -604,7 +604,13 @@ const char* gl_error_string(GLenum err);
     retval;\
 })
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int sgn(real_t x);
+#ifdef __cplusplus
+}
+#endif
 int numdigits_sint16(Sint16 x);
 int longestline(char const * const str);
 int concatedStringLength(char* str, ...);
