@@ -1811,6 +1811,7 @@ extern TextSourceScript textSourceScript;
 // ========================================================================
 
 #include "ccontainers.h"
+#include "monster.h"
 
 /* ----------------------------------------------------------------------- */
 /* Forward declarations                                                    */
@@ -1821,9 +1822,33 @@ typedef struct Item Item;
 typedef struct view_t view_t;
 typedef struct spell_t spell_t;
 typedef struct BaronyRNG BaronyRNG;
-typedef int Monster;
-typedef int sex_t;
 typedef struct map_t map_t;
+typedef struct light_t light_t;
+
+/* Entity flag constants (moved from C++ section for C access) */
+#define BRIGHT 1
+#define INVISIBLE 2
+#define NOUPDATE 3
+#define UPDATENEEDED 4
+#define GENIUS 5
+#define OVERDRAW 6
+#define SPRITE 7
+#define BLOCKSIGHT 8
+#define BURNING 9
+#define BURNABLE 10
+#define UNCLICKABLE 11
+#define PASSABLE 12
+#define USERFLAG1 14
+#define USERFLAG2 15
+#define INVISIBLE_DITHER 16
+#define NOCLIP_WALLS 17
+#define NOCLIP_CREATURES 18
+#define ENTITY_SKIP_CULLING 19
+#define STASIS_DITHER 20
+
+/* Entity skill array sizes */
+#define NUMENTITYSKILLS 60
+#define NUMENTITYFSKILLS 30
 
 /* ----------------------------------------------------------------------- */
 /* C-compatible TimerExperiments::State / EntityStates                      */

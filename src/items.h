@@ -611,7 +611,9 @@ typedef struct Item
 extern Uint32 itemuids;
 
 /* ItemGeneric forward-declared opaque (has std::string/std::map members) */
+#ifdef __cplusplus
 extern ItemGeneric items[];  /* actually NUMITEMS; sized by the C++ definition */
+#endif
 
 /* ------------------------------------------------------------------ */
 /* Bomb placement enums (pulled out of Item class for C)               */

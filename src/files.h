@@ -393,15 +393,15 @@ void   FileIO_close(File* file);
 /* ---------------------------------------------------------
    HolidayTheme and related globals
    --------------------------------------------------------- */
-enum HolidayTheme {
+typedef enum HolidayTheme {
 	THEME_NONE,
 	THEME_HALLOWEEN,
 	THEME_XMAS,
 	THEME_MAX
-};
+} HolidayTheme;
 extern const char* holidayThemeDirs[THEME_MAX];
-HolidayTheme getCurrentHoliday(bool force);
-bool         isCurrentHoliday(bool force);
+enum HolidayTheme getCurrentHoliday(bool force);
+bool             isCurrentHoliday(bool force);
 
 /* ConsoleVariable<T> is a C++ template — opaque forward decls for C */
 typedef struct ConsoleVariable_int ConsoleVariable_int;

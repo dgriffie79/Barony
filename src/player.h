@@ -2517,10 +2517,10 @@ struct Stat;
 struct Item;
 struct view_t;
 struct spell_t;
-struct Frame;
-struct Field;
-struct Message;
-struct hotbar_slot_t;
+typedef struct Frame Frame;
+typedef struct Field Field;
+typedef struct Message Message;
+typedef struct hotbar_slot_t hotbar_slot_t;
 
 // ---------------------------------------------------------------------------
 // Constants

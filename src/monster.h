@@ -1465,6 +1465,11 @@ typedef struct Stat Stat;
 typedef struct Item Item;
 
 /* ------------------------------------------------------------------ */
+/* stat.h is included below (after the Monster enum definition)        */
+/* so that stat.h's common section can use the Monster type.           */
+/* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
 /* enums                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -1527,6 +1532,10 @@ typedef enum
 } Monster;
 
 #define NUMMONSTERS (MAX_MONSTER)
+
+/* Include stat.h here so its common section (lines 27–459) can use Monster
+   and its C section provides SKILL_LEVEL_* constants used below. */
+#include "stat.h"
 
 extern int kills[NUMMONSTERS];
 

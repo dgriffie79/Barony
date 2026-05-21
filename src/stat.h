@@ -571,8 +571,6 @@ const char* getSkillLangEntry(int skill);
 #include <assert.h>
 
 // Forward declarations for types defined in other headers
-typedef int Monster;
-typedef int ItemType;
 struct Entity;
 struct Item;
 
