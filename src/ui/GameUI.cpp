@@ -26024,7 +26024,14 @@ void loadHUDSettingsJSON()
 				return;
 			}
 			printlog("[JSON]: About to check version...");
-			if ( !cJSON_HasObjectItem(d, "version") )
+			fprintf(stderr, "[DEBUG] d=%p d->type=%d d->child=%p d->child->string='%s'\n", (void*)d, d?d->type:-1, (void*)(d?d->child:NULL), d&&d->child&&d->child->string?d->child->string:"(null)");
+			fflush(stderr);
+			fprintf(stderr, "[DEBUG] About to call cJSON_HasObjectItem(d, \"version\")\n");
+			fflush(stderr);
+			cJSON_bool hasVersion = cJSON_HasObjectItem(d, "version");
+			fprintf(stderr, "[DEBUG] cJSON_HasObjectItem returned %d\n", (int)hasVersion);
+			fflush(stderr);
+			if ( !hasVersion )
 			{
 				printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
 				cJSON_Delete(d);
@@ -26032,6 +26039,8 @@ void loadHUDSettingsJSON()
 			}
 			else
 			{
+				fprintf(stderr, "[DEBUG] Version check passed\n");
+				fflush(stderr);
 				printlog("[JSON]: HUD version check passed, reading settings...");
 				if ( cJSON_HasObjectItem(d, "selected_cursor_opacity") )
 				{
