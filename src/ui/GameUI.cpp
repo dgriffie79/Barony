@@ -26008,7 +26008,15 @@ void loadHUDSettingsJSON()
 			buf[count] = '\0';
 			printlog("[JSON]: HUD file read, parsing JSON...");
 			cJSON* d = cJSON_Parse(buf);
-			printlog("[JSON]: HUD JSON parsed, d=%p", (void*)d);
+			printlog("[JSON]: HUD JSON parsed, d=%p type=%d child=%p", (void*)d, d?d->type:-1, (void*)(d?d->child:NULL));
+			if ( d )
+			{
+				int count = 0;
+				for ( cJSON* c = d->child; c && count < 10; c = c->next, count++ )
+				{
+					printlog("[JSON]: child[%d] type=%d string='%s'", count, c->type, c->string ? c->string : "(null)");
+				}
+			}
 			FileIO::close(fp);
 			if ( !d )
 			{
