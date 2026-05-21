@@ -60,7 +60,7 @@ pub fn build(b: *std.Build) void {
 
     };
 
-    // C++ sources (being converted to C — some .c files still require C++ due to
+    // C++ sources (being converted to Zig — some .c files still require C++ due to
     // dependencies on unconverted headers; compiled with -std=c++17)
     const cpp_sources = &.{
         "src/main.cpp", "src/init.cpp", "src/collision.cpp", "src/light.cpp",

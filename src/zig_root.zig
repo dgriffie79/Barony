@@ -6,4 +6,5 @@ comptime {
     _ = @import("zig_item.zig");
     _ = @import("zig_objects.zig");
     _ = @import("zig_scores.zig");
+    _ = @import("zig_set.zig");
 }

@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <set>
 #include <map>
 
 using std::string;
@@ -44,7 +43,7 @@ struct map_t
 	bool* trapexcludelocations = nullptr;
 	bool* monsterexcludelocations = nullptr;
 	bool* lootexcludelocations = nullptr;
-	std::set<int> liquidSfxPlayedTiles;
+	void* liquidSfxPlayedTiles;
 	std::map<int, Uint32> tileAttributes;
 	static const Uint32 TILE_ATTRIBUTE_NODIG = 1 << 0;
 	static const Uint32 TILE_ATTRIBUTE_SLIPPERY = 1 << 1;

@@ -31,6 +31,7 @@
 #include "menu.h"
 #include "net.h"
 
+#include "set.h"
 #include "prng.h"
 #include "collision.h"
 #include "paths.h"
@@ -1286,7 +1287,7 @@ void gameLogic(void)
 									if ( ticks % (TICKS_PER_SECOND * 4) == (y + x * map.height) % (TICKS_PER_SECOND * 4) && local_rng.rand() % 3 == 0 )
 									{
 										int coord = x + y * 1000;
-										if ( map.liquidSfxPlayedTiles.find(coord) == map.liquidSfxPlayedTiles.end() )
+										if ( !set_find(map.liquidSfxPlayedTiles, coord) )
 										{
 											if ( lavatiles[map.tiles[index]] )
 											{
@@ -1298,7 +1299,7 @@ void gameLogic(void)
 												// running water
 												playSoundPosLocal( x * 16 + 8, y * 16 + 8, 135, 32 );
 											}
-											map.liquidSfxPlayedTiles.insert(coord);
+											set_insert(map.liquidSfxPlayedTiles, coord);
 										}
 									}
 
@@ -3131,7 +3132,7 @@ void gameLogic(void)
 									if ( ticks % (TICKS_PER_SECOND * 4) == (y + x * map.height) % (TICKS_PER_SECOND * 4) && local_rng.rand() % 3 == 0 )
 									{
 										int coord = x + y * 1000;
-										if ( map.liquidSfxPlayedTiles.find(coord) == map.liquidSfxPlayedTiles.end() )
+										if ( !set_find(map.liquidSfxPlayedTiles, coord) )
 										{
 											if ( lavatiles[map.tiles[index]] )
 											{
@@ -3143,7 +3144,7 @@ void gameLogic(void)
 												// running water
 												playSoundPosLocal(x * 16 + 8, y * 16 + 8, 135, 32);
 											}
-											map.liquidSfxPlayedTiles.insert(coord);
+											set_insert(map.liquidSfxPlayedTiles, coord);
 										}
 									}
 

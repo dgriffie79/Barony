@@ -22,6 +22,7 @@
 #include <future>
 
 #include "files.h"
+#include "set.h"
 #include "engine/audio/sound.hpp"
 #include "entity.h"
 #include "book.hpp"
@@ -2487,7 +2488,11 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 		{
 			list_FreeAll(map.worldUI);
 		}
-		destmap->liquidSfxPlayedTiles.clear();
+		if ( !destmap->liquidSfxPlayedTiles )
+		{
+			destmap->liquidSfxPlayedTiles = set_create();
+		}
+		set_clear(destmap->liquidSfxPlayedTiles);
 		destmap->tileAttributes.clear();
 	}
 	if ( destmap->tiles != nullptr )
