@@ -1722,7 +1722,7 @@ void FollowerRadialMenu::loadFollowerJSON()
 				{
 					FollowerRadialMenu::panelEntries.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "panels")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						FollowerRadialMenu::panelEntries.push_back(FollowerRadialMenu::PanelEntry());
 						auto& entry = FollowerRadialMenu::panelEntries[FollowerRadialMenu::panelEntries.size() - 1];
@@ -1764,7 +1764,7 @@ void FollowerRadialMenu::loadFollowerJSON()
 				{
 					FollowerRadialMenu::panelEntriesAlternate.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "panels_alternate")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						FollowerRadialMenu::panelEntriesAlternate.push_back(FollowerRadialMenu::PanelEntry());
 						auto& entry = FollowerRadialMenu::panelEntriesAlternate[FollowerRadialMenu::panelEntriesAlternate.size() - 1];
@@ -1806,7 +1806,7 @@ void FollowerRadialMenu::loadFollowerJSON()
 				{
 					FollowerRadialMenu::iconEntries.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "icons")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						std::string actionName = "";
 						if ( cJSON_HasObjectItem(itr, "action") )
@@ -1842,16 +1842,16 @@ void FollowerRadialMenu::loadFollowerJSON()
 						if ( cJSON_HasObjectItem(itr, "text_maps") )
 						{
 							for ( cJSON* itr2 = cJSON_GetObjectItem(itr, "text_maps")->child;
-								itr2 != nullptr; ++itr2 )
+								itr2 != nullptr; itr2 = itr2->next )
 							{
 								for ( cJSON* itr3 = itr2->child;
-									itr3 != nullptr; ++itr3 )
+									itr3 != nullptr; itr3 = itr3->next )
 								{
 									std::string mapKey = itr3->string;
 									std::string mapText = cJSON_GetStringValue(cJSON_GetObjectItem(itr3, "text"));
 									std::set<int> mapHighlights;
 									for ( cJSON* highlightItr = cJSON_GetObjectItem(itr3, "word_highlights")->child;
-										highlightItr != nullptr; ++highlightItr )
+										highlightItr != nullptr; highlightItr = highlightItr->next )
 									{
 										mapHighlights.insert(highlightItr->valueint);
 									}
@@ -27402,7 +27402,7 @@ void CalloutRadialMenu::loadCalloutJSON()
 				{
 					CalloutRadialMenu::panelEntries.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "panels")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						CalloutRadialMenu::panelEntries.push_back(CalloutRadialMenu::PanelEntry());
 						auto& entry = CalloutRadialMenu::panelEntries[CalloutRadialMenu::panelEntries.size() - 1];
@@ -27436,7 +27436,7 @@ void CalloutRadialMenu::loadCalloutJSON()
 				{
 					CalloutRadialMenu::helpDescriptors.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "help_strings")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						CalloutRadialMenu::helpDescriptors[itr->string] = itr->valuestring;
 					}
@@ -27447,7 +27447,7 @@ void CalloutRadialMenu::loadCalloutJSON()
 					CalloutRadialMenu::worldIconIDToEntryKey.clear();
 					int id = 0;
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "world_icons")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						std::string key = itr->string;
 						auto& entry = worldIconEntries[key];
@@ -27486,7 +27486,7 @@ void CalloutRadialMenu::loadCalloutJSON()
 				{
 					CalloutRadialMenu::iconEntries.clear();
 					for ( cJSON* itr = cJSON_GetObjectItem(d, "icons")->child;
-						itr != nullptr; ++itr )
+						itr != nullptr; itr = itr->next )
 					{
 						std::string actionName = "";
 						if ( cJSON_HasObjectItem(itr, "action") )
@@ -27522,16 +27522,16 @@ void CalloutRadialMenu::loadCalloutJSON()
 						if ( cJSON_HasObjectItem(itr, "text_maps") )
 						{
 							for ( cJSON* itr2 = cJSON_GetObjectItem(itr, "text_maps")->child;
-								itr2 != nullptr; ++itr2 )
+								itr2 != nullptr; itr2 = itr2->next )
 							{
 								for ( cJSON* itr3 = itr2->child;
-									itr3 != nullptr; ++itr3 )
+									itr3 != nullptr; itr3 = itr3->next )
 								{
 									std::string mapKey = itr3->string;
 									std::string mapText = cJSON_GetStringValue(cJSON_GetObjectItem(itr3, "text"));
 									std::set<int> mapHighlights;
 									for ( cJSON* highlightItr = cJSON_GetObjectItem(itr3, "word_highlights")->child;
-										highlightItr != nullptr; ++highlightItr )
+										highlightItr != nullptr; highlightItr = highlightItr->next )
 									{
 										mapHighlights.insert(highlightItr->valueint);
 									}
