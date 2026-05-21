@@ -2137,20 +2137,4 @@ void Item::applyTinkeringCreation(Entity* parent, Entity* thrown)
 	}
 }
 
-bool itemIsThrowableTinkerTool(const Item* item)
-{
-	if ( !item )
-	{
-		return false;
-	}
-	if ( (item->type >= TOOL_BOMB && item->type <= TOOL_TELEPORT_BOMB)
-		|| item->type == TOOL_DECOY
-		|| item->type == TOOL_SENTRYBOT 
-		|| item->type == TOOL_SPELLBOT 
-		|| item->type == TOOL_GYROBOT
-		|| item->type == TOOL_DUMMYBOT )
-	{
-		return true;
-	}
-	return false;
-}
+

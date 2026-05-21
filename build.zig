@@ -60,6 +60,9 @@ pub fn build(b: *std.Build) void {
         "src/objects.c",
         "src/scores.c",
         "src/entity_shared.c",
+        "src/collision.c",
+        "src/mechanisms.c",
+        "src/item_tool.c",
 
     };
 
@@ -159,7 +162,7 @@ pub fn build(b: *std.Build) void {
     // Add C++ source files (still being converted)
     game_mod.addCSourceFiles(.{ .files = cpp_sources, .flags = cxx_flags });
     // Add C source files (converted from .cpp — compiled without C++ flags)
-    game_mod.addCSourceFiles(.{ .files = c_sources, .flags = &.{} });
+    game_mod.addCSourceFiles(.{ .files = c_sources, .flags = &.{ "-Wno-vla" } });
     game_mod.addCSourceFile(.{ .file = b.path("src/cJSON.c"), .flags = &.{} });
 
     // -----------------------------------------------------------------------

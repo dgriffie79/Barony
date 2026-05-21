@@ -1439,7 +1439,13 @@ extern bool monsterally[NUMMONSTERS][NUMMONSTERS];
 int AC(Stat* stat);
 
 Entity* uidToEntity(Sint32 uidnum);
+#ifdef __cplusplus
+extern "C" {
+#endif
 list_t* checkTileForEntity(int x, int y); //Don't forget to free the list returned when you're done with it. Also, provide x and y in map, not entity, units.
+#ifdef __cplusplus
+}
+#endif
 /*
  * Don't forget to free the list returned when you're done with it.
  * Provide x and y in map, not entity, units.
@@ -1484,7 +1490,14 @@ void actSink(Entity* my);
 //--- Mechanism functions ---
 void actCircuit(Entity* my);
 void actSwitch(Entity* my); //Needs to be called periodically to ensure network's powered state is correct.
+#ifdef __cplusplus
+extern "C" {
+#endif
 void getPowerablesOnTile(int x, int y, list_t** list); //Stores a list of all circuits and mechanisms, on the tile (in map coordinates), in list.
+bool entityInsideWind(struct Entity* entity1, struct Entity* wind);
+#ifdef __cplusplus
+}
+#endif
 void actGate(Entity* my);
 void actArrowTrap(Entity* my);
 void actTrap(Entity* my);
@@ -2567,6 +2580,7 @@ void actSink(Entity* my);
 void actCircuit(Entity* my);
 void actSwitch(Entity* my);
 void getPowerablesOnTile(int x, int y, list_t** list);
+bool entityInsideWind(Entity* entity1, Entity* wind);
 void actGate(Entity* my);
 void actArrowTrap(Entity* my);
 void actTrap(Entity* my);

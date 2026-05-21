@@ -381,6 +381,7 @@ typedef struct Item Item;
 #endif
 
 typedef struct map_t map_t;
+extern map_t map;
 
 #define MAPLAYERS 3
 #define OBSTACLELAYER 1

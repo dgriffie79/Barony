@@ -16,26 +16,31 @@
 #define LINETRACE_TELEKINESIS 4
 #define LINETRACE_TOOLTIP_INTERACT 8
 
-// function prototypes
+#ifdef __cplusplus
+extern "C" {
+#endif
 real_t entityDist(Entity* my, Entity* your);
-enum EntityClickType
+bool entityInsideEntity(Entity* entity1, Entity* entity2);
+real_t clipMove(real_t* x, real_t* y, real_t vx, real_t vy, Entity* my);
+#ifdef __cplusplus
+}
+#endif
+typedef enum EntityClickType
 {
 	ENTITY_CLICK_USE,
 	ENTITY_CLICK_USE_TOOLTIPS_ONLY,
 	ENTITY_CLICK_HELD_USE_TOOLTIPS_ONLY,
 	ENTITY_CLICK_FOLLOWER_INTERACT,
 	ENTITY_CLICK_CALLOUT
-};
+} EntityClickType;
 Entity* entityClicked(bool* clickedOnGUI, bool clickCheckOverride, int player, EntityClickType clicktype);
 bool entityInsideTile(Entity* entity, int x, int y, int z
 #ifdef __cplusplus
 	, bool checkSafeTiles = false
 #endif
 );
-bool entityInsideEntity(Entity* entity1, Entity* entity2);
 bool entityInsideSomething(Entity* entity);
 int barony_clear(real_t tx, real_t ty, Entity* my);
-real_t clipMove(real_t* x, real_t* y, real_t vx, real_t vy, Entity* my);
 Entity* findEntityInLine(Entity* my, real_t x1, real_t y1, real_t angle, int entities, Entity* target
 #ifdef __cplusplus
 	, list_t* entityListToUse = nullptr

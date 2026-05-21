@@ -448,7 +448,13 @@ bool isPotionBad(const Item& potion);
 bool isRangedWeapon(const Item& item);
 bool isRangedWeapon(const ItemType type);
 bool isMeleeWeapon(const Item& item);
+#ifdef __cplusplus
+extern "C" {
+#endif
 bool itemIsThrowableTinkerTool(const Item* item);
+#ifdef __cplusplus
+}
+#endif
 
 void createCustomInventory(Stat* stats, int itemLimit, BaronyRNG& rng);
 void copyItem(Item* itemToSet, const Item* itemToCopy);

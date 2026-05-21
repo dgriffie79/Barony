@@ -848,57 +848,7 @@ void Entity::switchUpdateNeighbors()
 	}
 }
 
-void getPowerablesOnTile(int x, int y, list_t** list)
-{
 
-	//Take the return value of checkTileForEntity() and sort that list for powerables.
-	//if (entity->powerable == true)
-	//And then free the list returned by checkTileForEntity.
-
-	//Right. First, grab all the entities on the tile.
-	list_t* entities = NULL;
-	entities = checkTileForEntity(x, y);
-
-	if (!entities)
-	{
-		return;    //No use continuing, got no entities.
-	}
-
-	node_t* node = NULL;
-	node_t* node2 = NULL;
-	//Loop through the list of entities.
-	for (node = entities->first; node != NULL; node = node->next)
-	{
-		if (node->element)
-		{
-			Entity* entity = (Entity*) node->element;
-			//Check if the entity is powerable.
-			if (entity && entity->skill[28])   //If skill 28 = 0, the entity is not a powerable.
-			{
-				//If this is the first powerable found, the list needs to be created.
-				if (!(*list))
-				{
-					*list = (list_t*) malloc(sizeof(list_t));
-					(*list)->first = NULL;
-					(*list)->last = NULL;
-				}
-
-				//Add the current entity to it.
-				node2 = list_AddNodeLast(*list);
-				node2->element = entity;
-				node2->deconstructor = &emptyDeconstructor;
-			}
-		}
-	}
-
-	/*if (entities)
-	{
-		list_FreeAll(entities);
-		free(entities);
-	}*/
-
-	//return return_val;
-}
 
 list_t* Entity::getPowerableNeighbors()
 {

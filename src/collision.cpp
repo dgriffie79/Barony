@@ -33,22 +33,6 @@
 
 /*-------------------------------------------------------------------------------
 
-	entityDist
-
-	returns the distance between the two given entities
-
--------------------------------------------------------------------------------*/
-
-real_t entityDist(Entity* my, Entity* your)
-{
-	real_t dx, dy;
-	dx = my->x - your->x;
-	dy = my->y - your->y;
-	return sqrt(dx * dx + dy * dy);
-}
-
-/*-------------------------------------------------------------------------------
-
 	entityClicked
 
 	returns the entity that was last clicked on with the mouse
@@ -425,38 +409,62 @@ bool entityInsideTile(Entity* entity, int x, int y, int z, bool checkSafeTiles)
 
 /*-------------------------------------------------------------------------------
 
-	entityInsideEntity
-
-	checks whether an entity is intersecting another entity
-
--------------------------------------------------------------------------------*/
-
-bool entityInsideEntity(Entity* entity1, Entity* entity2)
-{
-	if ( !entity1 || !entity2 ) { return false; }
-	if ( entity1->x + entity1->sizex > entity2->x - entity2->sizex )
-	{
-		if ( entity1->x - entity1->sizex < entity2->x + entity2->sizex )
-		{
-			if ( entity1->y + entity1->sizey > entity2->y - entity2->sizey )
-			{
-				if ( entity1->y - entity1->sizey < entity2->y + entity2->sizey )
-				{
-					return true;
-				}
-			}
-		}
-	}
-	return false;
-}
-
-/*-------------------------------------------------------------------------------
-
 	entityInsideSomething
 
 	checks whether an entity is intersecting any obstacle
 
 -------------------------------------------------------------------------------*/
+
+real_t clipMove(real_t* x, real_t* y, real_t vx, real_t vy, Entity* my)
+{
+	real_t tx, ty;
+	hit.entity = NULL;
+
+	// move x and y
+	tx = *x + vx;
+	ty = *y + vy;
+
+	if (barony_clear(tx, ty, my))
+	{
+		*x = tx;
+		*y = ty;
+		hit.side = 0;
+		return sqrt(vx * vx + vy * vy);
+	}
+
+	hit_t prevHit = hit;
+	// only move x
+	tx = *x + vx;
+	ty = *y;
+	if (barony_clear(tx, ty, my))
+	{
+		*x = tx;
+		*y = ty;
+		hit.side = VERTICAL;
+		return fabs(vx);
+	}
+
+	prevHit = hit;
+	// only move y
+	tx = *x;
+	ty = *y + vy;
+	if (barony_clear(tx, ty, my))
+	{
+		*x = tx;
+		*y = ty;
+		hit.side = HORIZONTAL;
+		return fabs(vy);
+	}
+
+	if ( my && my->behavior == &actPlayer && prevHit.entity && prevHit.entity->behavior == &actDoorFrame && !hit.entity )
+	{
+		// allow players to hit doorways when next to map tile instead (otherwise gets overwritten here)
+		hit = prevHit;
+	}
+
+	hit.side = 0;
+	return 0;
+}
 
 bool entityInsideSomething(Entity* entity)
 {
@@ -1724,66 +1732,6 @@ int barony_clear(real_t tx, real_t ty, Entity* my)
 	}
 
 	return 1;
-}
-
-/*-------------------------------------------------------------------------------
-
-	clipMove
-
-	clips velocity by checking which direction is clear. returns distance
-	covered.
-
--------------------------------------------------------------------------------*/
-
-real_t clipMove(real_t* x, real_t* y, real_t vx, real_t vy, Entity* my)
-{
-	real_t tx, ty;
-	hit.entity = NULL;
-
-	// move x and y
-	tx = *x + vx;
-	ty = *y + vy;
-
-	if (barony_clear(tx, ty, my))
-	{
-		*x = tx;
-		*y = ty;
-		hit.side = 0;
-		return sqrt(vx * vx + vy * vy);
-	}
-
-	hit_t prevHit = hit;
-	// only move x
-	tx = *x + vx;
-	ty = *y;
-	if (barony_clear(tx, ty, my))
-	{
-		*x = tx;
-		*y = ty;
-		hit.side = VERTICAL;
-		return fabs(vx);
-	}
-
-	prevHit = hit;
-	// only move y
-	tx = *x;
-	ty = *y + vy;
-	if (barony_clear(tx, ty, my))
-	{
-		*x = tx;
-		*y = ty;
-		hit.side = HORIZONTAL;
-		return fabs(vy);
-	}
-
-	if ( my && my->behavior == &actPlayer && prevHit.entity && prevHit.entity->behavior == &actDoorFrame && !hit.entity )
-	{
-		// allow players to hit doorways when next to map tile instead (otherwise gets overwritten here)
-		hit = prevHit;
-	}
-
-	hit.side = 0;
-	return 0;
 }
 
 /*-------------------------------------------------------------------------------
