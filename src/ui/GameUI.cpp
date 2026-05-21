@@ -26024,9 +26024,12 @@ void loadHUDSettingsJSON()
 			else
 			{
 				printlog("[JSON]: HUD version check passed, reading settings...");
+				printlog("[JSON]: checking selected_cursor_opacity...");
 				if ( cJSON_HasObjectItem(d, "selected_cursor_opacity") )
 				{
+					printlog("[JSON]: reading selected_cursor_opacity...");
 					selectedCursorOpacity = cJSON_GetObjectItem(d, "selected_cursor_opacity")->valueint;
+					printlog("[JSON]: read selected_cursor_opacity OK");
 				}
 				if ( cJSON_HasObjectItem(d, "selected_old_cursor_opacity") )
 				{
