@@ -5901,7 +5901,7 @@ void StatusEffectQueue_t::loadStatusEffectsJSON()
 						if ( cJSON_IsArray(cJSON_GetObjectItem(itr, "name")) )
 						{
 							for ( auto arr = cJSON_GetObjectItem(itr, "name")->child;
-								arr != nullptr; ++arr )
+								arr != nullptr; arr = arr->next )
 							{
 								entry.nameVariations.push_back(arr->valuestring);
 							}
@@ -5966,7 +5966,7 @@ void StatusEffectQueue_t::loadStatusEffectsJSON()
 						if ( cJSON_IsArray(cJSON_GetObjectItem(itr, "name")) )
 						{
 							for ( auto arr = cJSON_GetObjectItem(itr, "name")->child;
-								arr != nullptr; ++arr )
+								arr != nullptr; arr = arr->next )
 							{
 								entry.nameVariations.push_back(arr->valuestring);
 							}
@@ -5978,7 +5978,7 @@ void StatusEffectQueue_t::loadStatusEffectsJSON()
 						if ( cJSON_IsArray(cJSON_GetObjectItem(itr, "desc")) )
 						{
 							for ( auto arr = cJSON_GetObjectItem(itr, "desc")->child;
-								arr != nullptr; ++arr )
+								arr != nullptr; arr = arr->next )
 							{
 								std::string buf = arr->valuestring;
 								int index = 0;
@@ -6040,7 +6040,7 @@ void StatusEffectQueue_t::loadStatusEffectsJSON()
 						if ( cJSON_IsArray(cJSON_GetObjectItem(itr, "img_path")) )
 						{
 							for ( auto arr = cJSON_GetObjectItem(itr, "img_path")->child;
-								arr != nullptr; ++arr )
+								arr != nullptr; arr = arr->next )
 							{
 								entry.imgPathVariations.push_back(arr->valuestring);
 							}
@@ -6052,7 +6052,7 @@ void StatusEffectQueue_t::loadStatusEffectsJSON()
 						if ( cJSON_IsArray(cJSON_GetObjectItem(itr, "img_from_spell_id")) )
 						{
 							for ( auto arr = cJSON_GetObjectItem(itr, "img_from_spell_id")->child;
-								arr != nullptr; ++arr )
+								arr != nullptr; arr = arr->next )
 							{
 								entry.useSpellIDForImgVariations.push_back(arr->valueint);
 							}
@@ -26242,9 +26242,14 @@ void loadHUDSettingsJSON()
 							}
 							if ( cJSON_HasObjectItem(ally_itr, "hp") )
 							{
-								for ( auto val_itr = cJSON_GetObjectItem(ally_itr, "hp")->child;
-									val_itr != nullptr; ++val_itr )
+								fprintf(stderr, "[DEBUG] hp for-loop: about to get hp->child\n"); fflush(stderr);
+								cJSON* hpObj = cJSON_GetObjectItem(ally_itr, "hp");
+								fprintf(stderr, "[DEBUG] hpObj=%p hpObj->type=%d hpObj->child=%p\n", (void*)hpObj, hpObj?hpObj->type:-1, (void*)(hpObj?hpObj->child:NULL)); fflush(stderr);
+								cJSON* val_itr = hpObj ? hpObj->child : nullptr;
+								fprintf(stderr, "[DEBUG] val_itr=%p\n", (void*)val_itr); fflush(stderr);
+								for ( ; val_itr != nullptr; val_itr = val_itr->next )
 								{
+									fprintf(stderr, "[DEBUG] loop: val_itr=%p type=%d string='%s'\n", (void*)val_itr, val_itr->type, val_itr->string?val_itr->string:"(null)"); fflush(stderr);
 									std::string key = val_itr->string;
 									auto& bar = AllyStatusBarSettings_t::FollowerBars_t::hpBar;
 									if ( key == "bar_pixel_width" )
@@ -26304,7 +26309,7 @@ void loadHUDSettingsJSON()
 							if ( cJSON_HasObjectItem(ally_itr, "mp") )
 							{
 								for ( auto val_itr = cJSON_GetObjectItem(ally_itr, "mp")->child;
-									val_itr != nullptr; ++val_itr )
+									val_itr != nullptr; val_itr = val_itr->next )
 								{
 									std::string key = val_itr->string;
 									auto& bar = AllyStatusBarSettings_t::FollowerBars_t::mpBar;
@@ -26396,7 +26401,7 @@ void loadHUDSettingsJSON()
 							if ( cJSON_HasObjectItem(ally_itr, "hp") )
 							{
 								for ( auto val_itr = cJSON_GetObjectItem(ally_itr, "hp")->child;
-									val_itr != nullptr; ++val_itr )
+									val_itr != nullptr; val_itr = val_itr->next )
 								{
 									std::string key = val_itr->string;
 									auto& bar = AllyStatusBarSettings_t::PlayerBars_t::hpBar;
@@ -26453,7 +26458,7 @@ void loadHUDSettingsJSON()
 							if ( cJSON_HasObjectItem(ally_itr, "mp") )
 							{
 								for ( auto val_itr = cJSON_GetObjectItem(ally_itr, "mp")->child;
-									val_itr != nullptr; ++val_itr )
+									val_itr != nullptr; val_itr = val_itr->next )
 								{
 									std::string key = val_itr->string;
 									auto& bar = AllyStatusBarSettings_t::PlayerBars_t::mpBar;
