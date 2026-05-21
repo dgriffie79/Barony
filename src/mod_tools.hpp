@@ -1640,11 +1640,7 @@ public:
 	std::string exportFileName = "";
 	int exportRotations = 0;
 	bool exportActive = false;
-#ifdef MOD_TOOLS_CPP
-	rapidjson::Document exportDocument;
-#else
-	void* exportDocument;
-#endif
+	cJSON* exportDocument = nullptr;
 
 	class Statue_t
 	{

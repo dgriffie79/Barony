@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 BARONY
-File: mod_tools_misc.cpp - Statue manager, debug timers, glyph renderer, script text parser, monster data, shop consumables
+File: mod_tools_misc.cpp - Statue manager, debug timers, glyph renderer, script text parser, monster data, shop consumables (converted from rapidjson to cJSON)
 Desc: Extracted from mod_tools.cpp for modularity
 
 Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
@@ -39,10 +39,12 @@ int StatueManager_t::processStatueExport()
 			{
 				return 0;
 			}
-			rapidjson::StringBuffer os;
-			rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-			exportDocument.Accept(writer);
-			fp->write(os.GetString(), sizeof(char), os.GetSize());
+			char* json = cJSON_Print(exportDocument);
+			if ( json )
+			{
+				fp->write(json, sizeof(char), strlen(json));
+				cJSON_free(json);
+			}
 			FileIO::close(fp);
 			return 2; // success
 		}
@@ -72,19 +74,18 @@ int StatueManager_t::processStatueExport()
 
 	if ( newDocument )
 	{
-		if ( exportDocument.IsObject() )
+		if ( exportDocument )
 		{
-			exportDocument.RemoveAllMembers();
+			cJSON_Delete(exportDocument);
 		}
-		exportDocument.SetObject();
-		CustomHelpers::addMemberToRoot(exportDocument, "version", rapidjson::Value(1));
-		CustomHelpers::addMemberToRoot(exportDocument, "statue_id", rapidjson::Value(local_rng.rand()));
-		CustomHelpers::addMemberToRoot(exportDocument, "height_offset", rapidjson::Value(0));
-		rapidjson::Value limbsObject(rapidjson::kObjectType);
-		CustomHelpers::addMemberToRoot(exportDocument, "limbs", limbsObject);
+		exportDocument = cJSON_CreateObject();
+		cJSON_AddNumberToObject(exportDocument, "version", 1);
+		cJSON_AddNumberToObject(exportDocument, "statue_id", (double)local_rng.rand());
+		cJSON_AddNumberToObject(exportDocument, "height_offset", 0);
+		cJSON_AddObjectToObject(exportDocument, "limbs");
 	}
 
-	rapidjson::Value limbsArray(rapidjson::kArrayType);
+	cJSON* limbsArray = cJSON_CreateArray();
 
 	std::vector<Entity*> allLimbs;
 	allLimbs.push_back(player);
@@ -101,33 +102,41 @@ int StatueManager_t::processStatueExport()
 		{
 			continue;
 		}
-		rapidjson::Value limbsObj(rapidjson::kObjectType);
+		cJSON* limbsObj = cJSON_CreateObject();
 
 		if ( index != 0 )
 		{
-			limbsObj.AddMember("x", rapidjson::Value(player->x - limb->x), exportDocument.GetAllocator());
-			limbsObj.AddMember("y", rapidjson::Value(player->y - limb->y), exportDocument.GetAllocator());
-			limbsObj.AddMember("z", rapidjson::Value(limb->z), exportDocument.GetAllocator());
+			cJSON_AddNumberToObject(limbsObj, "x", player->x - limb->x);
+			cJSON_AddNumberToObject(limbsObj, "y", player->y - limb->y);
+			cJSON_AddNumberToObject(limbsObj, "z", limb->z);
 		}
 		else
 		{
-			limbsObj.AddMember("x", rapidjson::Value(0), exportDocument.GetAllocator());
-			limbsObj.AddMember("y", rapidjson::Value(0), exportDocument.GetAllocator());
-			limbsObj.AddMember("z", rapidjson::Value(limb->z), exportDocument.GetAllocator());
+			cJSON_AddNumberToObject(limbsObj, "x", 0);
+			cJSON_AddNumberToObject(limbsObj, "y", 0);
+			cJSON_AddNumberToObject(limbsObj, "z", limb->z);
 		}
-		limbsObj.AddMember("pitch", rapidjson::Value(limb->pitch), exportDocument.GetAllocator());
-		limbsObj.AddMember("roll", rapidjson::Value(limb->roll), exportDocument.GetAllocator());
-		limbsObj.AddMember("yaw", rapidjson::Value(limb->yaw), exportDocument.GetAllocator());
-		limbsObj.AddMember("focalx", rapidjson::Value(limb->focalx), exportDocument.GetAllocator());
-		limbsObj.AddMember("focaly", rapidjson::Value(limb->focaly), exportDocument.GetAllocator());
-		limbsObj.AddMember("focalz", rapidjson::Value(limb->focalz), exportDocument.GetAllocator());
-		limbsObj.AddMember("sprite", rapidjson::Value(limb->sprite), exportDocument.GetAllocator());
-		limbsArray.PushBack(limbsObj, exportDocument.GetAllocator());
+		cJSON_AddNumberToObject(limbsObj, "pitch", limb->pitch);
+		cJSON_AddNumberToObject(limbsObj, "roll", limb->roll);
+		cJSON_AddNumberToObject(limbsObj, "yaw", limb->yaw);
+		cJSON_AddNumberToObject(limbsObj, "focalx", limb->focalx);
+		cJSON_AddNumberToObject(limbsObj, "focaly", limb->focaly);
+		cJSON_AddNumberToObject(limbsObj, "focalz", limb->focalz);
+		cJSON_AddNumberToObject(limbsObj, "sprite", limb->sprite);
+		cJSON_AddItemToArray(limbsArray, limbsObj);
 
 		++index;
 	}
 
-	CustomHelpers::addMemberToSubkey(exportDocument, "limbs", directionKeys[exportRotations], limbsArray);
+	cJSON* limbsObj2 = cJSON_GetObjectItem(exportDocument, "limbs");
+	if ( limbsObj2 )
+	{
+		cJSON_AddItemToObject(limbsObj2, directionKeys[exportRotations].c_str(), limbsArray);
+	}
+	else
+	{
+		cJSON_Delete(limbsArray);
+	}
 	++exportRotations;
 	return 1;
 }
@@ -219,51 +228,74 @@ void StatueManager_t::readStatueFromFile(int index, std::string filename)
 		char buf[65536];
 		int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 		buf[count] = '\0';
-		rapidjson::StringStream is(buf);
 		FileIO::close(fp);
 
-		rapidjson::Document d;
-		d.ParseStream(is);
-		if ( !d.HasMember("version") || !d.HasMember("limbs") || !d.HasMember("statue_id") )
+		cJSON* d = cJSON_Parse(buf);
+		if ( !d )
 		{
-			printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+			printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
 			return;
 		}
-		int version = d["version"].GetInt();
-		Uint32 statueId = d["statue_id"].GetUint();
+		if ( !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "limbs") || !cJSON_HasObjectItem(d, "statue_id") )
+		{
+			printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+			cJSON_Delete(d);
+			return;
+		}
+		int version = cJSON_GetObjectItem(d, "version")->valueint;
+		cJSON* statueIdItem = cJSON_GetObjectItem(d, "statue_id");
+		Uint32 statueId = (Uint32)(statueIdItem ? statueIdItem->valuedouble : 0);
 		auto findStatue = allStatues.find(statueId);
 		if ( findStatue != allStatues.end() )
 		{
 			allStatues.erase(findStatue);
 		}
 		allStatues.insert(std::make_pair(statueId, Statue_t()));
-		for ( rapidjson::Value::ConstMemberIterator limb_itr = d["limbs"].MemberBegin(); limb_itr != d["limbs"].MemberEnd(); ++limb_itr )
+		cJSON* limbsObj = cJSON_GetObjectItem(d, "limbs");
+		if ( limbsObj )
 		{
-			auto& statue = allStatues[statueId];
-			if ( d.HasMember("height_offset") )
+			for ( cJSON* limb_itr = limbsObj->child; limb_itr; limb_itr = limb_itr->next )
 			{
-				statue.heightOffset = d["height_offset"].GetDouble();
-			}
-			for ( rapidjson::Value::ConstValueIterator dir_itr = limb_itr->value.Begin(); dir_itr != limb_itr->value.End(); ++dir_itr )
-			{
-				const rapidjson::Value& attributes = *dir_itr;
-				std::string direction = limb_itr->name.GetString();
-				auto& limbVector = statue.limbs[direction];
-				limbVector.push_back(Statue_t::StatueLimb_t());
-				auto& limb = limbVector[limbVector.size() - 1];
-				limb.x = attributes["x"].GetDouble();
-				limb.y = attributes["y"].GetDouble();
-				limb.z = attributes["z"].GetDouble();
-				limb.focalx = attributes["focalx"].GetDouble();
-				limb.focaly = attributes["focaly"].GetDouble();
-				limb.focalz = attributes["focalz"].GetDouble();
-				limb.pitch = attributes["pitch"].GetDouble();
-				limb.roll = attributes["roll"].GetDouble();
-				limb.yaw = attributes["yaw"].GetDouble();
-				limb.sprite = attributes["sprite"].GetInt();
+				auto& statue = allStatues[statueId];
+				cJSON* heightItem = cJSON_GetObjectItem(d, "height_offset");
+				if ( heightItem )
+				{
+					statue.heightOffset = heightItem->valuedouble;
+				}
+				if ( cJSON_IsArray(limb_itr) )
+				{
+					cJSON* dir_itr = NULL;
+					cJSON_ArrayForEach(dir_itr, limb_itr)
+					{
+						std::string direction = limb_itr->string;
+						auto& limbVector = statue.limbs[direction];
+						limbVector.push_back(Statue_t::StatueLimb_t());
+						auto& limb = limbVector[limbVector.size() - 1];
+						cJSON* xItem = cJSON_GetObjectItem(dir_itr, "x");
+						if ( xItem ) limb.x = xItem->valuedouble;
+						cJSON* yItem = cJSON_GetObjectItem(dir_itr, "y");
+						if ( yItem ) limb.y = yItem->valuedouble;
+						cJSON* zItem = cJSON_GetObjectItem(dir_itr, "z");
+						if ( zItem ) limb.z = zItem->valuedouble;
+						cJSON* focalxItem = cJSON_GetObjectItem(dir_itr, "focalx");
+						if ( focalxItem ) limb.focalx = focalxItem->valuedouble;
+						cJSON* focalyItem = cJSON_GetObjectItem(dir_itr, "focaly");
+						if ( focalyItem ) limb.focaly = focalyItem->valuedouble;
+						cJSON* focalzItem = cJSON_GetObjectItem(dir_itr, "focalz");
+						if ( focalzItem ) limb.focalz = focalzItem->valuedouble;
+						cJSON* pitchItem = cJSON_GetObjectItem(dir_itr, "pitch");
+						if ( pitchItem ) limb.pitch = pitchItem->valuedouble;
+						cJSON* rollItem = cJSON_GetObjectItem(dir_itr, "roll");
+						if ( rollItem ) limb.roll = rollItem->valuedouble;
+						cJSON* yawItem = cJSON_GetObjectItem(dir_itr, "yaw");
+						if ( yawItem ) limb.yaw = yawItem->valuedouble;
+						cJSON* spriteItem = cJSON_GetObjectItem(dir_itr, "sprite");
+						if ( spriteItem ) limb.sprite = spriteItem->valueint;
+					}
+				}
 			}
 		}
-
+		cJSON_Delete(d);
 		printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
 	}
 }
@@ -321,49 +353,39 @@ bool GlyphRenderer_t::readFromFile()
 		char buf[65536];
 		int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 		buf[count] = '\0';
-		rapidjson::StringStream is(buf);
 		FileIO::close(fp);
 
-		rapidjson::Document d;
-		d.ParseStream(is);
-		if ( !d.HasMember("version") )
+		cJSON* d = cJSON_Parse(buf);
+		if ( !d )
+		{
+			printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+			return false;
+		}
+		if ( !cJSON_HasObjectItem(d, "version") )
 		{
 			printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+			cJSON_Delete(d);
 			return false;
 		}
 
 		allGlyphs.clear();
-		if ( d.HasMember("rendered_glyph_folder") )
-		{
-			renderedGlyphFolder = d["rendered_glyph_folder"].GetString();
-		}
-		if ( d.HasMember("base_glyph_folder") )
-		{
-			baseSourceFolder = d["base_glyph_folder"].GetString();
-		}
-		if ( d.HasMember("small_key_unpressed_path") )
-		{
-			baseUnpressedGlyphPath = d["small_key_unpressed_path"].GetString();
-		}
-		if ( d.HasMember("small_key_pressed_path") )
-		{
-			basePressedGlyphPath = d["small_key_pressed_path"].GetString();
-		}
+		cJSON* item = cJSON_GetObjectItem(d, "rendered_glyph_folder");
+		if ( item ) renderedGlyphFolder = item->valuestring;
+		item = cJSON_GetObjectItem(d, "base_glyph_folder");
+		if ( item ) baseSourceFolder = item->valuestring;
+		item = cJSON_GetObjectItem(d, "small_key_unpressed_path");
+		if ( item ) baseUnpressedGlyphPath = item->valuestring;
+		item = cJSON_GetObjectItem(d, "small_key_pressed_path");
+		if ( item ) basePressedGlyphPath = item->valuestring;
 		int render_offsety = 0;
-		if ( d.HasMember("base_render_offset_y") )
-		{
-			render_offsety = d["base_render_offset_y"].GetInt();
-		}
+		item = cJSON_GetObjectItem(d, "base_render_offset_y");
+		if ( item ) render_offsety = item->valueint;
 		pressedRenderedPrefix = "Pressed_";
-		if ( d.HasMember("pressed_rendered_glyph_prefix") )
-		{
-			pressedRenderedPrefix = d["pressed_rendered_glyph_prefix"].GetString();
-		}
+		item = cJSON_GetObjectItem(d, "pressed_rendered_glyph_prefix");
+		if ( item ) pressedRenderedPrefix = item->valuestring;
 		unpressedRenderedPrefix = "Unpressed_";
-		if ( d.HasMember("unpressed_rendered_glyph_prefix") )
-		{
-			unpressedRenderedPrefix = d["unpressed_rendered_glyph_prefix"].GetString();
-		}
+		item = cJSON_GetObjectItem(d, "unpressed_rendered_glyph_prefix");
+		if ( item ) unpressedRenderedPrefix = item->valuestring;
 
 		std::string basePath = baseSourceFolder;
 		basePath += '/';
@@ -371,86 +393,96 @@ bool GlyphRenderer_t::readFromFile()
 		baseRenderedPath += renderedGlyphFolder;
 		baseRenderedPath += '/';
 
-		for ( rapidjson::Value::ConstValueIterator glyph_itr = d["glyphs"].Begin(); glyph_itr != d["glyphs"].End(); ++glyph_itr )
+		cJSON* glyphsArr = cJSON_GetObjectItem(d, "glyphs");
+		if ( glyphsArr )
 		{
-			const rapidjson::Value& attributes = *glyph_itr;
-			if ( !attributes.HasMember("keyname") )
+			cJSON* glyph_itr = NULL;
+			cJSON_ArrayForEach(glyph_itr, glyphsArr)
 			{
-				printlog("[JSON]: Glyph entry does not have keyname, skipping...");
-				continue;
-			}
-			std::string keyname = attributes["keyname"].GetString();
-			int keycode = SDL_GetKeyFromName(keyname.c_str());
-			if ( keycode == SDLK_UNKNOWN )
-			{
-				printlog("[JSON]: Glyph name: %s could not find a keycode, skipping...", keyname.c_str());
-				continue;
-			}
-			allGlyphs[keycode] = GlyphData_t();
-			auto& glyphData = allGlyphs[keycode];
-			glyphData.keycode = keycode;
-			glyphData.keyname = keyname;
-			if ( !attributes.HasMember("folder") )
-			{
-				printlog("[JSON]: Glyph entry does not have base folder entry, skipping...");
-				continue;
-			}
-			glyphData.folder = attributes["folder"].GetString();
-			if ( !attributes.HasMember("path") )
-			{
-				printlog("[JSON]: Glyph entry does not have glyph path name, skipping...");
-				continue;
-			}
-			glyphData.filename = attributes["path"].GetString();
-			if ( attributes.HasMember("custom_render_offset_y") )
-			{
-				if ( attributes["custom_render_offset_y"].GetInt() != 0 )
+				if ( !cJSON_HasObjectItem(glyph_itr, "keyname") )
 				{
-					glyphData.render_offsety = attributes["custom_render_offset_y"].GetInt();
+					printlog("[JSON]: Glyph entry does not have keyname, skipping...");
+					continue;
+				}
+				cJSON* keynameItem = cJSON_GetObjectItem(glyph_itr, "keyname");
+				std::string keyname = keynameItem->valuestring;
+				int keycode = SDL_GetKeyFromName(keyname.c_str());
+				if ( keycode == SDLK_UNKNOWN )
+				{
+					printlog("[JSON]: Glyph name: %s could not find a keycode, skipping...", keyname.c_str());
+					continue;
+				}
+				allGlyphs[keycode] = GlyphData_t();
+				auto& glyphData = allGlyphs[keycode];
+				glyphData.keycode = keycode;
+				glyphData.keyname = keyname;
+				cJSON* folderItem = cJSON_GetObjectItem(glyph_itr, "folder");
+				if ( !folderItem )
+				{
+					printlog("[JSON]: Glyph entry does not have base folder entry, skipping...");
+					continue;
+				}
+				glyphData.folder = folderItem->valuestring;
+				cJSON* pathItem = cJSON_GetObjectItem(glyph_itr, "path");
+				if ( !pathItem )
+				{
+					printlog("[JSON]: Glyph entry does not have glyph path name, skipping...");
+					continue;
+				}
+				glyphData.filename = pathItem->valuestring;
+				cJSON* customOffsetItem = cJSON_GetObjectItem(glyph_itr, "custom_render_offset_y");
+				if ( customOffsetItem )
+				{
+					if ( customOffsetItem->valueint != 0 )
+					{
+						glyphData.render_offsety = customOffsetItem->valueint;
+					}
+					else
+					{
+						glyphData.render_offsety = render_offsety;
+					}
 				}
 				else
 				{
 					glyphData.render_offsety = render_offsety;
 				}
-			}
-			else
-			{
-				glyphData.render_offsety = render_offsety;
-			}
-			if ( attributes.HasMember("pressed_glyph_background_path") )
-			{
-				glyphData.pressedGlyphPath = attributes["pressed_glyph_background_path"].GetString();
-			}
-			else
-			{
-				glyphData.pressedGlyphPath = basePressedGlyphPath;
-			}
-			if ( attributes.HasMember("unpressed_glyph_background_path") )
-			{
-				glyphData.unpressedGlyphPath = attributes["unpressed_glyph_background_path"].GetString();
-			}
-			else
-			{
-				glyphData.unpressedGlyphPath = baseUnpressedGlyphPath;
+				cJSON* pressedBgItem = cJSON_GetObjectItem(glyph_itr, "pressed_glyph_background_path");
+				if ( pressedBgItem )
+				{
+					glyphData.pressedGlyphPath = pressedBgItem->valuestring;
+				}
+				else
+				{
+					glyphData.pressedGlyphPath = basePressedGlyphPath;
+				}
+				cJSON* unpressedBgItem = cJSON_GetObjectItem(glyph_itr, "unpressed_glyph_background_path");
+				if ( unpressedBgItem )
+				{
+					glyphData.unpressedGlyphPath = unpressedBgItem->valuestring;
+				}
+				else
+				{
+					glyphData.unpressedGlyphPath = baseUnpressedGlyphPath;
+				}
 			}
 		}
 
 		for ( auto& keyValue : allGlyphs )
 		{
 			auto& glyphData = keyValue.second;
-            glyphData.fullpath = "";
-            glyphData.pressedRenderedFullpath = "";
-            glyphData.unpressedRenderedFullpath = "";
-            
-            glyphData.fullpath = basePath;
-            glyphData.fullpath += glyphData.folder;
-            glyphData.fullpath += '/';
-            glyphData.fullpath += glyphData.filename;
+			glyphData.fullpath = "";
+			glyphData.pressedRenderedFullpath = "";
+			glyphData.unpressedRenderedFullpath = "";
+			
+			glyphData.fullpath = basePath;
+			glyphData.fullpath += glyphData.folder;
+			glyphData.fullpath += '/';
+			glyphData.fullpath += glyphData.filename;
 
-			if ( !PHYSFS_getRealDir(glyphData.fullpath.c_str()) ) // you need single forward '/' slashes for getRealDir to report true
+			if ( !PHYSFS_getRealDir(glyphData.fullpath.c_str()) )
 			{
 				printlog("[JSON]: Glyph path: %s not detected; won't be able to render!", glyphData.fullpath.c_str());
-                glyphData.fullpath = "";
+				glyphData.fullpath = "";
 			}
 
 			const std::string renderedPath = baseRenderedPath + glyphData.folder + '/';
@@ -462,10 +494,10 @@ bool GlyphRenderer_t::readFromFile()
 			{
 				glyphData.unpressedRenderedFullpath.erase((size_t)0, (size_t)1);
 			}
-            if ( !PHYSFS_getRealDir(glyphData.unpressedRenderedFullpath.c_str()) )
-            {
-                printlog("[JSON]: Glyph path: %s not detected", glyphData.unpressedRenderedFullpath.c_str());
-            }
+			if ( !PHYSFS_getRealDir(glyphData.unpressedRenderedFullpath.c_str()) )
+			{
+				printlog("[JSON]: Glyph path: %s not detected", glyphData.unpressedRenderedFullpath.c_str());
+			}
 
 			glyphData.pressedRenderedFullpath = renderedPath;
 			glyphData.pressedRenderedFullpath += pressedRenderedPrefix;
@@ -474,12 +506,12 @@ bool GlyphRenderer_t::readFromFile()
 			{
 				glyphData.pressedRenderedFullpath.erase((size_t)0, (size_t)1);
 			}
-            if ( !PHYSFS_getRealDir(glyphData.pressedRenderedFullpath.c_str()) )
-            {
-                printlog("[JSON]: Glyph path: %s not detected", glyphData.pressedRenderedFullpath.c_str());
-            }
+			if ( !PHYSFS_getRealDir(glyphData.pressedRenderedFullpath.c_str()) )
+			{
+				printlog("[JSON]: Glyph path: %s not detected", glyphData.pressedRenderedFullpath.c_str());
+			}
 		}
-
+		cJSON_Delete(d);
 		printlog("[JSON]: Successfully read json file %s, processed %d glyphs", inputPath.c_str(), allGlyphs.size());
 		return true;
 	}
@@ -514,7 +546,6 @@ void GlyphRenderer_t::renderGlyphsToPNGs()
 		Image* base = Image::get(unpressedPath.c_str());
 		if ( base->getWidth() != 0 )
 		{
-			// successfully loaded, do unpressed glyph
 			SDL_Surface* srcSurf = const_cast<SDL_Surface*>(base->getSurf());
 			SDL_Rect pos{ 0, 0, (int)base->getWidth(), (int)base->getHeight() };
 			SDL_Surface* sprite = SDL_CreateRGBSurface(0, pos.w, pos.h, 32,
@@ -531,7 +562,6 @@ void GlyphRenderer_t::renderGlyphsToPNGs()
 			auto key = Image::get(keyPath.c_str());
 			if ( key->getWidth() != 0 )
 			{
-				// successfully loaded
 				SDL_Surface* keySurf = const_cast<SDL_Surface*>(key->getSurf());
 				SDL_Rect keyPos{ 0, 0, (int)key->getWidth(), (int)key->getHeight() };
 				keyPos.x = pos.w / 2 - keyPos.w / 2;
@@ -574,7 +604,6 @@ void GlyphRenderer_t::renderGlyphsToPNGs()
 		base = Image::get(pressedPath.c_str());
 		if ( base->getWidth() != 0 )
 		{
-			// successfully loaded, do pressed glyph
 			SDL_Surface* srcSurf = const_cast<SDL_Surface*>(base->getSurf());
 			SDL_Rect pos{ 0, 0, (int)base->getWidth(), (int)base->getHeight() };
 			SDL_Surface* sprite = SDL_CreateRGBSurface(0, pos.w, pos.h, 32,
@@ -591,7 +620,6 @@ void GlyphRenderer_t::renderGlyphsToPNGs()
 			auto key = Image::get(keyPath.c_str());
 			if ( key->getWidth() != 0 )
 			{
-				// successfully loaded
 				SDL_Surface* keySurf = const_cast<SDL_Surface*>(key->getSurf());
 				SDL_Rect keyPos{ 0, 0, (int)key->getWidth(), (int)key->getHeight() };
 				keyPos.x = pos.w / 2 - keyPos.w / 2;
@@ -688,14 +716,18 @@ bool ScriptTextParser_t::readFromFile(const std::string& filename)
 		char buf[65536];
 		int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 		buf[count] = '\0';
-		rapidjson::StringStream is(buf);
 		FileIO::close(fp);
 
-		rapidjson::Document d;
-		d.ParseStream(is);
-		if ( !d.HasMember("version") || !d.HasMember("script_entries") )
+		cJSON* d = cJSON_Parse(buf);
+		if ( !d )
+		{
+			printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+			return false;
+		}
+		if ( !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "script_entries") )
 		{
 			printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+			cJSON_Delete(d);
 			return false;
 		}
 
@@ -703,380 +735,266 @@ bool ScriptTextParser_t::readFromFile(const std::string& filename)
 		Uint32 defaultFontOutlineColor = 0;
 		Uint32 defaultFontHighlightColor = 0xFFFFFFFF;
 		Uint32 defaultFontHighlight2Color = 0xFFFFFFFF;
-		if ( d.HasMember("default_attributes") )
+
+		auto readColor = [](cJSON* parent, const char* key) -> Uint32 {
+			cJSON* colorObj = cJSON_GetObjectItem(parent, key);
+			if ( !colorObj ) return 0xFFFFFFFF;
+			cJSON* r = cJSON_GetObjectItem(colorObj, "r");
+			cJSON* g = cJSON_GetObjectItem(colorObj, "g");
+			cJSON* b = cJSON_GetObjectItem(colorObj, "b");
+			cJSON* a = cJSON_GetObjectItem(colorObj, "a");
+			return makeColor(
+				r ? r->valueint : 255,
+				g ? g->valueint : 255,
+				b ? b->valueint : 255,
+				a ? a->valueint : 255);
+		};
+
+		cJSON* defaultAttr = cJSON_GetObjectItem(d, "default_attributes");
+		if ( defaultAttr )
 		{
-			if ( d["default_attributes"].HasMember("font_color") )
-			{
-				defaultFontColor = makeColor(
-					d["default_attributes"]["font_color"]["r"].GetInt(),
-					d["default_attributes"]["font_color"]["g"].GetInt(),
-					d["default_attributes"]["font_color"]["b"].GetInt(),
-					d["default_attributes"]["font_color"]["a"].GetInt());
-			}
-			if ( d["default_attributes"].HasMember("font_outline_color") )
-			{
-				defaultFontOutlineColor = makeColor(
-					d["default_attributes"]["font_outline_color"]["r"].GetInt(),
-					d["default_attributes"]["font_outline_color"]["g"].GetInt(),
-					d["default_attributes"]["font_outline_color"]["b"].GetInt(),
-					d["default_attributes"]["font_outline_color"]["a"].GetInt());
-			}
-			if ( d["default_attributes"].HasMember("font_highlight_color") )
-			{
-				defaultFontHighlightColor = makeColor(
-					d["default_attributes"]["font_highlight_color"]["r"].GetInt(),
-					d["default_attributes"]["font_highlight_color"]["g"].GetInt(),
-					d["default_attributes"]["font_highlight_color"]["b"].GetInt(),
-					d["default_attributes"]["font_highlight_color"]["a"].GetInt());
-			}
-			if ( d["default_attributes"].HasMember("font_highlight2_color") )
-			{
-				defaultFontHighlight2Color = makeColor(
-					d["default_attributes"]["font_highlight2_color"]["r"].GetInt(),
-					d["default_attributes"]["font_highlight2_color"]["g"].GetInt(),
-					d["default_attributes"]["font_highlight2_color"]["b"].GetInt(),
-					d["default_attributes"]["font_highlight2_color"]["a"].GetInt());
-			}
+			if ( cJSON_HasObjectItem(defaultAttr, "font_color") )
+				defaultFontColor = readColor(defaultAttr, "font_color");
+			if ( cJSON_HasObjectItem(defaultAttr, "font_outline_color") )
+				defaultFontOutlineColor = readColor(defaultAttr, "font_outline_color");
+			if ( cJSON_HasObjectItem(defaultAttr, "font_highlight_color") )
+				defaultFontHighlightColor = readColor(defaultAttr, "font_highlight_color");
+			if ( cJSON_HasObjectItem(defaultAttr, "font_highlight2_color") )
+				defaultFontHighlight2Color = readColor(defaultAttr, "font_highlight2_color");
 		}
 
-		for ( rapidjson::Value::ConstMemberIterator entry_itr = d["script_entries"].MemberBegin(); entry_itr != d["script_entries"].MemberEnd(); ++entry_itr )
+		cJSON* scriptEntries = cJSON_GetObjectItem(d, "script_entries");
+		if ( scriptEntries )
 		{
-			std::string key = entry_itr->name.GetString();
-			allEntries[key] = Entry_t();
-			auto& entry = allEntries[key];
-			entry.name = key;
-			entry.fontColor = defaultFontColor;
-			entry.fontOutlineColor = defaultFontOutlineColor;
-			entry.fontHighlightColor = defaultFontHighlightColor;
-			entry.fontHighlight2Color = defaultFontHighlight2Color;
-			if ( entry_itr->value.HasMember("sign") )
+			for ( cJSON* entry_itr = scriptEntries->child; entry_itr; entry_itr = entry_itr->next )
 			{
-				entry.objectType = OBJ_SIGN;
-				for ( rapidjson::Value::ConstValueIterator text_itr = entry_itr->value["sign"].Begin(); text_itr != entry_itr->value["sign"].End(); ++text_itr )
+				std::string key = entry_itr->string;
+				allEntries[key] = Entry_t();
+				auto& entry = allEntries[key];
+				entry.name = key;
+				entry.fontColor = defaultFontColor;
+				entry.fontOutlineColor = defaultFontOutlineColor;
+				entry.fontHighlightColor = defaultFontHighlightColor;
+				entry.fontHighlight2Color = defaultFontHighlight2Color;
+
+				cJSON* signArr = cJSON_GetObjectItem(entry_itr, "sign");
+				if ( signArr && cJSON_IsArray(signArr) )
 				{
-					entry.rawText.push_back(text_itr->GetString());
-				}
-				if ( entry_itr->value.HasMember("variables") )
-				{
-					for ( rapidjson::Value::ConstValueIterator var_itr = entry_itr->value["variables"].Begin();
-						var_itr != entry_itr->value["variables"].End(); ++var_itr )
+					entry.objectType = OBJ_SIGN;
+					cJSON* text_itr = NULL;
+					cJSON_ArrayForEach(text_itr, signArr)
 					{
-						Entry_t::Variable_t variable;
-						variable.type = TEXT;
-						if ( (*var_itr).HasMember("type") )
+						if ( text_itr->valuestring )
+							entry.rawText.push_back(text_itr->valuestring);
+					}
+					cJSON* vars = cJSON_GetObjectItem(entry_itr, "variables");
+					if ( vars && cJSON_IsArray(vars) )
+					{
+						cJSON* var_itr = NULL;
+						cJSON_ArrayForEach(var_itr, vars)
 						{
-							std::string typeTxt = (*var_itr)["type"].GetString();
-							if ( typeTxt == "text" )
+							Entry_t::Variable_t variable;
+							variable.type = TEXT;
+							cJSON* typeItem = cJSON_GetObjectItem(var_itr, "type");
+							if ( typeItem )
 							{
-								variable.type = TEXT;
+								std::string typeTxt = typeItem->valuestring;
+								if ( typeTxt == "text" )
+									variable.type = TEXT;
+								else if ( typeTxt == "input_glyph" )
+									variable.type = GLYPH;
+								else if ( typeTxt == "image" )
+									variable.type = IMG;
 							}
-							else if ( typeTxt == "input_glyph" )
+							cJSON* valItem = cJSON_GetObjectItem(var_itr, "value");
+							if ( valItem ) variable.value = valItem->valuestring;
+							cJSON* sizexItem = cJSON_GetObjectItem(var_itr, "sizex");
+							if ( sizexItem ) variable.sizex = sizexItem->valueint;
+							cJSON* sizeyItem = cJSON_GetObjectItem(var_itr, "sizey");
+							if ( sizeyItem ) variable.sizey = sizeyItem->valueint;
+							entry.variables.push_back(variable);
+						}
+					}
+					for ( size_t s = 0; s < entry.rawText.size(); ++s )
+						entry.padPerLine.push_back(0);
+					cJSON* attr = cJSON_GetObjectItem(entry_itr, "attributes");
+					if ( attr )
+					{
+						cJSON* fontItem = cJSON_GetObjectItem(attr, "font");
+						if ( fontItem ) entry.font = fontItem->valuestring;
+						cJSON* hjustItem = cJSON_GetObjectItem(attr, "horizontal_justify");
+						if ( hjustItem )
+						{
+							std::string s = hjustItem->valuestring;
+							if ( s == "center" ) entry.hjustify = Field::justify_t::CENTER;
+							else if ( s == "left" ) entry.hjustify = Field::justify_t::LEFT;
+							else if ( s == "right" ) entry.hjustify = Field::justify_t::RIGHT;
+						}
+						cJSON* vjustItem = cJSON_GetObjectItem(attr, "vertical_justify");
+						if ( vjustItem )
+						{
+							std::string s = vjustItem->valuestring;
+							if ( s == "center" ) entry.vjustify = Field::justify_t::CENTER;
+							else if ( s == "top" ) entry.vjustify = Field::justify_t::TOP;
+							else if ( s == "bottom" ) entry.vjustify = Field::justify_t::BOTTOM;
+						}
+						cJSON* topPadItem = cJSON_GetObjectItem(attr, "top_padding");
+						if ( topPadItem ) entry.padTopY = topPadItem->valueint;
+						cJSON* linePadItem = cJSON_GetObjectItem(attr, "line_padding");
+						if ( linePadItem )
+						{
+							if ( cJSON_IsNumber(linePadItem) )
 							{
-								variable.type = GLYPH;
+								for ( auto& s : entry.padPerLine )
+									s = linePadItem->valueint;
 							}
-							else if ( typeTxt == "image" )
+							else if ( cJSON_IsArray(linePadItem) )
 							{
-								variable.type = IMG;
-							}
-						}
-						if ( (*var_itr).HasMember("value") )
-						{
-							variable.value = (*var_itr)["value"].GetString();
-						}
-						if ( (*var_itr).HasMember("sizex") )
-						{
-							variable.sizex = (*var_itr)["sizex"].GetInt();
-						}
-						if ( (*var_itr).HasMember("sizey") )
-						{
-							variable.sizey = (*var_itr)["sizey"].GetInt();
-						}
-						entry.variables.push_back(variable);
-					}
-				}
-				for ( size_t s = 0; s < entry.rawText.size(); ++s )
-				{
-					entry.padPerLine.push_back(0);
-				}
-				if ( entry_itr->value.HasMember("attributes") )
-				{
-					if ( entry_itr->value["attributes"].HasMember("font") )
-					{
-						entry.font = entry_itr->value["attributes"]["font"].GetString();
-					}
-					if ( entry_itr->value["attributes"].HasMember("horizontal_justify") )
-					{
-						std::string s = entry_itr->value["attributes"]["horizontal_justify"].GetString();
-						if ( s == "center" )
-						{
-							entry.hjustify = Field::justify_t::CENTER;
-						}
-						else if ( s == "left" )
-						{
-							entry.hjustify = Field::justify_t::LEFT;
-						}
-						else if ( s == "right" )
-						{
-							entry.hjustify = Field::justify_t::RIGHT;
-						}
-					}
-					if ( entry_itr->value["attributes"].HasMember("vertical_justify") )
-					{
-						std::string s = entry_itr->value["attributes"]["vertical_justify"].GetString();
-						if ( s == "center" )
-						{
-							entry.vjustify = Field::justify_t::CENTER;
-						}
-						else if ( s == "top" )
-						{
-							entry.vjustify = Field::justify_t::TOP;
-						}
-						else if ( s == "bottom" )
-						{
-							entry.vjustify = Field::justify_t::BOTTOM;
-						}
-					}
-					if ( entry_itr->value["attributes"].HasMember("top_padding") )
-					{
-						entry.padTopY = entry_itr->value["attributes"]["top_padding"].GetInt();
-					}
-					if ( entry_itr->value["attributes"].HasMember("line_padding") )
-					{
-						if ( entry_itr->value["attributes"]["line_padding"].IsInt() )
-						{
-							for ( auto& s : entry.padPerLine )
-							{
-								s = entry_itr->value["attributes"]["line_padding"].GetInt();
-							}
-						}
-						else if ( entry_itr->value["attributes"]["line_padding"].IsArray() )
-						{
-							size_t s = 0;
-							for ( auto arr_itr = entry_itr->value["attributes"]["line_padding"].Begin();
-								arr_itr != entry_itr->value["attributes"]["line_padding"].End(); ++arr_itr )
-							{
-								entry.padPerLine[s] = arr_itr->GetInt();
-								++s;
-								if ( s >= entry.padPerLine.size() )
+								size_t s = 0;
+								cJSON* arr_itr = NULL;
+								cJSON_ArrayForEach(arr_itr, linePadItem)
 								{
-									break;
+									entry.padPerLine[s] = arr_itr->valueint;
+									++s;
+									if ( s >= entry.padPerLine.size() ) break;
 								}
 							}
 						}
-					}
-					if ( entry_itr->value["attributes"].HasMember("font_color") )
-					{
-						entry.fontColor = makeColor(
-							entry_itr->value["attributes"]["font_color"]["r"].GetInt(),
-							entry_itr->value["attributes"]["font_color"]["g"].GetInt(),
-							entry_itr->value["attributes"]["font_color"]["b"].GetInt(),
-							entry_itr->value["attributes"]["font_color"]["a"].GetInt());
-					}
-					if ( entry_itr->value["attributes"].HasMember("font_outline_color") )
-					{
-						entry.fontOutlineColor = makeColor(
-							entry_itr->value["attributes"]["font_outline_color"]["r"].GetInt(),
-							entry_itr->value["attributes"]["font_outline_color"]["g"].GetInt(),
-							entry_itr->value["attributes"]["font_outline_color"]["b"].GetInt(),
-							entry_itr->value["attributes"]["font_outline_color"]["a"].GetInt());
-					}
-					if ( entry_itr->value["attributes"].HasMember("font_highlight_color") )
-					{
-						entry.fontHighlightColor = makeColor(
-							entry_itr->value["attributes"]["font_highlight_color"]["r"].GetInt(),
-							entry_itr->value["attributes"]["font_highlight_color"]["g"].GetInt(),
-							entry_itr->value["attributes"]["font_highlight_color"]["b"].GetInt(),
-							entry_itr->value["attributes"]["font_highlight_color"]["a"].GetInt());
-					}
-					if ( entry_itr->value["attributes"].HasMember("font_highlight2_color") )
-					{
-						entry.fontHighlight2Color = makeColor(
-							entry_itr->value["attributes"]["font_highlight2_color"]["r"].GetInt(),
-							entry_itr->value["attributes"]["font_highlight2_color"]["g"].GetInt(),
-							entry_itr->value["attributes"]["font_highlight2_color"]["b"].GetInt(),
-							entry_itr->value["attributes"]["font_highlight2_color"]["a"].GetInt());
-					}
-					if ( entry_itr->value["attributes"].HasMember("word_highlights") )
-					{
-						if ( entry_itr->value["attributes"]["word_highlights"].IsArray() )
+						if ( cJSON_HasObjectItem(attr, "font_color") )
+							entry.fontColor = readColor(attr, "font_color");
+						if ( cJSON_HasObjectItem(attr, "font_outline_color") )
+							entry.fontOutlineColor = readColor(attr, "font_outline_color");
+						if ( cJSON_HasObjectItem(attr, "font_highlight_color") )
+							entry.fontHighlightColor = readColor(attr, "font_highlight_color");
+						if ( cJSON_HasObjectItem(attr, "font_highlight2_color") )
+							entry.fontHighlight2Color = readColor(attr, "font_highlight2_color");
+						cJSON* wordHL = cJSON_GetObjectItem(attr, "word_highlights");
+						if ( wordHL && cJSON_IsArray(wordHL) )
 						{
 							int lineNumber = 0;
-							for ( auto highlight_itr = entry_itr->value["attributes"]["word_highlights"].Begin();
-								highlight_itr != entry_itr->value["attributes"]["word_highlights"].End(); ++highlight_itr )
+							cJSON* highlight_itr = NULL;
+							cJSON_ArrayForEach(highlight_itr, wordHL)
 							{
-								for ( auto line_itr = (*highlight_itr).Begin(); line_itr != (*highlight_itr).End(); ++line_itr )
+								if ( cJSON_IsArray(highlight_itr) )
 								{
-									entry.wordHighlights.push_back(lineNumber + line_itr->GetInt());
+									cJSON* line_itr = NULL;
+									cJSON_ArrayForEach(line_itr, highlight_itr)
+									{
+										entry.wordHighlights.push_back(lineNumber + line_itr->valueint);
+									}
 								}
 								lineNumber += Field::TEXT_HIGHLIGHT_WORDS_PER_LINE;
 							}
 						}
-					}
-					if ( entry_itr->value["attributes"].HasMember("word_highlights2") )
-					{
-						if ( entry_itr->value["attributes"]["word_highlights2"].IsArray() )
+						cJSON* wordHL2 = cJSON_GetObjectItem(attr, "word_highlights2");
+						if ( wordHL2 && cJSON_IsArray(wordHL2) )
 						{
 							int lineNumber = 0;
-							for ( auto highlight_itr = entry_itr->value["attributes"]["word_highlights2"].Begin();
-								highlight_itr != entry_itr->value["attributes"]["word_highlights2"].End(); ++highlight_itr )
+							cJSON* highlight_itr = NULL;
+							cJSON_ArrayForEach(highlight_itr, wordHL2)
 							{
-								for ( auto line_itr = (*highlight_itr).Begin(); line_itr != (*highlight_itr).End(); ++line_itr )
+								if ( cJSON_IsArray(highlight_itr) )
 								{
-									entry.wordHighlights2.push_back(lineNumber + line_itr->GetInt());
+									cJSON* line_itr = NULL;
+									cJSON_ArrayForEach(line_itr, highlight_itr)
+									{
+										entry.wordHighlights2.push_back(lineNumber + line_itr->valueint);
+									}
 								}
 								lineNumber += Field::TEXT_HIGHLIGHT_WORDS_PER_LINE;
 							}
 						}
-					}
-					if ( entry_itr->value["attributes"].HasMember("inline_img_adjust_x") )
-					{
-						entry.imageInlineTextAdjustX = entry_itr->value["attributes"]["inline_img_adjust_x"].GetInt();
-					}
-					if ( entry_itr->value["attributes"].HasMember("video") )
-					{
-						if ( entry_itr->value["attributes"]["video"].HasMember("path") )
+						cJSON* inlineImgItem = cJSON_GetObjectItem(attr, "inline_img_adjust_x");
+						if ( inlineImgItem ) entry.imageInlineTextAdjustX = inlineImgItem->valueint;
+						cJSON* video = cJSON_GetObjectItem(attr, "video");
+						if ( video )
 						{
-							entry.signVideoContent.path = entry_itr->value["attributes"]["video"]["path"].GetString();
-						}
-						if ( entry_itr->value["attributes"]["video"].HasMember("x") )
-						{
-							entry.signVideoContent.pos.x = entry_itr->value["attributes"]["video"]["x"].GetInt();
-						}
-						if ( entry_itr->value["attributes"]["video"].HasMember("y") )
-						{
-							entry.signVideoContent.pos.y = entry_itr->value["attributes"]["video"]["y"].GetInt();
-						}
-						if ( entry_itr->value["attributes"]["video"].HasMember("w") )
-						{
-							entry.signVideoContent.pos.w = entry_itr->value["attributes"]["video"]["w"].GetInt();
-						}
-						if ( entry_itr->value["attributes"]["video"].HasMember("h") )
-						{
-							entry.signVideoContent.pos.h = entry_itr->value["attributes"]["video"]["h"].GetInt();
-						}
-						if ( entry_itr->value["attributes"]["video"].HasMember("background_img") )
-						{
-							entry.signVideoContent.bgPath = entry_itr->value["attributes"]["video"]["background_img"].GetString();
-						}
-						if ( entry_itr->value["attributes"]["video"].HasMember("background_border") )
-						{
-							entry.signVideoContent.imgBorder = entry_itr->value["attributes"]["video"]["background_border"].GetInt();
+							cJSON* v = cJSON_GetObjectItem(video, "path");
+							if ( v ) entry.signVideoContent.path = v->valuestring;
+							v = cJSON_GetObjectItem(video, "x");
+							if ( v ) entry.signVideoContent.pos.x = v->valueint;
+							v = cJSON_GetObjectItem(video, "y");
+							if ( v ) entry.signVideoContent.pos.y = v->valueint;
+							v = cJSON_GetObjectItem(video, "w");
+							if ( v ) entry.signVideoContent.pos.w = v->valueint;
+							v = cJSON_GetObjectItem(video, "h");
+							if ( v ) entry.signVideoContent.pos.h = v->valueint;
+							v = cJSON_GetObjectItem(video, "background_img");
+							if ( v ) entry.signVideoContent.bgPath = v->valuestring;
+							v = cJSON_GetObjectItem(video, "background_border");
+							if ( v ) entry.signVideoContent.imgBorder = v->valueint;
 						}
 					}
 				}
-			}
-			else if ( entry_itr->value.HasMember("script") )
-			{
-				entry.objectType = OBJ_SCRIPT;
-				entry.formattedText = entry_itr->value["script"].GetString();
-			}
-			else if ( entry_itr->value.HasMember("bubble_sign") )
-			{
-				entry.objectType = OBJ_BUBBLE_SIGN;
-				for ( rapidjson::Value::ConstValueIterator text_itr = entry_itr->value["bubble_sign"].Begin(); text_itr != entry_itr->value["bubble_sign"].End(); ++text_itr )
+				else
 				{
-					entry.rawText.push_back(text_itr->GetString());
-				}
-				entry.formattedText = "";
-				for ( auto& str : entry.rawText )
-				{
-					if ( entry.formattedText != "" )
+					cJSON* scriptItem = cJSON_GetObjectItem(entry_itr, "script");
+					if ( scriptItem )
 					{
-						entry.formattedText += '\n';
+						entry.objectType = OBJ_SCRIPT;
+						entry.formattedText = scriptItem->valuestring;
 					}
-					entry.formattedText += str;
-				}
-			}
-			else if ( entry_itr->value.HasMember("bubble_grave") )
-			{
-				entry.objectType = OBJ_BUBBLE_GRAVE;
-				for ( rapidjson::Value::ConstValueIterator text_itr = entry_itr->value["bubble_grave"].Begin(); text_itr != entry_itr->value["bubble_grave"].End(); ++text_itr )
-				{
-					entry.rawText.push_back(text_itr->GetString());
-				}
-				entry.formattedText = "";
-				for ( auto& str : entry.rawText )
-				{
-					if ( entry.formattedText != "" )
+					else
 					{
-						entry.formattedText += '\n';
-					}
-					entry.formattedText += str;
-				}
-			}
-			else if ( entry_itr->value.HasMember("bubble_dialogue") )
-			{
-				entry.objectType = OBJ_BUBBLE_DIALOGUE;
-				for ( rapidjson::Value::ConstValueIterator text_itr = entry_itr->value["bubble_dialogue"].Begin(); text_itr != entry_itr->value["bubble_dialogue"].End(); ++text_itr )
-				{
-					entry.rawText.push_back(text_itr->GetString());
-				}
-				entry.formattedText = "";
-				for ( auto& str : entry.rawText )
-				{
-					if ( entry.formattedText != "" )
-					{
-						entry.formattedText += '\n';
-					}
-					entry.formattedText += str;
-				}
-			}
-			else if ( entry_itr->value.HasMember("message") )
-			{
-				entry.objectType = OBJ_MESSAGE;
-				for ( rapidjson::Value::ConstValueIterator text_itr = entry_itr->value["message"].Begin(); text_itr != entry_itr->value["message"].End(); ++text_itr )
-				{
-					entry.rawText.push_back(text_itr->GetString());
-				}
-				entry.formattedText = "";
-				for ( auto& str : entry.rawText )
-				{
-					if ( entry.formattedText != "" )
-					{
-						entry.formattedText += '\n';
-					}
-					entry.formattedText += str;
-				}
-				if ( entry_itr->value.HasMember("variables") )
-				{
-					for ( rapidjson::Value::ConstValueIterator var_itr = entry_itr->value["variables"].Begin();
-						var_itr != entry_itr->value["variables"].End(); ++var_itr )
-					{
-						Entry_t::Variable_t variable;
-						variable.type = TEXT;
-						if ( (*var_itr).HasMember("type") )
+						const char* bubbleTypes[] = { "bubble_sign", "bubble_grave", "bubble_dialogue", "message" };
+						ObjectType_t objTypes[] = { OBJ_BUBBLE_SIGN, OBJ_BUBBLE_GRAVE, OBJ_BUBBLE_DIALOGUE, OBJ_MESSAGE };
+						for ( int bi = 0; bi < 4; ++bi )
 						{
-							std::string typeTxt = (*var_itr)["type"].GetString();
-							if ( typeTxt == "color_r" )
+							cJSON* bubbleArr = cJSON_GetObjectItem(entry_itr, bubbleTypes[bi]);
+							if ( bubbleArr && cJSON_IsArray(bubbleArr) )
 							{
-								variable.type = COLOR_R;
-							}
-							else if ( typeTxt == "color_g" )
-							{
-								variable.type = COLOR_G;
-							}
-							else if ( typeTxt == "color_b" )
-							{
-								variable.type = COLOR_B;
+								entry.objectType = objTypes[bi];
+								cJSON* text_itr = NULL;
+								cJSON_ArrayForEach(text_itr, bubbleArr)
+								{
+									if ( text_itr->valuestring )
+										entry.rawText.push_back(text_itr->valuestring);
+								}
+								entry.formattedText = "";
+								for ( auto& str : entry.rawText )
+								{
+									if ( entry.formattedText != "" )
+										entry.formattedText += '\n';
+									entry.formattedText += str;
+								}
+								if ( objTypes[bi] == OBJ_MESSAGE )
+								{
+									cJSON* vars = cJSON_GetObjectItem(entry_itr, "variables");
+									if ( vars && cJSON_IsArray(vars) )
+									{
+										cJSON* var_itr = NULL;
+										cJSON_ArrayForEach(var_itr, vars)
+										{
+											Entry_t::Variable_t variable;
+											variable.type = TEXT;
+											cJSON* typeItem = cJSON_GetObjectItem(var_itr, "type");
+											if ( typeItem )
+											{
+												std::string typeTxt = typeItem->valuestring;
+												if ( typeTxt == "color_r" ) variable.type = COLOR_R;
+												else if ( typeTxt == "color_g" ) variable.type = COLOR_G;
+												else if ( typeTxt == "color_b" ) variable.type = COLOR_B;
+											}
+											cJSON* valItem = cJSON_GetObjectItem(var_itr, "value");
+											if ( valItem )
+											{
+												if ( cJSON_IsNumber(valItem) )
+													variable.numericValue = valItem->valueint;
+												else if ( cJSON_IsString(valItem) )
+													variable.value = valItem->valuestring;
+											}
+											entry.variables.push_back(variable);
+										}
+									}
+								}
+								break;
 							}
 						}
-						if ( (*var_itr).HasMember("value") )
-						{
-							if ( (*var_itr)["value"].IsInt() )
-							{
-								variable.numericValue = (*var_itr)["value"].GetInt();
-							}
-							else if ( (*var_itr)["value"].IsString() )
-							{
-								variable.value = (*var_itr)["value"].GetString();
-							}
-						}
-						entry.variables.push_back(variable);
 					}
 				}
 			}
 		}
-
+		cJSON_Delete(d);
 		printlog("[JSON]: Successfully read json file %s, processed %d script variables", inputPath.c_str(), allEntries.size());
 		return true;
 	}
@@ -1086,10 +1004,9 @@ bool ScriptTextParser_t::readFromFile(const std::string& filename)
 
 void ScriptTextParser_t::writeWorldSignsToFile()
 {
-	rapidjson::Document exportDocument;
-	exportDocument.SetObject();
-	CustomHelpers::addMemberToRoot(exportDocument, "version", rapidjson::Value(1));
-	rapidjson::Value objScriptEntries(rapidjson::kObjectType);
+	cJSON* exportDocument = cJSON_CreateObject();
+	cJSON_AddNumberToObject(exportDocument, "version", 1);
+	cJSON* objScriptEntries = cJSON_AddObjectToObject(exportDocument, "script_entries");
 
 	char suffix = 'a';
 	char suffix2 = 'a';
@@ -1099,38 +1016,22 @@ void ScriptTextParser_t::writeWorldSignsToFile()
 	SDL_Color fontOutline{ 29, 16, 11, 255 };
 	SDL_Color fontHighlight{ 255, 0, 255, 255 };
 
-	rapidjson::Value objDefaultAttributes(rapidjson::kObjectType);
+	cJSON* objDefaultAttributes = cJSON_CreateObject();
 	{
-		rapidjson::Value objFontColor(rapidjson::kObjectType);
-		objFontColor.AddMember("r", rapidjson::Value(fontColor.r), exportDocument.GetAllocator());
-		objFontColor.AddMember("g", rapidjson::Value(fontColor.g), exportDocument.GetAllocator());
-		objFontColor.AddMember("b", rapidjson::Value(fontColor.b), exportDocument.GetAllocator());
-		objFontColor.AddMember("a", rapidjson::Value(fontColor.a), exportDocument.GetAllocator());
-
-		rapidjson::Value objFontOutlineColor(rapidjson::kObjectType);
-		objFontOutlineColor.AddMember("r", rapidjson::Value(fontOutline.r), exportDocument.GetAllocator());
-		objFontOutlineColor.AddMember("g", rapidjson::Value(fontOutline.g), exportDocument.GetAllocator());
-		objFontOutlineColor.AddMember("b", rapidjson::Value(fontOutline.b), exportDocument.GetAllocator());
-		objFontOutlineColor.AddMember("a", rapidjson::Value(fontOutline.a), exportDocument.GetAllocator());
-
-		rapidjson::Value objFontHighlightColor(rapidjson::kObjectType);
-		objFontHighlightColor.AddMember("r", rapidjson::Value(fontHighlight.r), exportDocument.GetAllocator());
-		objFontHighlightColor.AddMember("g", rapidjson::Value(fontHighlight.g), exportDocument.GetAllocator());
-		objFontHighlightColor.AddMember("b", rapidjson::Value(fontHighlight.b), exportDocument.GetAllocator());
-		objFontHighlightColor.AddMember("a", rapidjson::Value(fontHighlight.a), exportDocument.GetAllocator());
-
-		rapidjson::Value objFontHighlight2Color(rapidjson::kObjectType);
-		objFontHighlight2Color.AddMember("r", rapidjson::Value(fontHighlight.r), exportDocument.GetAllocator());
-		objFontHighlight2Color.AddMember("g", rapidjson::Value(fontHighlight.g), exportDocument.GetAllocator());
-		objFontHighlight2Color.AddMember("b", rapidjson::Value(fontHighlight.b), exportDocument.GetAllocator());
-		objFontHighlight2Color.AddMember("a", rapidjson::Value(fontHighlight.a), exportDocument.GetAllocator());
-
-		objDefaultAttributes.AddMember("font_color", objFontColor, exportDocument.GetAllocator());
-		objDefaultAttributes.AddMember("font_outline_color", objFontOutlineColor, exportDocument.GetAllocator());
-		objDefaultAttributes.AddMember("font_highlight_color", objFontHighlightColor, exportDocument.GetAllocator());
-		objDefaultAttributes.AddMember("font_highlight2_color", objFontHighlight2Color, exportDocument.GetAllocator());
+		auto addColor = [](cJSON* parent, const char* name, SDL_Color& c) {
+			cJSON* obj = cJSON_CreateObject();
+			cJSON_AddNumberToObject(obj, "r", c.r);
+			cJSON_AddNumberToObject(obj, "g", c.g);
+			cJSON_AddNumberToObject(obj, "b", c.b);
+			cJSON_AddNumberToObject(obj, "a", c.a);
+			cJSON_AddItemToObject(parent, name, obj);
+		};
+		addColor(objDefaultAttributes, "font_color", fontColor);
+		addColor(objDefaultAttributes, "font_outline_color", fontOutline);
+		addColor(objDefaultAttributes, "font_highlight_color", fontHighlight);
+		addColor(objDefaultAttributes, "font_highlight2_color", fontHighlight);
 	}
-	CustomHelpers::addMemberToRoot(exportDocument, "default_attributes", objDefaultAttributes);
+	cJSON_AddItemToObject(exportDocument, "default_attributes", objDefaultAttributes);
 
 	for ( auto node = map.entities->first; node != NULL; node = node->next )
 	{
@@ -1151,32 +1052,26 @@ void ScriptTextParser_t::writeWorldSignsToFile()
 			
 			printlog("Sign '%s': x: %d y: %d", key.c_str(), static_cast<int>(entity->x) >> 4, static_cast<int>(entity->y) >> 4);
 
-			rapidjson::Value objEntry(rapidjson::kObjectType);
-			rapidjson::Value arrSignText(rapidjson::kArrayType);
+			cJSON* objEntry = cJSON_CreateObject();
+			cJSON* arrSignText = cJSON_CreateArray();
 
-			// assemble the string.
 			char buf[256] = "";
 			int totalChars = 0;
 			for ( int i = 8; i < 60; ++i )
 			{
-				if ( i == 28 ) // circuit_status
-				{
+				if ( i == 28 )
 					continue;
-				}
 				if ( entity->skill[i] != 0 )
 				{
 					for ( int c = 0; c < 4; ++c )
 					{
 						buf[totalChars] = static_cast<char>((entity->skill[i] >> (c * 8)) & 0xFF);
-						//messagePlayer(0, "%d %d", i, c);
 						++totalChars;
 					}
 				}
 			}
 			if ( buf[totalChars] != '\0' )
-			{
 				buf[totalChars] = '\0';
-			}
 			std::string output = buf;
 
 			std::vector<std::string> signText;
@@ -1185,13 +1080,9 @@ void ScriptTextParser_t::writeWorldSignsToFile()
 			for ( int i = 0; i < output.size(); ++i )
 			{
 				if ( i == 0 && output[0] == '#' )
-				{
 					continue;
-				}
 				if ( output[i] == '\0' )
-				{
 					break;
-				}
 				if ( output[i] == '\\' && (i + 1) < output.size() && output[i + 1] == 'n' )
 				{
 					++i;
@@ -1204,35 +1095,27 @@ void ScriptTextParser_t::writeWorldSignsToFile()
 
 			for ( auto& line : signText )
 			{
-				rapidjson::Value lineString(line.c_str(), exportDocument.GetAllocator());
-				arrSignText.PushBack(lineString, exportDocument.GetAllocator());
+				cJSON_AddItemToArray(arrSignText, cJSON_CreateString(line.c_str()));
 			}
-			objEntry.AddMember("sign", arrSignText, exportDocument.GetAllocator());
+			cJSON_AddItemToObject(objEntry, "sign", arrSignText);
 
-			rapidjson::Value objAttributes(rapidjson::kObjectType);
+			cJSON* objAttributes = cJSON_CreateObject();
 			{
-				objAttributes.AddMember("font", rapidjson::StringRef("fonts/pixel_maz_multiline.ttf#16#2"), exportDocument.GetAllocator());
-				objAttributes.AddMember("horizontal_justify", rapidjson::StringRef("center"), exportDocument.GetAllocator());
-				objAttributes.AddMember("vertical_justify", rapidjson::StringRef("center"), exportDocument.GetAllocator());
-				objAttributes.AddMember("line_padding", rapidjson::Value(0), exportDocument.GetAllocator());
-				objAttributes.AddMember("top_padding", rapidjson::Value(0), exportDocument.GetAllocator());
-				objAttributes.AddMember("inline_img_adjust_x", rapidjson::Value(0), exportDocument.GetAllocator());
-				rapidjson::Value objWordHighlights(rapidjson::kArrayType);
-				objAttributes.AddMember("word_highlights", objWordHighlights, exportDocument.GetAllocator());
-				rapidjson::Value objWordHighlights2(rapidjson::kArrayType);
-				objAttributes.AddMember("word_highlights2", objWordHighlights2, exportDocument.GetAllocator());
+				cJSON_AddStringToObject(objAttributes, "font", "fonts/pixel_maz_multiline.ttf#16#2");
+				cJSON_AddStringToObject(objAttributes, "horizontal_justify", "center");
+				cJSON_AddStringToObject(objAttributes, "vertical_justify", "center");
+				cJSON_AddNumberToObject(objAttributes, "line_padding", 0);
+				cJSON_AddNumberToObject(objAttributes, "top_padding", 0);
+				cJSON_AddNumberToObject(objAttributes, "inline_img_adjust_x", 0);
+				cJSON_AddArrayToObject(objAttributes, "word_highlights");
+				cJSON_AddArrayToObject(objAttributes, "word_highlights2");
 			}
-			objEntry.AddMember("attributes", objAttributes, exportDocument.GetAllocator());
+			cJSON_AddItemToObject(objEntry, "attributes", objAttributes);
+			cJSON_AddArrayToObject(objEntry, "variables");
 
-			rapidjson::Value objVariables(rapidjson::kArrayType);
-			objEntry.AddMember("variables", objVariables, exportDocument.GetAllocator());
-
-			rapidjson::Value entryName(key.c_str(), exportDocument.GetAllocator());
-			objScriptEntries.AddMember(entryName, objEntry, exportDocument.GetAllocator());
+			cJSON_AddItemToObject(objScriptEntries, key.c_str(), objEntry);
 		}
 	}
-
-	CustomHelpers::addMemberToRoot(exportDocument, "script_entries", objScriptEntries);
 
 	std::string outputPath = PHYSFS_getRealDir("/data/scripts");
 	outputPath.append(PHYSFS_getDirSeparator());
@@ -1242,13 +1125,17 @@ void ScriptTextParser_t::writeWorldSignsToFile()
 	File* fp = FileIO::open(outputPath.c_str(), "wb");
 	if ( !fp )
 	{
+		cJSON_Delete(exportDocument);
 		return;
 	}
-	rapidjson::StringBuffer os;
-	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os);
-	exportDocument.Accept(writer);
-	fp->write(os.GetString(), sizeof(char), os.GetSize());
+	char* json = cJSON_Print(exportDocument);
+	if ( json )
+	{
+		fp->write(json, sizeof(char), strlen(json));
+		cJSON_free(json);
+	}
 	FileIO::close(fp);
+	cJSON_Delete(exportDocument);
 }
 
 
@@ -1269,161 +1156,176 @@ void MonsterData_t::loadMonsterDataJSON()
 		char buf[65536];
 		int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 		buf[count] = '\0';
-		rapidjson::StringStream is(buf);
 		FileIO::close(fp);
 
-		rapidjson::Document d;
-		d.ParseStream(is);
-		if ( !d.HasMember("version") || !d.HasMember("monsters") )
+		cJSON* d = cJSON_Parse(buf);
+		if ( !d )
+		{
+			printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+			return;
+		}
+		if ( !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "monsters") )
 		{
 			printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+			cJSON_Delete(d);
 			return;
 		}
 
 		monsterDataEntries.clear();
 
-		const std::string baseIconPath = d["base_path"].GetString();
+		cJSON* basePathItem = cJSON_GetObjectItem(d, "base_path");
+		const std::string baseIconPath = basePathItem ? basePathItem->valuestring : "";
 
-		for ( auto itr = d["monsters"].MemberBegin(); itr != d["monsters"].MemberEnd(); ++itr )
+		cJSON* monstersObj = cJSON_GetObjectItem(d, "monsters");
+		if ( monstersObj )
 		{
-			std::string monsterTypeName = itr->name.GetString();
-			int monsterType = NOTHING;
-			for ( int i = 0; i < NUMMONSTERS; ++i )
+			for ( cJSON* itr = monstersObj->child; itr; itr = itr->next )
 			{
-				if ( monsterTypeName == monstertypename[i] )
+				std::string monsterTypeName = itr->string;
+				int monsterType = NOTHING;
+				for ( int i = 0; i < NUMMONSTERS; ++i )
 				{
-					monsterType = i;
-					break;
-				}
-			}
-
-			monsterDataEntries[monsterType] = MonsterDataEntry_t(monsterType);
-			auto& entry = monsterDataEntries[monsterType];
-
-			for ( auto entry_itr = itr->value.MemberBegin(); entry_itr != itr->value.MemberEnd(); ++entry_itr )
-			{
-				std::string key = entry_itr->name.GetString();
-				if ( key == "specialNPCs" )
-				{
-					for ( auto special_itr = entry_itr->value.MemberBegin(); special_itr != entry_itr->value.MemberEnd(); ++special_itr )
+					if ( monsterTypeName == monstertypename[i] )
 					{
-						bool foundIcon = false;
-						std::string iconPath = "";
-						if ( special_itr->value.HasMember("icon") )
+						monsterType = i;
+						break;
+					}
+				}
+
+				monsterDataEntries[monsterType] = MonsterDataEntry_t(monsterType);
+				auto& entry = monsterDataEntries[monsterType];
+
+				for ( cJSON* entry_itr = itr->child; entry_itr; entry_itr = entry_itr->next )
+				{
+					std::string key = entry_itr->string;
+					if ( key == "specialNPCs" )
+					{
+						for ( cJSON* special_itr = entry_itr->child; special_itr; special_itr = special_itr->next )
 						{
-							iconPath = special_itr->value["icon"].GetString();
-							if ( iconPath.size() > 0 )
+							bool foundIcon = false;
+							std::string iconPath = "";
+							cJSON* iconItem = cJSON_GetObjectItem(special_itr, "icon");
+							if ( iconItem )
 							{
-								foundIcon = true;
-								iconPath = baseIconPath + iconPath;
-							}
-						}
-						if ( special_itr->value.HasMember("models") )
-						{
-							std::vector<int> models;
-							if ( special_itr->value["models"].IsArray() )
-							{
-								for ( auto array_itr = special_itr->value["models"].Begin(); array_itr != special_itr->value["models"].End(); ++array_itr )
+								iconPath = iconItem->valuestring;
+								if ( iconPath.size() > 0 )
 								{
-									models.push_back(array_itr->GetInt());
+									foundIcon = true;
+									iconPath = baseIconPath + iconPath;
 								}
 							}
-							else if ( special_itr->value["models"].IsInt() )
+							cJSON* modelsItem = cJSON_GetObjectItem(special_itr, "models");
+							if ( modelsItem )
 							{
-								models.push_back(special_itr->value["models"].GetInt());
-							}
-							assert(models.size() > 0);
-							int baseModel = models[0];
-							if ( special_itr->value.HasMember("base_model") )
-							{
-								baseModel = special_itr->value["base_model"].GetInt();
-							}
-
-							bool noOverrideIcon = false; // special case, handling monsters with unique icons but no unique sprites
-							if ( special_itr->value.HasMember("no_override_icon") )
-							{
-								noOverrideIcon = special_itr->value["no_override_icon"].GetBool();
-							}
-							entry.specialNPCs[special_itr->name.GetString()] = MonsterDataEntry_t::SpecialNPCEntry_t();
-							auto& specialNPC = entry.specialNPCs[special_itr->name.GetString()];
-							specialNPC.internalName = special_itr->name.GetString();
-							specialNPC.name = special_itr->value["localized_name"].GetString();
-							specialNPC.baseModel = baseModel;
-							if ( special_itr->value.HasMember("localized_short_name") )
-							{
-								specialNPC.shortname = special_itr->value["localized_short_name"].GetString();
-							}
-							if ( foundIcon && noOverrideIcon )
-							{
-								specialNPC.uniqueIcon = iconPath;
-							}
-							for ( auto m : models )
-							{
-								entry.modelIndexes.insert(m);
-								if ( foundIcon )
+								std::vector<int> models;
+								if ( cJSON_IsArray(modelsItem) )
 								{
-									if ( !noOverrideIcon )
+									cJSON* array_itr = NULL;
+									cJSON_ArrayForEach(array_itr, modelsItem)
 									{
-										entry.iconSpritesAndPaths[m].iconPath = iconPath;
-										entry.iconSpritesAndPaths[m].key = special_itr->name.GetString();
-										entry.keyToSpriteLookup[special_itr->name.GetString()].push_back(m);
+										models.push_back(array_itr->valueint);
 									}
 								}
-								specialNPC.modelIndexes.insert(m);
+								else if ( cJSON_IsNumber(modelsItem) )
+								{
+									models.push_back(modelsItem->valueint);
+								}
+								assert(models.size() > 0);
+								int baseModel = models[0];
+								cJSON* baseModelItem = cJSON_GetObjectItem(special_itr, "base_model");
+								if ( baseModelItem )
+								{
+									baseModel = baseModelItem->valueint;
+								}
+
+								bool noOverrideIcon = false;
+								cJSON* noOvItem = cJSON_GetObjectItem(special_itr, "no_override_icon");
+								if ( noOvItem )
+								{
+									noOverrideIcon = cJSON_IsTrue(noOvItem);
+								}
+								entry.specialNPCs[special_itr->string] = MonsterDataEntry_t::SpecialNPCEntry_t();
+								auto& specialNPC = entry.specialNPCs[special_itr->string];
+								specialNPC.internalName = special_itr->string;
+								cJSON* localizedName = cJSON_GetObjectItem(special_itr, "localized_name");
+								if ( localizedName ) specialNPC.name = localizedName->valuestring;
+								specialNPC.baseModel = baseModel;
+								cJSON* shortName = cJSON_GetObjectItem(special_itr, "localized_short_name");
+								if ( shortName ) specialNPC.shortname = shortName->valuestring;
+								if ( foundIcon && noOverrideIcon )
+								{
+									specialNPC.uniqueIcon = iconPath;
+								}
+								for ( auto m : models )
+								{
+									entry.modelIndexes.insert(m);
+									if ( foundIcon )
+									{
+										if ( !noOverrideIcon )
+										{
+											entry.iconSpritesAndPaths[m].iconPath = iconPath;
+											entry.iconSpritesAndPaths[m].key = special_itr->string;
+											entry.keyToSpriteLookup[special_itr->string].push_back(m);
+										}
+									}
+									specialNPC.modelIndexes.insert(m);
+								}
 							}
 						}
 					}
-				}
-				else
-				{
-					bool isPlayerSprite = (key.find("player") != std::string::npos) || monsterType == HUMAN;
-
-					if ( entry_itr->value.HasMember("icon") )
+					else
 					{
-						std::string iconPath = entry_itr->value["icon"].GetString();
-						if ( iconPath.size() > 0 )
-						{
-							iconPath = baseIconPath + iconPath;
-						}
-						if ( key == "default" )
-						{
-							entry.defaultIconPath = iconPath;
-							if ( entry_itr->value.HasMember("localized_short_name") )
-							{
-								entry.defaultShortDisplayName = entry_itr->value["localized_short_name"].GetString();
-							}
-						}
-						if ( entry_itr->value.HasMember("models") )
-						{
-							std::vector<int> models;
-							if ( entry_itr->value["models"].IsArray() )
-							{
-								for ( auto array_itr = entry_itr->value["models"].Begin(); array_itr != entry_itr->value["models"].End(); ++array_itr )
-								{
-									models.push_back(array_itr->GetInt());
-								}
-							}
-							else if ( entry_itr->value["models"].IsInt() )
-							{
-								models.push_back(entry_itr->value["models"].GetInt());
-							}
+						bool isPlayerSprite = (key.find("player") != std::string::npos) || monsterType == HUMAN;
 
-							for ( auto m : models )
+						cJSON* iconItem = cJSON_GetObjectItem(entry_itr, "icon");
+						if ( iconItem )
+						{
+							std::string iconPath = iconItem->valuestring;
+							if ( iconPath.size() > 0 )
 							{
-								if ( isPlayerSprite )
+								iconPath = baseIconPath + iconPath;
+							}
+							if ( key == "default" )
+							{
+								entry.defaultIconPath = iconPath;
+								cJSON* shortName = cJSON_GetObjectItem(entry_itr, "localized_short_name");
+								if ( shortName ) entry.defaultShortDisplayName = shortName->valuestring;
+							}
+							cJSON* modelsItem = cJSON_GetObjectItem(entry_itr, "models");
+							if ( modelsItem )
+							{
+								std::vector<int> models;
+								if ( cJSON_IsArray(modelsItem) )
 								{
-									entry.playerModelIndexes.insert(m);
+									cJSON* array_itr = NULL;
+									cJSON_ArrayForEach(array_itr, modelsItem)
+									{
+										models.push_back(array_itr->valueint);
+									}
 								}
-								entry.modelIndexes.insert(m);
-								entry.iconSpritesAndPaths[m].iconPath = iconPath;
-								entry.iconSpritesAndPaths[m].key = entry_itr->name.GetString();
-								entry.keyToSpriteLookup[entry_itr->name.GetString()].push_back(m);
+								else if ( cJSON_IsNumber(modelsItem) )
+								{
+									models.push_back(modelsItem->valueint);
+								}
+
+								for ( auto m : models )
+								{
+									if ( isPlayerSprite )
+									{
+										entry.playerModelIndexes.insert(m);
+									}
+									entry.modelIndexes.insert(m);
+									entry.iconSpritesAndPaths[m].iconPath = iconPath;
+									entry.iconSpritesAndPaths[m].key = entry_itr->string;
+									entry.keyToSpriteLookup[entry_itr->string].push_back(m);
+								}
 							}
 						}
 					}
 				}
 			}
 		}
+
 		// validate data
 		for ( int i = 0; i < NUMMONSTERS; ++i )
 		{
@@ -1442,7 +1344,7 @@ void MonsterData_t::loadMonsterDataJSON()
 				}
 			}
 		}
-
+		cJSON_Delete(d);
 		printlog("[JSON]: Successfully read json file %s, processed %d monsters", inputPath.c_str(), monsterDataEntries.size());
 		return;
 	}
@@ -1476,262 +1378,190 @@ void ShopkeeperConsumables_t::readFromFile()
 	char buf[65536];
 	int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	rapidjson::StringStream is(buf);
 	FileIO::close(fp);
 
-	rapidjson::Document d;
-	d.ParseStream(is);
-	if ( !d.HasMember("version") || !d.HasMember("store_types") )
+	cJSON* d = cJSON_Parse(buf);
+	if ( !d )
+	{
+		printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+		return;
+	}
+	if ( !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "store_types") )
 	{
 		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
 
-	consumableBuyValueMult = 100;
-	if ( d.HasMember("consumable_buy_value_multiplier") )
-	{
-		consumableBuyValueMult = d["consumable_buy_value_multiplier"].GetInt();
-	}
+	cJSON* multItem = cJSON_GetObjectItem(d, "consumable_buy_value_multiplier");
+	if ( multItem ) consumableBuyValueMult = multItem->valueint;
 
 	entries.clear();
-	for ( auto shoptypes = d["store_types"].MemberBegin(); shoptypes != d["store_types"].MemberEnd(); ++shoptypes )
+	cJSON* storeTypes = cJSON_GetObjectItem(d, "store_types");
+	if ( storeTypes )
 	{
-		int shoptype = -1;
-		const std::string shopname = shoptypes->name.GetString();
-		if ( shopname == "arms_armor" )
+		for ( cJSON* shoptypes = storeTypes->child; shoptypes; shoptypes = shoptypes->next )
 		{
-			shoptype = SHOP_TYPE_ARMS_ARMOR;
-		}
-		else if ( shopname == "hats" )
-		{
-			shoptype = SHOP_TYPE_HAT;
-		}
-		else if ( shopname == "jewelry" )
-		{
-			shoptype = SHOP_TYPE_JEWELRY;
-		}
-		else if ( shopname == "books" )
-		{
-			shoptype = SHOP_TYPE_BOOKS;
-		}
-		else if ( shopname == "potions" )
-		{
-			shoptype = SHOP_TYPE_POTIONS;
-		}
-		else if ( shopname == "staffs" )
-		{
-			shoptype = SHOP_TYPE_STAFFS;
-		}
-		else if ( shopname == "food" )
-		{
-			shoptype = SHOP_TYPE_FOOD;
-		}
-		else if ( shopname == "hardware" )
-		{
-			shoptype = SHOP_TYPE_HARDWARE;
-		}
-		else if ( shopname == "hunting" )
-		{
-			shoptype = SHOP_TYPE_HUNTING;
-		}
-		else if ( shopname == "general" )
-		{
-			shoptype = SHOP_TYPE_GENERAL;
-		}
-		if ( shoptype == -1 )
-		{
-			continue;
-		}
+			int shoptype = -1;
+			const std::string shopname = shoptypes->string;
+			if ( shopname == "arms_armor" )
+				shoptype = SHOP_TYPE_ARMS_ARMOR;
+			else if ( shopname == "hats" )
+				shoptype = SHOP_TYPE_HAT;
+			else if ( shopname == "jewelry" )
+				shoptype = SHOP_TYPE_JEWELRY;
+			else if ( shopname == "books" )
+				shoptype = SHOP_TYPE_BOOKS;
+			else if ( shopname == "potions" )
+				shoptype = SHOP_TYPE_POTIONS;
+			else if ( shopname == "staffs" )
+				shoptype = SHOP_TYPE_STAFFS;
+			else if ( shopname == "food" )
+				shoptype = SHOP_TYPE_FOOD;
+			else if ( shopname == "hardware" )
+				shoptype = SHOP_TYPE_HARDWARE;
+			else if ( shopname == "hunting" )
+				shoptype = SHOP_TYPE_HUNTING;
+			else if ( shopname == "general" )
+				shoptype = SHOP_TYPE_GENERAL;
+			if ( shoptype == -1 )
+				continue;
 
-		if ( !shoptypes->value.HasMember("slots") )
-		{
-			continue;
-		}
+			cJSON* slotsObj = cJSON_GetObjectItem(shoptypes, "slots");
+			if ( !slotsObj )
+				continue;
 
-		for ( auto slots = shoptypes->value["slots"].MemberBegin(); slots != shoptypes->value["slots"].MemberEnd(); ++slots )
-		{
-			auto& slot = slots->value;
-			int tradeRequirement = slot["trading_req"].GetInt();
-
-			auto& slotItems = slot["items"];
-
-			entries[shoptype].push_back(StoreSlots_t());
-			auto& storeSlotData = entries[shoptype].at(entries[shoptype].size() - 1);
-
-			storeSlotData.slotTradingReq = tradeRequirement;
-			for ( auto slot_itr = slotItems.Begin(); slot_itr != slotItems.End(); ++slot_itr )
+			for ( cJSON* slots = slotsObj->child; slots; slots = slots->next )
 			{
-				storeSlotData.itemEntries.push_back(ItemEntry());
-				auto& itemEntry = storeSlotData.itemEntries.at(storeSlotData.itemEntries.size() - 1);
+				cJSON* tradeReqItem = cJSON_GetObjectItem(slots, "trading_req");
+				int tradeRequirement = tradeReqItem ? tradeReqItem->valueint : 0;
 
+				cJSON* slotItems = cJSON_GetObjectItem(slots, "items");
+
+				entries[shoptype].push_back(StoreSlots_t());
+				auto& storeSlotData = entries[shoptype].at(entries[shoptype].size() - 1);
+
+				storeSlotData.slotTradingReq = tradeRequirement;
+				if ( slotItems && cJSON_IsArray(slotItems) )
 				{
-					auto& member = (*slot_itr)["type"];
-					bool isArr = member.IsArray();
-					std::vector<std::string> strings;
-					if ( !isArr )
+					cJSON* slot_itr = NULL;
+					cJSON_ArrayForEach(slot_itr, slotItems)
 					{
-						strings.push_back(member.GetString());
-					}
-					else
-					{
-						for ( auto arr = member.Begin(); arr != member.End(); ++arr )
-						{
-							strings.push_back(arr->GetString());
-						}
-					}
-					for ( auto& s : strings )
-					{
-						if ( s == "empty" )
-						{
-							itemEntry.type.clear();
-							break;
-						}
-						bool found = false;
-						for ( int i = 0; i < NUMITEMS; ++i )
-						{
-							if ( s.compare(itemNameStrings[i + 2]) == 0 )
+						storeSlotData.itemEntries.push_back(ItemEntry());
+						auto& itemEntry = storeSlotData.itemEntries.at(storeSlotData.itemEntries.size() - 1);
+
+						auto readStringOrArray = [](cJSON* parent, const char* key, std::vector<std::string>& out) {
+							cJSON* member = cJSON_GetObjectItem(parent, key);
+							if ( !member ) return;
+							if ( cJSON_IsString(member) )
 							{
-								itemEntry.type.push_back(static_cast<ItemType>(i));
-								found = true;
-								break;
+								out.push_back(member->valuestring);
+							}
+							else if ( cJSON_IsArray(member) )
+							{
+								cJSON* arr = NULL;
+								cJSON_ArrayForEach(arr, member)
+								{
+									if ( arr->valuestring )
+										out.push_back(arr->valuestring);
+								}
+							}
+						};
+						auto readIntOrArray = [](cJSON* parent, const char* key, auto& out) {
+							cJSON* member = cJSON_GetObjectItem(parent, key);
+							if ( !member ) return;
+							if ( cJSON_IsNumber(member) )
+							{
+								out.push_back(static_cast<typename std::decay<decltype(out)>::type::value_type>(member->valueint));
+							}
+							else if ( cJSON_IsArray(member) )
+							{
+								cJSON* arr = NULL;
+								cJSON_ArrayForEach(arr, member)
+								{
+									out.push_back(static_cast<typename std::decay<decltype(out)>::type::value_type>(arr->valueint));
+								}
+							}
+						};
+
+						{
+							std::vector<std::string> strings;
+							readStringOrArray(slot_itr, "type", strings);
+							for ( auto& s : strings )
+							{
+								if ( s == "empty" )
+								{
+									itemEntry.type.clear();
+									break;
+								}
+								bool found = false;
+								for ( int i = 0; i < NUMITEMS; ++i )
+								{
+									if ( s.compare(itemNameStrings[i + 2]) == 0 )
+									{
+										itemEntry.type.push_back(static_cast<ItemType>(i));
+										found = true;
+										break;
+									}
+								}
+								assert(found);
 							}
 						}
-						assert(found);
-					}
-				}
-				if ( itemEntry.type.empty() )
-				{
-					itemEntry.emptyItemEntry = true;
-				}
-				{
-					auto& member = (*slot_itr)["status"];
-					bool isArr = member.IsArray();
-					std::vector<std::string> strings;
-					if ( !isArr )
-					{
-						strings.push_back(member.GetString());
-					}
-					else
-					{
-						for ( auto arr = member.Begin(); arr != member.End(); ++arr )
+						if ( itemEntry.type.empty() )
+							itemEntry.emptyItemEntry = true;
 						{
-							strings.push_back(arr->GetString());
-						}
-					}
-					for ( auto& s : strings )
-					{
-						if ( s == "broken" )
-						{
-							itemEntry.status.push_back(BROKEN);
-						}
-						else if ( s == "decrepit" )
-						{
-							itemEntry.status.push_back(DECREPIT);
-						}
-						else if ( s == "worn" )
-						{
-							itemEntry.status.push_back(WORN);
-						}
-						else if ( s == "serviceable" )
-						{
-							itemEntry.status.push_back(SERVICABLE);
-						}
-						else if ( s == "excellent" )
-						{
-							itemEntry.status.push_back(EXCELLENT);
-						}
-					}
-				}
-				{
-					auto& member = (*slot_itr)["beatitude"];
-					bool isArr = member.IsArray();
-					std::vector<int> ints;
-					if ( !isArr )
-					{
-						ints.push_back(member.GetInt());
-					}
-					else
-					{
-						for ( auto arr = member.Begin(); arr != member.End(); ++arr )
-						{
-							ints.push_back(arr->GetInt());
-						}
-					}
-					for ( auto& i : ints )
-					{
-						itemEntry.beatitude.push_back(i);
-					}
-				}
-				{
-					auto& member = (*slot_itr)["count"];
-					bool isArr = member.IsArray();
-					std::vector<int> ints;
-					if ( !isArr )
-					{
-						ints.push_back(member.GetInt());
-					}
-					else
-					{
-						for ( auto arr = member.Begin(); arr != member.End(); ++arr )
-						{
-							ints.push_back(arr->GetInt());
-						}
-					}
-					for ( auto& i : ints )
-					{
-						itemEntry.count.push_back(i);
-					}
-				}
-				{
-					auto& member = (*slot_itr)["appearance"];
-					bool isArr = member.IsArray();
-					std::vector<Uint32> ints;
-					if ( !member.IsString() )
-					{
-						if ( !isArr )
-						{
-							ints.push_back(member.GetUint());
-						}
-						else
-						{
-							for ( auto arr = member.Begin(); arr != member.End(); ++arr )
+							std::vector<std::string> strings;
+							readStringOrArray(slot_itr, "status", strings);
+							for ( auto& s : strings )
 							{
-								ints.push_back(arr->GetUint());
+								if ( s == "broken" ) itemEntry.status.push_back(BROKEN);
+								else if ( s == "decrepit" ) itemEntry.status.push_back(DECREPIT);
+								else if ( s == "worn" ) itemEntry.status.push_back(WORN);
+								else if ( s == "serviceable" ) itemEntry.status.push_back(SERVICABLE);
+								else if ( s == "excellent" ) itemEntry.status.push_back(EXCELLENT);
 							}
 						}
-						for ( auto& i : ints )
+						readIntOrArray(slot_itr, "beatitude", itemEntry.beatitude);
+						readIntOrArray(slot_itr, "count", itemEntry.count);
 						{
-							itemEntry.appearance.push_back(i);
+							cJSON* member = cJSON_GetObjectItem(slot_itr, "appearance");
+							if ( member && !cJSON_IsString(member) )
+							{
+								std::vector<int> ints;
+								readIntOrArray(slot_itr, "appearance", ints);
+								for ( auto& i : ints )
+									itemEntry.appearance.push_back((Uint32)i);
+							}
 						}
+						{
+							cJSON* member = cJSON_GetObjectItem(slot_itr, "identified");
+							if ( member )
+							{
+								if ( cJSON_IsBool(member) )
+								{
+									itemEntry.identified.push_back(cJSON_IsTrue(member));
+								}
+								else if ( cJSON_IsArray(member) )
+								{
+									cJSON* arr = NULL;
+									cJSON_ArrayForEach(arr, member)
+									{
+										itemEntry.identified.push_back(cJSON_IsTrue(arr));
+									}
+								}
+							}
+						}
+						cJSON* spawnPct = cJSON_GetObjectItem(slot_itr, "spawn_percent_chance");
+						if ( spawnPct ) itemEntry.percentChance = spawnPct->valueint;
+						cJSON* dropPct = cJSON_GetObjectItem(slot_itr, "drop_percent_chance");
+						if ( dropPct ) itemEntry.dropChance = dropPct->valueint;
+						cJSON* weightChance = cJSON_GetObjectItem(slot_itr, "slot_weighted_chance");
+						if ( weightChance ) itemEntry.weightedChance = weightChance->valueint;
 					}
 				}
-				{
-					auto& member = (*slot_itr)["identified"];
-					bool isArr = member.IsArray();
-					std::vector<bool> bools;
-					if ( !isArr )
-					{
-						bools.push_back(member.GetBool());
-					}
-					else
-					{
-						for ( auto arr = member.Begin(); arr != member.End(); ++arr )
-						{
-							bools.push_back(arr->GetBool());
-						}
-					}
-					for ( auto b : bools )
-					{
-						itemEntry.identified.push_back(b);
-					}
-				}
-				itemEntry.percentChance = (*slot_itr)["spawn_percent_chance"].GetInt();
-				itemEntry.dropChance = (*slot_itr)["drop_percent_chance"].GetInt();
-				itemEntry.weightedChance = (*slot_itr)["slot_weighted_chance"].GetInt();
 			}
 		}
 	}
-
+	cJSON_Delete(d);
 	printlog("[JSON]: Successfully read json file %s, processed %d shop consumables", inputPath.c_str(), entries.size());
 }
-
