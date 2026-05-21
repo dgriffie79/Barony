@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 BARONY
-File: mod_tools_editor.cpp - Editor entity data
+File: mod_tools_editor.cpp - Editor entity data (converted from rapidjson to cJSON)
 Desc: Extracted from mod_tools.cpp for modularity
 
 Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
@@ -40,14 +40,19 @@ void EditorEntityData_t::readFromFile()
 	char buf[65536];
 	int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	rapidjson::StringStream is(buf);
 	FileIO::close(fp);
 
-	rapidjson::Document d;
-	d.ParseStream(is);
-	if ( !d.HasMember("version") || !d.HasMember("entities") )
+	cJSON* d = cJSON_Parse(buf);
+	if ( !d )
+	{
+		printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+		return;
+	}
+
+	if ( !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "entities") )
 	{
 		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
 
@@ -55,29 +60,39 @@ void EditorEntityData_t::readFromFile()
 	colliderDmgTypes.clear();
 	colliderRandomGenPool.clear();
 	colliderNameIndexes.clear();
-	auto& entityTypes = d["entities"];
-	if ( entityTypes.HasMember("collider_dmg_calcs") )
+	cJSON* entityTypes = cJSON_GetObjectItem(d, "entities");
+	if ( cJSON_HasObjectItem(entityTypes, "collider_dmg_calcs") )
 	{
-		for ( auto itr = entityTypes["collider_dmg_calcs"].MemberBegin(); itr != entityTypes["collider_dmg_calcs"].MemberEnd();
-			++itr )
+		cJSON* calcsObj = cJSON_GetObjectItem(entityTypes, "collider_dmg_calcs");
+		for ( cJSON* itr = calcsObj->child; itr; itr = itr->next )
 		{
-			auto& colliderDmg = colliderDmgTypes[itr->name.GetString()];
-			colliderDmg.burnable = itr->value["burnable"].GetBool();
-			colliderDmg.minotaurPathThroughAndBreak = itr->value["minotaur_path_and_break"].GetBool();
-			colliderDmg.meleeAffects = itr->value["melee"].GetBool();
-			colliderDmg.magicAffects = itr->value["magic"].GetBool();
-			colliderDmg.bombsAttach = itr->value["bombs_attach"].GetBool();
-			colliderDmg.boulderDestroys = itr->value["boulder_destroy"].GetBool();
-			colliderDmg.showAsWallOnMinimap = itr->value["minimap_appear_as_wall"].GetBool();
-			if ( itr->value.HasMember("allow_npc_pathing") )
+			auto& colliderDmg = colliderDmgTypes[itr->string];
+			cJSON* burnable = cJSON_GetObjectItem(itr, "burnable");
+			if ( burnable ) colliderDmg.burnable = cJSON_IsTrue(burnable);
+			cJSON* mino = cJSON_GetObjectItem(itr, "minotaur_path_and_break");
+			if ( mino ) colliderDmg.minotaurPathThroughAndBreak = cJSON_IsTrue(mino);
+			cJSON* melee = cJSON_GetObjectItem(itr, "melee");
+			if ( melee ) colliderDmg.meleeAffects = cJSON_IsTrue(melee);
+			cJSON* magic = cJSON_GetObjectItem(itr, "magic");
+			if ( magic ) colliderDmg.magicAffects = cJSON_IsTrue(magic);
+			cJSON* bombs = cJSON_GetObjectItem(itr, "bombs_attach");
+			if ( bombs ) colliderDmg.bombsAttach = cJSON_IsTrue(bombs);
+			cJSON* boulder = cJSON_GetObjectItem(itr, "boulder_destroy");
+			if ( boulder ) colliderDmg.boulderDestroys = cJSON_IsTrue(boulder);
+			cJSON* minimap = cJSON_GetObjectItem(itr, "minimap_appear_as_wall");
+			if ( minimap ) colliderDmg.showAsWallOnMinimap = cJSON_IsTrue(minimap);
+			cJSON* npcPathing = cJSON_GetObjectItem(itr, "allow_npc_pathing");
+			if ( npcPathing )
 			{
-				colliderDmg.allowNPCPathing = itr->value["allow_npc_pathing"].GetBool();
+				colliderDmg.allowNPCPathing = cJSON_IsTrue(npcPathing);
 			}
-			if ( itr->value.HasMember("bonus_damage_skills") && itr->value["bonus_damage_skills"].IsArray() )
+			cJSON* bonusSkills = cJSON_GetObjectItem(itr, "bonus_damage_skills");
+			if ( bonusSkills && cJSON_IsArray(bonusSkills) )
 			{
-				for ( auto itr2 = itr->value["bonus_damage_skills"].Begin(); itr2 != itr->value["bonus_damage_skills"].End(); ++itr2 )
+				cJSON* itr2 = NULL;
+				cJSON_ArrayForEach(itr2, bonusSkills)
 				{
-					std::string s = itr2->GetString();
+					std::string s = itr2->valuestring;
 					if ( s == "PRO_AXE" )
 					{
 						colliderDmg.proficiencyBonusDamage.insert(PRO_AXE);
@@ -110,11 +125,13 @@ void EditorEntityData_t::readFromFile()
 					}
 				}
 			}
-			if ( itr->value.HasMember("resist_damage_skills") && itr->value["resist_damage_skills"].IsArray() )
+			cJSON* resistSkills = cJSON_GetObjectItem(itr, "resist_damage_skills");
+			if ( resistSkills && cJSON_IsArray(resistSkills) )
 			{
-				for ( auto itr2 = itr->value["resist_damage_skills"].Begin(); itr2 != itr->value["resist_damage_skills"].End(); ++itr2 )
+				cJSON* itr2 = NULL;
+				cJSON_ArrayForEach(itr2, resistSkills)
 				{
-					std::string s = itr2->GetString();
+					std::string s = itr2->valuestring;
 					if ( s == "PRO_AXE" )
 					{
 						colliderDmg.proficiencyResistDamage.insert(PRO_AXE);
@@ -149,112 +166,127 @@ void EditorEntityData_t::readFromFile()
 			}
 		}
 	}
-	if ( entityTypes.HasMember("collider_dmg_types") )
+	if ( cJSON_HasObjectItem(entityTypes, "collider_dmg_types") )
 	{
-		for ( auto itr = entityTypes["collider_dmg_types"].MemberBegin(); itr != entityTypes["collider_dmg_types"].MemberEnd();
-			++itr )
+		cJSON* dmgTypesObj = cJSON_GetObjectItem(entityTypes, "collider_dmg_types");
+		for ( cJSON* itr = dmgTypesObj->child; itr; itr = itr->next )
 		{
-			auto indexStr = itr->name.GetString();
-			int index = std::stoi(indexStr);
+			int index = std::stoi(itr->string);
 			auto& collider = colliderData[index];
-			collider.name = itr->value["name"].GetString();
+			cJSON* nameItem = cJSON_GetObjectItem(itr, "name");
+			if ( nameItem ) collider.name = nameItem->valuestring;
 			assert(colliderNameIndexes.find(collider.name) == colliderNameIndexes.end());
 			colliderNameIndexes[collider.name] = index;
-			collider.gib = itr->value["gib_model"].GetInt();
+			cJSON* gib = cJSON_GetObjectItem(itr, "gib_model");
+			if ( gib ) collider.gib = gib->valueint;
 			collider.gib_hit.clear();
-			if ( itr->value.HasMember("gib_hit_model") )
+			cJSON* gibHit = cJSON_GetObjectItem(itr, "gib_hit_model");
+			if ( gibHit )
 			{
-				if ( itr->value["gib_hit_model"].IsInt() )
+				if ( cJSON_IsNumber(gibHit) )
 				{
-					collider.gib_hit.push_back(itr->value["gib_hit_model"].GetInt());
+					collider.gib_hit.push_back(gibHit->valueint);
 				}
-				else if ( itr->value["gib_hit_model"].IsArray() )
+				else if ( cJSON_IsArray(gibHit) )
 				{
-					for ( auto itr2 = itr->value["gib_hit_model"].Begin();
-						itr2 != itr->value["gib_hit_model"].End(); ++itr2 )
+					cJSON* itr2 = NULL;
+					cJSON_ArrayForEach(itr2, gibHit)
 					{
-						if ( itr2->IsInt() )
+						if ( cJSON_IsNumber(itr2) )
 						{
-							collider.gib_hit.push_back(itr2->GetInt());
+							collider.gib_hit.push_back(itr2->valueint);
 						}
 					}
 				}
 			}
-			if ( itr->value["sfx_break"].IsInt() )
+			cJSON* sfxBreak = cJSON_GetObjectItem(itr, "sfx_break");
+			if ( sfxBreak )
 			{
-				collider.sfxBreak.push_back(itr->value["sfx_break"].GetInt());
-			}
-			else if ( itr->value["sfx_break"].IsArray() )
-			{
-				for ( auto itr2 = itr->value["sfx_break"].Begin();
-					itr2 != itr->value["sfx_break"].End(); ++itr2 )
+				if ( cJSON_IsNumber(sfxBreak) )
 				{
-					if ( itr2->IsInt() )
+					collider.sfxBreak.push_back(sfxBreak->valueint);
+				}
+				else if ( cJSON_IsArray(sfxBreak) )
+				{
+					cJSON* itr2 = NULL;
+					cJSON_ArrayForEach(itr2, sfxBreak)
 					{
-						collider.sfxBreak.push_back(itr2->GetInt());
+						if ( cJSON_IsNumber(itr2) )
+						{
+							collider.sfxBreak.push_back(itr2->valueint);
+						}
 					}
 				}
 			}
-			collider.sfxHit = itr->value["sfx_hit"].GetInt();
-			collider.damageCalculationType = itr->value["damage_calc"].GetString();
-			collider.entityLangEntry = itr->value["entity_lang_entry"].GetInt();
-			collider.hitMessageLangEntry = itr->value["hit_message"].GetInt();
-			collider.breakMessageLangEntry = itr->value["break_message"].GetInt();
-			if ( itr->value.HasMember("jump_message") )
+			cJSON* sfxHit = cJSON_GetObjectItem(itr, "sfx_hit");
+			if ( sfxHit ) collider.sfxHit = sfxHit->valueint;
+			cJSON* dmgCalc = cJSON_GetObjectItem(itr, "damage_calc");
+			if ( dmgCalc ) collider.damageCalculationType = dmgCalc->valuestring;
+			cJSON* entityLang = cJSON_GetObjectItem(itr, "entity_lang_entry");
+			if ( entityLang ) collider.entityLangEntry = entityLang->valueint;
+			cJSON* hitMsg = cJSON_GetObjectItem(itr, "hit_message");
+			if ( hitMsg ) collider.hitMessageLangEntry = hitMsg->valueint;
+			cJSON* breakMsg = cJSON_GetObjectItem(itr, "break_message");
+			if ( breakMsg ) collider.breakMessageLangEntry = breakMsg->valueint;
+			cJSON* jumpMsg = cJSON_GetObjectItem(itr, "jump_message");
+			if ( jumpMsg )
 			{
-				collider.colliderJumpLangEntry = itr->value["jump_message"].GetInt();
+				collider.colliderJumpLangEntry = jumpMsg->valueint;
 			}
-			collider.hpbarLookupName = itr->value["hp_bar_lookup_name"].GetString();
+			cJSON* hpbarName = cJSON_GetObjectItem(itr, "hp_bar_lookup_name");
+			if ( hpbarName ) collider.hpbarLookupName = hpbarName->valuestring;
 			collider.hideMonsters.clear();
 			collider.spellTriggers.clear();
 			collider.pathableMonsters.clear();
-			if ( itr->value.HasMember("random_gen_pool") )
+			cJSON* randGenPool = cJSON_GetObjectItem(itr, "random_gen_pool");
+			if ( randGenPool )
 			{
-				if ( itr->value["random_gen_pool"].IsObject() )
+				if ( cJSON_IsObject(randGenPool) )
 				{
-					for ( auto itr2 = itr->value["random_gen_pool"].MemberBegin();
-						itr2 != itr->value["random_gen_pool"].MemberEnd(); ++itr2 )
+					for ( cJSON* itr2 = randGenPool->child; itr2; itr2 = itr2->next )
 					{
-						if ( itr2->name.IsString() )
+						if ( itr2->string )
 						{
-							EditorEntityData_t::colliderRandomGenPool[itr2->name.GetString()][index] =
-								itr2->value.GetInt();
+							EditorEntityData_t::colliderRandomGenPool[itr2->string][index] =
+								itr2->valueint;
 						}
 					}
 				}
 			}
-			if ( itr->value.HasMember("events") )
+			cJSON* events = cJSON_GetObjectItem(itr, "events");
+			if ( events )
 			{
-				for ( auto itr2 = itr->value["events"].MemberBegin();
-					itr2 != itr->value["events"].MemberEnd(); ++itr2 )
+				for ( cJSON* itr2 = events->child; itr2; itr2 = itr2->next )
 				{
-					if ( !strcmp(itr2->name.GetString(), "spell_trigger") )
+					if ( !strcmp(itr2->string, "spell_trigger") )
 					{
 						auto& data = collider.spellTriggers;
-						if ( itr2->value.IsArray() )
+						if ( cJSON_IsArray(itr2) )
 						{
-							for ( auto val = itr2->value.Begin(); val != itr2->value.End(); ++val )
+							cJSON* val = NULL;
+							cJSON_ArrayForEach(val, itr2)
 							{
-								if ( val->IsInt() )
+								if ( cJSON_IsNumber(val) )
 								{
-									data.push_back(val->GetInt());
+									data.push_back(val->valueint);
 								}
 							}
 						}
 						continue;
 					}
-					if ( !strcmp(itr2->name.GetString(), "pathable") )
+					if ( !strcmp(itr2->string, "pathable") )
 					{
 						auto& data = collider.pathableMonsters;
-						if ( itr2->value.IsArray() )
+						if ( cJSON_IsArray(itr2) )
 						{
-							for ( auto val = itr2->value.Begin(); val != itr2->value.End(); ++val )
+							cJSON* val = NULL;
+							cJSON_ArrayForEach(val, itr2)
 							{
-								if ( val->IsString() )
+								if ( cJSON_IsString(val) && val->valuestring )
 								{
 									for ( int i = 0; i < NUMMONSTERS; ++i )
 									{
-										if ( !strcmp(val->GetString(), monstertypename[i]) )
+										if ( !strcmp(val->valuestring, monstertypename[i]) )
 										{
 											data.insert(i);
 											break;
@@ -265,22 +297,22 @@ void EditorEntityData_t::readFromFile()
 						}
 						continue;
 					}
-					std::string mapname = itr2->name.GetString();
-					for ( auto itr3 = itr2->value.MemberBegin();
-						itr3 != itr2->value.MemberEnd(); ++itr3 )
+					std::string mapname = itr2->string;
+					for ( cJSON* itr3 = itr2->child; itr3; itr3 = itr3->next )
 					{
-						if ( !strcmp(itr3->name.GetString(), "summon") )
+						if ( !strcmp(itr3->string, "summon") )
 						{
 							auto& data = collider.hideMonsters[mapname];
-							if ( itr3->value.IsArray() )
+							if ( cJSON_IsArray(itr3) )
 							{
-								for ( auto val = itr3->value.Begin(); val != itr3->value.End(); ++val )
+								cJSON* val = NULL;
+								cJSON_ArrayForEach(val, itr3)
 								{
-									if ( val->IsString() )
+									if ( cJSON_IsString(val) && val->valuestring )
 									{
 										for ( int i = 0; i < NUMMONSTERS; ++i )
 										{
-											if ( !strcmp(val->GetString(), monstertypename[i]) )
+											if ( !strcmp(val->valuestring, monstertypename[i]) )
 											{
 												data.push_back(i);
 												break;
@@ -295,21 +327,21 @@ void EditorEntityData_t::readFromFile()
 			}
 
 			collider.overrideProperties.clear();
-			if ( itr->value.HasMember("override_editor_props") )
+			cJSON* overrideProps = cJSON_GetObjectItem(itr, "override_editor_props");
+			if ( overrideProps )
 			{
-				if ( itr->value["override_editor_props"].IsObject() )
+				if ( cJSON_IsObject(overrideProps) )
 				{
-					for ( auto itr2 = itr->value["override_editor_props"].MemberBegin();
-						itr2 != itr->value["override_editor_props"].MemberEnd(); ++itr2 )
+					for ( cJSON* itr2 = overrideProps->child; itr2; itr2 = itr2->next )
 					{
-						if ( itr2->value.IsInt() )
+						if ( cJSON_IsNumber(itr2) )
 						{
-							collider.overrideProperties[itr2->name.GetString()] = itr2->value.GetInt();
+							collider.overrideProperties[itr2->string] = itr2->valueint;
 						}
 					}
 				}
 			}
 		}
 	}
+	cJSON_Delete(d);
 }
-
