@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 BARONY
-File: mod_tools_equip.cpp - Equipment model offsets
+File: mod_tools_equip.cpp - Equipment model offsets (converted from rapidjson to cJSON)
 Desc: Extracted from mod_tools.cpp for modularity
 
 Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
@@ -144,91 +144,103 @@ void EquipmentModelOffsets_t::readBaseItemsFromFile()
 	static char buf[32000];
 	int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	rapidjson::StringStream is(buf);
 	FileIO::close(fp);
 
-	rapidjson::Document d;
-	d.ParseStream(is);
-	if ( !d.IsObject() )
+	cJSON* d = cJSON_Parse(buf);
+	if ( !d )
 	{
 		return;
 	}
-	if ( !d.HasMember("version") || !d.HasMember("items") )
+	if ( !cJSON_IsObject(d) || !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "items") )
 	{
 		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
 
-	int version = d["version"].GetInt();
+	int version = cJSON_GetObjectItem(d, "version")->valueint;
 
 	miscItemsBaseOffsets.clear();
 
-	auto& itemsArr = d["items"];
-	for ( auto it = itemsArr.Begin(); it != itemsArr.End(); ++it )
+	cJSON* itemsArr = cJSON_GetObjectItem(d, "items");
+	if ( itemsArr )
 	{
-		for ( auto it2 = it->MemberBegin(); it2 != it->MemberEnd(); ++it2 )
+		cJSON* it = NULL;
+		cJSON_ArrayForEach(it, itemsArr)
 		{
-			std::string itemName = it2->name.GetString();
-			if ( ItemTooltips.itemNameStringToItemID.find(itemName) == ItemTooltips.itemNameStringToItemID.end() )
+			for ( cJSON* it2 = it->child; it2; it2 = it2->next )
 			{
-				continue;
-			}
-			ItemType itemType = (ItemType)ItemTooltips.itemNameStringToItemID[itemName];
-			std::vector<int> models;
-			if ( it2->value.HasMember("models") )
-			{
-				if ( it2->value["models"].IsArray() )
+				std::string itemName = it2->string;
+				if ( ItemTooltips.itemNameStringToItemID.find(itemName) == ItemTooltips.itemNameStringToItemID.end() )
 				{
-					if ( it2->value["models"].Size() == 0 )
+					continue;
+				}
+				ItemType itemType = (ItemType)ItemTooltips.itemNameStringToItemID[itemName];
+				std::vector<int> models;
+				cJSON* modelsItem = cJSON_GetObjectItem(it2, "models");
+				if ( modelsItem )
+				{
+					if ( cJSON_IsArray(modelsItem) )
 					{
-						for ( int i = items[itemType].index; i < items[itemType].index + items[itemType].variations; ++i )
+						if ( cJSON_GetArraySize(modelsItem) == 0 )
 						{
-							models.push_back(i);
-						}
-					}
-					else
-					{
-						for ( auto itArr = it2->value["models"].Begin(); itArr != it2->value["models"].End(); ++itArr )
-						{
-							if ( itArr->IsInt() )
+							for ( int i = items[itemType].index; i < items[itemType].index + items[itemType].variations; ++i )
 							{
-								models.push_back(itArr->GetInt());
+								models.push_back(i);
+							}
+						}
+						else
+						{
+							cJSON* itArr = NULL;
+							cJSON_ArrayForEach(itArr, modelsItem)
+							{
+								if ( cJSON_IsNumber(itArr) )
+								{
+									models.push_back(itArr->valueint);
+								}
 							}
 						}
 					}
 				}
-			}
 
-			real_t focalx = it2->value.HasMember("focalx") ? it2->value["focalx"].GetDouble() : 0.0;
-			real_t focaly = it2->value.HasMember("focaly") ? it2->value["focaly"].GetDouble() : 0.0;
-			real_t focalz = it2->value.HasMember("focalz") ? it2->value["focalz"].GetDouble() : 0.0;
-			real_t scalex = 0.0;
-			if ( it2->value.HasMember("scalex") )
-			{
-				scalex = it2->value["scalex"].GetDouble();
-			}
-			real_t scaley = 0.0;
-			if ( it2->value.HasMember("scaley") )
-			{
-				scaley = it2->value["scaley"].GetDouble();
-			}
-			real_t scalez = 0.0;
-			if ( it2->value.HasMember("scalez") )
-			{
-				scalez = it2->value["scalez"].GetDouble();
-			}
-			for ( auto index : models )
-			{
-				auto& entry = miscItemsBaseOffsets[index];
-				entry.focalx = focalx;
-				entry.focaly = focaly;
-				entry.focalz = focalz;
-				entry.scalex = scalex;
-				entry.scaley = scaley;
-				entry.scalez = scalez;
+				cJSON* focalxItem = cJSON_GetObjectItem(it2, "focalx");
+				real_t focalx = focalxItem ? focalxItem->valuedouble : 0.0;
+				cJSON* focalyItem = cJSON_GetObjectItem(it2, "focaly");
+				real_t focaly = focalyItem ? focalyItem->valuedouble : 0.0;
+				cJSON* focalzItem = cJSON_GetObjectItem(it2, "focalz");
+				real_t focalz = focalzItem ? focalzItem->valuedouble : 0.0;
+				real_t scalex = 0.0;
+				cJSON* scalexItem = cJSON_GetObjectItem(it2, "scalex");
+				if ( scalexItem )
+				{
+					scalex = scalexItem->valuedouble;
+				}
+				real_t scaley = 0.0;
+				cJSON* scaleyItem = cJSON_GetObjectItem(it2, "scaley");
+				if ( scaleyItem )
+				{
+					scaley = scaleyItem->valuedouble;
+				}
+				real_t scalez = 0.0;
+				cJSON* scalezItem = cJSON_GetObjectItem(it2, "scalez");
+				if ( scalezItem )
+				{
+					scalez = scalezItem->valuedouble;
+				}
+				for ( auto index : models )
+				{
+					auto& entry = miscItemsBaseOffsets[index];
+					entry.focalx = focalx;
+					entry.focaly = focaly;
+					entry.focalz = focalz;
+					entry.scalex = scalex;
+					entry.scaley = scaley;
+					entry.scalez = scalez;
+				}
 			}
 		}
 	}
+	cJSON_Delete(d);
 }
 
 void EquipmentModelOffsets_t::readFromFile(std::string monsterName, int monsterType)
@@ -274,22 +286,21 @@ void EquipmentModelOffsets_t::readFromFile(std::string monsterName, int monsterT
 	static char buf[32000];
 	int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	rapidjson::StringStream is(buf);
 	FileIO::close(fp);
 
-	rapidjson::Document d;
-	d.ParseStream(is);
-	if ( !d.IsObject() )
+	cJSON* d = cJSON_Parse(buf);
+	if ( !d )
 	{
 		return;
 	}
-	if ( !d.HasMember("version") || !d.HasMember("items") )
+	if ( !cJSON_IsObject(d) || !cJSON_HasObjectItem(d, "version") || !cJSON_HasObjectItem(d, "items") )
 	{
 		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
 
-	int version = d["version"].GetInt();
+	int version = cJSON_GetObjectItem(d, "version")->valueint;
 	monsterModelsMap[monsterType].clear();
 
 	real_t baseFocalX = 0.0;
@@ -298,216 +309,213 @@ void EquipmentModelOffsets_t::readFromFile(std::string monsterName, int monsterT
 	real_t baseFocalX_rot1 = 0.0;
 	real_t baseFocalY_rot1 = 0.0;
 	real_t baseFocalZ_rot1 = 0.0;
-	if ( d.HasMember("base_offsets") )
+	cJSON* baseOffsets = cJSON_GetObjectItem(d, "base_offsets");
+	if ( baseOffsets )
 	{
-		if ( d["base_offsets"].HasMember("focalx") )
-		{
-			baseFocalX = d["base_offsets"]["focalx"].GetDouble();
-		}
-		if ( d["base_offsets"].HasMember("focaly") )
-		{
-			baseFocalY = d["base_offsets"]["focaly"].GetDouble();
-		}
-		if ( d["base_offsets"].HasMember("focalz") )
-		{
-			baseFocalZ = d["base_offsets"]["focalz"].GetDouble();
-		}
-		if ( d["base_offsets"].HasMember("focalx_rot1") )
-		{
-			baseFocalX_rot1 = d["base_offsets"]["focalx_rot1"].GetDouble();
-		}
-		if ( d["base_offsets"].HasMember("focaly_rot1") )
-		{
-			baseFocalY_rot1 = d["base_offsets"]["focaly_rot1"].GetDouble();
-		}
-		if ( d["base_offsets"].HasMember("focalz_rot1") )
-		{
-			baseFocalZ_rot1 = d["base_offsets"]["focalz_rot1"].GetDouble();
-		}
+		cJSON* item = cJSON_GetObjectItem(baseOffsets, "focalx");
+		if ( item ) baseFocalX = item->valuedouble;
+		item = cJSON_GetObjectItem(baseOffsets, "focaly");
+		if ( item ) baseFocalY = item->valuedouble;
+		item = cJSON_GetObjectItem(baseOffsets, "focalz");
+		if ( item ) baseFocalZ = item->valuedouble;
+		item = cJSON_GetObjectItem(baseOffsets, "focalx_rot1");
+		if ( item ) baseFocalX_rot1 = item->valuedouble;
+		item = cJSON_GetObjectItem(baseOffsets, "focaly_rot1");
+		if ( item ) baseFocalY_rot1 = item->valuedouble;
+		item = cJSON_GetObjectItem(baseOffsets, "focalz_rot1");
+		if ( item ) baseFocalZ_rot1 = item->valuedouble;
 	}
 
-	auto& itemsArr = d["items"];
-	for ( auto it = itemsArr.Begin(); it != itemsArr.End(); ++it )
+	cJSON* itemsArr = cJSON_GetObjectItem(d, "items");
+	if ( itemsArr )
 	{
-		for ( auto it2 = it->MemberBegin(); it2 != it->MemberEnd(); ++it2 )
+		cJSON* it = NULL;
+		cJSON_ArrayForEach(it, itemsArr)
 		{
-			std::string itemName = it2->name.GetString();
-			if ( ItemTooltips.itemNameStringToItemID.find(itemName) == ItemTooltips.itemNameStringToItemID.end() )
+			for ( cJSON* it2 = it->child; it2; it2 = it2->next )
 			{
-				continue;
-			}
-			ItemType itemType = (ItemType)ItemTooltips.itemNameStringToItemID[itemName];
-			std::vector<int> models;
-			if ( it2->value.HasMember("models") )
-			{
-				if ( it2->value["models"].IsArray() )
+				std::string itemName = it2->string;
+				if ( ItemTooltips.itemNameStringToItemID.find(itemName) == ItemTooltips.itemNameStringToItemID.end() )
 				{
-					if ( it2->value["models"].Size() == 0 )
+					continue;
+				}
+				ItemType itemType = (ItemType)ItemTooltips.itemNameStringToItemID[itemName];
+				std::vector<int> models;
+				cJSON* modelsItem = cJSON_GetObjectItem(it2, "models");
+				if ( modelsItem )
+				{
+					if ( cJSON_IsArray(modelsItem) )
 					{
-						for ( int i = items[itemType].index; i < items[itemType].index + items[itemType].variations; ++i )
+						if ( cJSON_GetArraySize(modelsItem) == 0 )
 						{
-							models.push_back(i);
+							for ( int i = items[itemType].index; i < items[itemType].index + items[itemType].variations; ++i )
+							{
+								models.push_back(i);
+							}
 						}
+						else
+						{
+							cJSON* itArr = NULL;
+							cJSON_ArrayForEach(itArr, modelsItem)
+							{
+								if ( cJSON_IsNumber(itArr) )
+								{
+									models.push_back(itArr->valueint);
+								}
+							}
+						}
+					}
+				}
+
+				cJSON* focalxItem = cJSON_GetObjectItem(it2, "focalx");
+				real_t focalx = focalxItem ? focalxItem->valuedouble : 0.0;
+				cJSON* focalyItem = cJSON_GetObjectItem(it2, "focaly");
+				real_t focaly = focalyItem ? focalyItem->valuedouble : 0.0;
+				cJSON* focalzItem = cJSON_GetObjectItem(it2, "focalz");
+				real_t focalz = focalzItem ? focalzItem->valuedouble : 0.0;
+				real_t scalex = 0.0;
+				cJSON* scalexItem = cJSON_GetObjectItem(it2, "scalex");
+				if ( scalexItem )
+				{
+					scalex = scalexItem->valuedouble;
+				}
+				real_t scaley = 0.0;
+				cJSON* scaleyItem = cJSON_GetObjectItem(it2, "scaley");
+				if ( scaleyItem )
+				{
+					scaley = scaleyItem->valuedouble;
+				}
+				real_t scalez = 0.0;
+				cJSON* scalezItem = cJSON_GetObjectItem(it2, "scalez");
+				if ( scalezItem )
+				{
+					scalez = scalezItem->valuedouble;
+				}
+				cJSON* rotItem = cJSON_GetObjectItem(it2, "rotation");
+				real_t rotation = rotItem ? rotItem->valuedouble : 0.0;
+				cJSON* pitchItem = cJSON_GetObjectItem(it2, "pitch");
+				real_t pitch = pitchItem ? pitchItem->valuedouble : 0.0;
+				cJSON* limbsItem = cJSON_GetObjectItem(it2, "limbs_index");
+				int limbsIndex = limbsItem ? limbsItem->valueint : 0;
+				cJSON* oversizeItem = cJSON_GetObjectItem(it2, "oversize_mask");
+				bool oversizedMask = oversizeItem ? cJSON_IsTrue(oversizeItem) : false;
+				cJSON* expandItem = cJSON_GetObjectItem(it2, "expand_to_fit_oversize_mask");
+				bool expandToFitMask = expandItem ? cJSON_IsTrue(expandItem) : false;
+
+				for ( auto index : models )
+				{
+					auto& entry = monsterModelsMap[monsterType][index];
+					entry.rotation = rotation * (PI / 2);
+					entry.focalx = focalx;
+					entry.focaly = focaly;
+					entry.focalz = focalz;
+					if ( items[itemType].item_slot == EQUIPPABLE_IN_SLOT_BREASTPLATE )
+					{
+					}
+					else if ( static_cast<int>(entry.rotation) == 1 && version >= 2 )
+					{
+						entry.focalx += baseFocalX_rot1;
+						entry.focaly += baseFocalY_rot1;
+						entry.focalz += baseFocalZ_rot1;
 					}
 					else
 					{
-						for ( auto itArr = it2->value["models"].Begin(); itArr != it2->value["models"].End(); ++itArr )
+						entry.focalx += baseFocalX;
+						entry.focaly += baseFocalY;
+						entry.focalz += baseFocalZ;
+					}
+					entry.scalex = scalex;
+					entry.scaley = scaley;
+					entry.scalez = scalez;
+					entry.pitch = pitch * (PI / 2);
+					entry.limbsIndex = limbsIndex;
+					entry.expandToFitMask = expandToFitMask;
+					entry.oversizedMask = oversizedMask;
+
+					cJSON* adjustOversize = cJSON_GetObjectItem(it2, "adjust_on_oversize_mask");
+					if ( adjustOversize && cJSON_IsArray(adjustOversize) )
+					{
+						cJSON* adjItr = NULL;
+						cJSON_ArrayForEach(adjItr, adjustOversize)
 						{
-							if ( itArr->IsInt() )
+							std::vector<int> models;
+							cJSON* maskSprite = cJSON_GetObjectItem(adjItr, "mask_sprite");
+							if ( cJSON_IsArray(maskSprite) )
 							{
-								models.push_back(itArr->GetInt());
+								if ( cJSON_GetArraySize(maskSprite) == 0 )
+								{
+									models.push_back(-1);
+								}
+								else
+								{
+									cJSON* itr2 = NULL;
+									cJSON_ArrayForEach(itr2, maskSprite)
+									{
+										if ( cJSON_IsNumber(itr2) )
+										{
+											models.push_back(itr2->valueint);
+										}
+									}
+								}
+							}
+							for ( auto model : models )
+							{
+								cJSON* val = cJSON_GetObjectItem(adjItr, "focalx");
+								if ( val ) entry.adjustToOversizeMask[model].focalx = val->valuedouble;
+								val = cJSON_GetObjectItem(adjItr, "focaly");
+								if ( val ) entry.adjustToOversizeMask[model].focaly = val->valuedouble;
+								val = cJSON_GetObjectItem(adjItr, "focalz");
+								if ( val ) entry.adjustToOversizeMask[model].focalz = val->valuedouble;
+								val = cJSON_GetObjectItem(adjItr, "scalex");
+								if ( val ) entry.adjustToOversizeMask[model].scalex = val->valuedouble;
+								val = cJSON_GetObjectItem(adjItr, "scaley");
+								if ( val ) entry.adjustToOversizeMask[model].scaley = val->valuedouble;
+								val = cJSON_GetObjectItem(adjItr, "scalez");
+								if ( val ) entry.adjustToOversizeMask[model].scalez = val->valuedouble;
 							}
 						}
 					}
-				}
-			}
 
-			real_t focalx = it2->value["focalx"].GetDouble();
-			real_t focaly = it2->value["focaly"].GetDouble();
-			real_t focalz = it2->value["focalz"].GetDouble();
-			real_t scalex = 0.0;
-			if ( it2->value.HasMember("scalex") )
-			{
-				scalex = it2->value["scalex"].GetDouble();
-			}
-			real_t scaley = 0.0;
-			if ( it2->value.HasMember("scaley") )
-			{
-				scaley = it2->value["scaley"].GetDouble();
-			}
-			real_t scalez = 0.0;
-			if ( it2->value.HasMember("scalez") )
-			{
-				scalez = it2->value["scalez"].GetDouble();
-			}
-			real_t rotation = it2->value["rotation"].GetDouble();
-			real_t pitch = it2->value.HasMember("pitch") ?
-				it2->value["pitch"].GetDouble() : 0.0;
-			int limbsIndex = it2->value["limbs_index"].GetInt();
-			bool oversizedMask = it2->value.HasMember("oversize_mask") ? 
-				it2->value["oversize_mask"].GetBool() : false;
-			bool expandToFitMask = it2->value.HasMember("expand_to_fit_oversize_mask") ?
-				it2->value["expand_to_fit_oversize_mask"].GetBool() : false;
-
-			for ( auto index : models )
-			{
-				auto& entry = monsterModelsMap[monsterType][index];
-				entry.rotation = rotation * (PI / 2);
-				entry.focalx = focalx;
-				entry.focaly = focaly;
-				entry.focalz = focalz;
-				if ( items[itemType].item_slot == EQUIPPABLE_IN_SLOT_BREASTPLATE )
-				{
-				}
-				else if ( static_cast<int>(entry.rotation) == 1 && version >= 2 )
-				{
-					entry.focalx += baseFocalX_rot1;
-					entry.focaly += baseFocalY_rot1;
-					entry.focalz += baseFocalZ_rot1;
-				}
-				else
-				{
-					entry.focalx += baseFocalX;
-					entry.focaly += baseFocalY;
-					entry.focalz += baseFocalZ;
-				}
-				entry.scalex = scalex;
-				entry.scaley = scaley;
-				entry.scalez = scalez;
-				entry.pitch = pitch * (PI / 2);
-				entry.limbsIndex = limbsIndex;
-				entry.expandToFitMask = expandToFitMask;
-				entry.oversizedMask = oversizedMask;
-
-				if ( it2->value.HasMember("adjust_on_oversize_mask") )
-				{
-					auto& itr = it2->value["adjust_on_oversize_mask"];
-					for ( auto adjItr = itr.Begin(); adjItr != itr.End(); ++adjItr )
+					cJSON* adjustExpand = cJSON_GetObjectItem(it2, "adjust_on_expand_helm");
+					if ( adjustExpand && cJSON_IsArray(adjustExpand) )
 					{
-						std::vector<int> models;
-						if ( (*adjItr)["mask_sprite"].Size() == 0 )
+						cJSON* adjItr = NULL;
+						cJSON_ArrayForEach(adjItr, adjustExpand)
 						{
-							models.push_back(-1);
-						}
-						else
-						{
-							for ( auto itr2 = (*adjItr)["mask_sprite"].Begin(); itr2 != (*adjItr)["mask_sprite"].End(); ++itr2 )
+							std::vector<int> models;
+							cJSON* helmSprite = cJSON_GetObjectItem(adjItr, "helm_sprite");
+							if ( cJSON_IsArray(helmSprite) )
 							{
-								models.push_back(itr2->GetInt());
+								if ( cJSON_GetArraySize(helmSprite) == 0 )
+								{
+									models.push_back(-1);
+								}
+								else
+								{
+									cJSON* itr2 = NULL;
+									cJSON_ArrayForEach(itr2, helmSprite)
+									{
+										if ( cJSON_IsNumber(itr2) )
+										{
+											models.push_back(itr2->valueint);
+										}
+									}
+								}
 							}
-						}
-						for ( auto model : models )
-						{
-							if ( (*adjItr).HasMember("focalx") )
+							for ( auto model : models )
 							{
-								entry.adjustToOversizeMask[model].focalx = (*adjItr)["focalx"].GetDouble();
-							}
-							if ( (*adjItr).HasMember("focaly") )
-							{
-								entry.adjustToOversizeMask[model].focaly = (*adjItr)["focaly"].GetDouble();
-							}
-							if ( (*adjItr).HasMember("focalz") )
-							{
-								entry.adjustToOversizeMask[model].focalz = (*adjItr)["focalz"].GetDouble();
-							}
-							if ( (*adjItr).HasMember("scalex") )
-							{
-								entry.adjustToOversizeMask[model].scalex = (*adjItr)["scalex"].GetDouble();
-							}
-							if ( (*adjItr).HasMember("scaley") )
-							{
-								entry.adjustToOversizeMask[model].scaley = (*adjItr)["scaley"].GetDouble();
-							}
-							if ( (*adjItr).HasMember("scalez") )
-							{
-								entry.adjustToOversizeMask[model].scalez = (*adjItr)["scalez"].GetDouble();
-							}
-						}
-					}
-				}
-
-				if ( it2->value.HasMember("adjust_on_expand_helm") )
-				{
-					auto& itr = it2->value["adjust_on_expand_helm"];
-					for ( auto adjItr = itr.Begin(); adjItr != itr.End(); ++adjItr )
-					{
-						std::vector<int> models;
-						if ( (*adjItr)["helm_sprite"].Size() == 0 )
-						{
-							models.push_back(-1);
-						}
-						else
-						{
-							for ( auto itr2 = (*adjItr)["helm_sprite"].Begin(); itr2 != (*adjItr)["helm_sprite"].End(); ++itr2 )
-							{
-								models.push_back(itr2->GetInt());
-							}
-						}
-						for ( auto model : models )
-						{
-							if ( (*adjItr).HasMember("focalx") )
-							{
-								entry.adjustToExpandedHelm[model].focalx = (*adjItr)["focalx"].GetDouble();
-							}
-							if ( (*adjItr).HasMember("focaly") )
-							{
-								entry.adjustToExpandedHelm[model].focaly = (*adjItr)["focaly"].GetDouble();
-							}
-							if ( (*adjItr).HasMember("focalz") )
-							{
-								entry.adjustToExpandedHelm[model].focalz = (*adjItr)["focalz"].GetDouble();
-							}
-							if ( (*adjItr).HasMember("scalex") )
-							{
-								entry.adjustToExpandedHelm[model].scalex = (*adjItr)["scalex"].GetDouble();
-							}
-							if ( (*adjItr).HasMember("scaley") )
-							{
-								entry.adjustToExpandedHelm[model].scaley = (*adjItr)["scaley"].GetDouble();
-							}
-							if ( (*adjItr).HasMember("scalez") )
-							{
-								entry.adjustToExpandedHelm[model].scalez = (*adjItr)["scalez"].GetDouble();
+								cJSON* val = cJSON_GetObjectItem(adjItr, "focalx");
+								if ( val ) entry.adjustToExpandedHelm[model].focalx = val->valuedouble;
+								val = cJSON_GetObjectItem(adjItr, "focaly");
+								if ( val ) entry.adjustToExpandedHelm[model].focaly = val->valuedouble;
+								val = cJSON_GetObjectItem(adjItr, "focalz");
+								if ( val ) entry.adjustToExpandedHelm[model].focalz = val->valuedouble;
+								val = cJSON_GetObjectItem(adjItr, "scalex");
+								if ( val ) entry.adjustToExpandedHelm[model].scalex = val->valuedouble;
+								val = cJSON_GetObjectItem(adjItr, "scaley");
+								if ( val ) entry.adjustToExpandedHelm[model].scaley = val->valuedouble;
+								val = cJSON_GetObjectItem(adjItr, "scalez");
+								if ( val ) entry.adjustToExpandedHelm[model].scalez = val->valuedouble;
 							}
 						}
 					}
@@ -516,13 +524,20 @@ void EquipmentModelOffsets_t::readFromFile(std::string monsterName, int monsterT
 		}
 	}
 
-	if ( d.HasMember("base_offsets") && d["base_offsets"].HasMember("sprite_adjust") && d["base_offsets"]["sprite_adjust"].IsArray() )
+	cJSON* spriteAdjust = NULL;
+	if ( baseOffsets )
 	{
-		for ( auto itr = d["base_offsets"]["sprite_adjust"].Begin(); itr != d["base_offsets"]["sprite_adjust"].End(); ++itr )
+		spriteAdjust = cJSON_GetObjectItem(baseOffsets, "sprite_adjust");
+	}
+	if ( spriteAdjust && cJSON_IsArray(spriteAdjust) )
+	{
+		cJSON* itr = NULL;
+		cJSON_ArrayForEach(itr, spriteAdjust)
 		{
-			if ( (*itr).HasMember("sprite") )
+			cJSON* spriteItem = cJSON_GetObjectItem(itr, "sprite");
+			if ( spriteItem )
 			{
-				int customSprite = (*itr)["sprite"].GetInt();
+				int customSprite = spriteItem->valueint;
 				monsterModelsMap[customSprite] = monsterModelsMap[monsterType];
 
 				real_t baseFocalX = 0.0;
@@ -531,30 +546,18 @@ void EquipmentModelOffsets_t::readFromFile(std::string monsterName, int monsterT
 				real_t baseFocalX_rot1 = 0.0;
 				real_t baseFocalY_rot1 = 0.0;
 				real_t baseFocalZ_rot1 = 0.0;
-				if ( (*itr).HasMember("focalx") )
-				{
-					baseFocalX = (*itr)["focalx"].GetDouble();
-				}
-				if ( (*itr).HasMember("focaly") )
-				{
-					baseFocalY = (*itr)["focaly"].GetDouble();
-				}
-				if ( (*itr).HasMember("focalz") )
-				{
-					baseFocalZ = (*itr)["focalz"].GetDouble();
-				}
-				if ( (*itr).HasMember("focalx_rot1") )
-				{
-					baseFocalX_rot1 = (*itr)["focalx_rot1"].GetDouble();
-				}
-				if ( (*itr).HasMember("focaly_rot1") )
-				{
-					baseFocalY_rot1 = (*itr)["focaly_rot1"].GetDouble();
-				}
-				if ( (*itr).HasMember("focalz_rot1") )
-				{
-					baseFocalZ_rot1 = (*itr)["focalz_rot1"].GetDouble();
-				}
+				cJSON* val = cJSON_GetObjectItem(itr, "focalx");
+				if ( val ) baseFocalX = val->valuedouble;
+				val = cJSON_GetObjectItem(itr, "focaly");
+				if ( val ) baseFocalY = val->valuedouble;
+				val = cJSON_GetObjectItem(itr, "focalz");
+				if ( val ) baseFocalZ = val->valuedouble;
+				val = cJSON_GetObjectItem(itr, "focalx_rot1");
+				if ( val ) baseFocalX_rot1 = val->valuedouble;
+				val = cJSON_GetObjectItem(itr, "focaly_rot1");
+				if ( val ) baseFocalY_rot1 = val->valuedouble;
+				val = cJSON_GetObjectItem(itr, "focalz_rot1");
+				if ( val ) baseFocalZ_rot1 = val->valuedouble;
 
 				for ( auto& model : monsterModelsMap[customSprite] )
 				{
@@ -576,6 +579,6 @@ void EquipmentModelOffsets_t::readFromFile(std::string monsterName, int monsterT
 		}
 	}
 
+	cJSON_Delete(d);
 	printlog("[JSON]: Successfully read json file %s", inputPath.c_str());
 }
-
