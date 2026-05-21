@@ -60,7 +60,6 @@ pub fn build(b: *std.Build) void {
         "src/objects.c",
         "src/scores.c",
         "src/entity_shared.c",
-        "src/collision.c",
         "src/mechanisms.c",
         "src/item_tool.c",
 
@@ -211,8 +210,17 @@ pub fn build(b: *std.Build) void {
     const zig_mod = b.createModule(.{
         .target = target,
         .optimize = optimize,
-        .root_source_file = b.path("src/zig_utils.zig"),
+        .root_source_file = b.path("src/zig_root.zig"),
+        .link_libc = true,
     });
+
+    zig_mod.addIncludePath(b.path("src"));
+    {
+        const inc_path = b.fmt("{s}/include", .{deps_root});
+        zig_mod.addSystemIncludePath(.{ .cwd_relative = inc_path });
+        const sdl_inc = b.fmt("{s}/include/SDL2", .{deps_root});
+        zig_mod.addSystemIncludePath(.{ .cwd_relative = sdl_inc });
+    }
 
     const zig_obj = b.addObject(.{
         .name = "zigbarony",
