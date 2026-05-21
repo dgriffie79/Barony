@@ -14,11 +14,11 @@ See LICENSE for details.
 Uint32 ItemTooltips_t::itemsJsonHashRead = 0;
 const Uint32 ItemTooltips_t::kItemsJsonHash = 2516917045;
 
-void ItemTooltips_t::setSpellValueIfKeyPresent(ItemTooltips_t::spellItem_t& t, rapidjson::Value::ConstMemberIterator item_itr, Uint32& hash, Uint32& hashShift, const char* key, int& toSet)
+void ItemTooltips_t::setSpellValueIfKeyPresent(ItemTooltips_t::spellItem_t& t, cJSON* item_itr, Uint32& hash, Uint32& hashShift, const char* key, int& toSet)
 {
 	t.hasExpandedJSON = true;
 }
-void ItemTooltips_t::setSpellValueIfKeyPresent(ItemTooltips_t::spellItem_t& t, rapidjson::Value::ConstMemberIterator item_itr, Uint32& hash, Uint32& hashShift, const char* key, real_t& toSet)
+void ItemTooltips_t::setSpellValueIfKeyPresent(ItemTooltips_t::spellItem_t& t, cJSON* item_itr, Uint32& hash, Uint32& hashShift, const char* key, real_t& toSet)
 {
 	t.hasExpandedJSON = true;
 }
@@ -57,68 +57,86 @@ void ItemTooltips_t::readItemsFromFile()
 	static char buf[bufSize];
 	int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	//rapidjson::FileReadStream is(fp, buf, sizeof(buf)); - use this for large chunks.
-	rapidjson::StringStream is(buf);
-
-	rapidjson::Document d;
-	d.ParseStream(is);
 	FileIO::close(fp);
-	if ( !d.HasMember("version") || !d.HasMember("items") )
+
+	cJSON* d = cJSON_Parse(buf);
+	if (!d)
 	{
-		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
 		return;
 	}
-	int version = d["version"].GetInt();
+	cJSON* versionItem = cJSON_GetObjectItemCaseSensitive(d, "version");
+	cJSON* itemsItem = cJSON_GetObjectItemCaseSensitive(d, "items");
+	if (!versionItem || !itemsItem)
+	{
+		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		cJSON_Delete(d);
+		return;
+	}
+	int version = (int)versionItem->valueint;
 
 	int itemsRead = 0;
 
 	tmpItems.clear();
 
-	for ( rapidjson::Value::ConstMemberIterator item_itr = d["items"].MemberBegin(); 
-		item_itr != d["items"].MemberEnd(); ++item_itr )
+	for ( cJSON* item_itr = itemsItem->child; item_itr; item_itr = item_itr->next )
 	{
 		tmpItem_t t;
-		t.internalName = item_itr->name.GetString();
-		t.itemId = item_itr->value["item_id"].GetInt();
-		t.fpIndex = item_itr->value["first_person_model_index"].GetInt();
-		t.tpIndex = item_itr->value["third_person_model_index"].GetInt();
-		if ( item_itr->value.HasMember("third_person_model_index_short") )
+		t.internalName = item_itr->string ? item_itr->string : "";
+		cJSON* item_id = cJSON_GetObjectItemCaseSensitive(item_itr, "item_id");
+		t.itemId = item_id ? (int)item_id->valueint : 0;
+		cJSON* fp_index = cJSON_GetObjectItemCaseSensitive(item_itr, "first_person_model_index");
+		t.fpIndex = fp_index ? (int)fp_index->valueint : 0;
+		cJSON* tp_index = cJSON_GetObjectItemCaseSensitive(item_itr, "third_person_model_index");
+		t.tpIndex = tp_index ? (int)tp_index->valueint : 0;
+		cJSON* tp_short = cJSON_GetObjectItemCaseSensitive(item_itr, "third_person_model_index_short");
+		if (tp_short)
 		{
-			t.tpShortIndex = item_itr->value["third_person_model_index_short"].GetInt();
+			t.tpShortIndex = (int)tp_short->valueint;
 		}
-		t.gold = item_itr->value["gold_value"].GetInt();
-		t.weight = item_itr->value["weight_value"].GetInt();
-		t.itemLevel = item_itr->value["item_level"].GetInt();
-		t.category = item_itr->value["item_category"].GetString();
-		t.equipSlot = item_itr->value["equip_slot"].GetString();
+		cJSON* gold_value = cJSON_GetObjectItemCaseSensitive(item_itr, "gold_value");
+		t.gold = gold_value ? (int)gold_value->valueint : 0;
+		cJSON* weight_value = cJSON_GetObjectItemCaseSensitive(item_itr, "weight_value");
+		t.weight = weight_value ? (int)weight_value->valueint : 0;
+		cJSON* item_level = cJSON_GetObjectItemCaseSensitive(item_itr, "item_level");
+		t.itemLevel = item_level ? (int)item_level->valueint : 0;
+		cJSON* item_category = cJSON_GetObjectItemCaseSensitive(item_itr, "item_category");
+		t.category = item_category && item_category->valuestring ? item_category->valuestring : "";
+		cJSON* equip_slot = cJSON_GetObjectItemCaseSensitive(item_itr, "equip_slot");
+		t.equipSlot = equip_slot && equip_slot->valuestring ? equip_slot->valuestring : "";
 
-		for ( rapidjson::Value::ConstValueIterator pathArray_itr = item_itr->value["item_images"].Begin();
-			pathArray_itr != item_itr->value["item_images"].End(); 
-			++pathArray_itr )
+		cJSON* item_images = cJSON_GetObjectItemCaseSensitive(item_itr, "item_images");
+		if (item_images && cJSON_IsArray(item_images))
 		{
-			t.imagePaths.push_back(pathArray_itr->GetString());
-		}
-
-		if ( item_itr->value.HasMember("stats") )
-		{
-			for ( rapidjson::Value::ConstMemberIterator stat_itr = item_itr->value["stats"].MemberBegin(); 
-				stat_itr != item_itr->value["stats"].MemberEnd(); ++stat_itr )
+			for ( cJSON* pathArray_itr = item_images->child; pathArray_itr; pathArray_itr = pathArray_itr->next )
 			{
-				t.attributes[stat_itr->name.GetString()] = stat_itr->value.GetInt();
+				t.imagePaths.push_back(pathArray_itr->valuestring ? pathArray_itr->valuestring : "");
 			}
 		}
 
-		if ( item_itr->value.HasMember("tooltip") )
+		cJSON* stats = cJSON_GetObjectItemCaseSensitive(item_itr, "stats");
+		if (stats)
 		{
-			if ( item_itr->value["tooltip"].HasMember("type") )
+			for ( cJSON* stat_itr = stats->child; stat_itr; stat_itr = stat_itr->next )
 			{
-				t.tooltip = item_itr->value["tooltip"]["type"].GetString();
+				t.attributes[stat_itr->string ? stat_itr->string : ""] = (int)stat_itr->valueint;
 			}
 		}
 
-		if ( item_itr->value.HasMember("icon_label_path") )
+		cJSON* tooltip = cJSON_GetObjectItemCaseSensitive(item_itr, "tooltip");
+		if (tooltip)
 		{
-			t.iconLabelPath = item_itr->value["icon_label_path"].GetString();
+			cJSON* tooltip_type = cJSON_GetObjectItemCaseSensitive(tooltip, "type");
+			if (tooltip_type && tooltip_type->valuestring)
+			{
+				t.tooltip = tooltip_type->valuestring;
+			}
+		}
+
+		cJSON* icon_label_path = cJSON_GetObjectItemCaseSensitive(item_itr, "icon_label_path");
+		if (icon_label_path && icon_label_path->valuestring)
+		{
+			t.iconLabelPath = icon_label_path->valuestring;
 		}
 
 		tmpItems.push_back(t);
@@ -295,24 +313,30 @@ void ItemTooltips_t::readItemsFromFile()
 					return lhs < rhs;
 				});
 			itemValueTableByCategory[items[i].category].insert(lower, pair);
-		}*/
-	}
+	}*/
+}
 
 	spellItems.clear();
 
 	int spellsRead = 0;
-	for ( rapidjson::Value::ConstMemberIterator spell_itr = d["spells"].MemberBegin();
-		spell_itr != d["spells"].MemberEnd(); ++spell_itr )
+	cJSON* spells = cJSON_GetObjectItemCaseSensitive(d, "spells");
+	if (spells)
+	{
+	for ( cJSON* spell_itr = spells->child;
+		spell_itr; spell_itr = spell_itr->next )
 	{
 		spellItem_t t;
-		t.internalName = spell_itr->name.GetString();
+		t.internalName = spell_itr->string ? spell_itr->string : "";
 		//hash += djb2Hash(const_cast<char*>(t.internalName.c_str()));
-		t.name = spell_itr->value["spell_name"].GetString();
+		cJSON* spell_name = cJSON_GetObjectItemCaseSensitive(spell_itr, "spell_name");
+		t.name = spell_name && spell_name->valuestring ? spell_name->valuestring : "";
 		t.name_lowercase = t.name;
 		lowercaseString(t.name_lowercase);
-		t.id = spell_itr->value["spell_id"].GetInt();
+		cJSON* spell_id = cJSON_GetObjectItemCaseSensitive(spell_itr, "spell_id");
+		t.id = spell_id ? (int)spell_id->valueint : 0;
 		//hash += (Uint32)((Uint32)t.id << (shift % 32)); ++shift;
-		t.spellTypeStr = spell_itr->value["spell_type"].GetString();
+		cJSON* spell_type = cJSON_GetObjectItemCaseSensitive(spell_itr, "spell_type");
+		t.spellTypeStr = spell_type && spell_type->valuestring ? spell_type->valuestring : "";
 		t.spellType = SPELL_TYPE_DEFAULT;
 		if ( t.spellTypeStr == "PROJECTILE" )
 		{
@@ -361,28 +385,33 @@ void ItemTooltips_t::readItemsFromFile()
 
 		//hash += djb2Hash(const_cast<char*>(t.spellTypeStr.c_str()));
 
-		if ( spell_itr->value.HasMember("format_tags") )
+		cJSON* format_tags = cJSON_GetObjectItemCaseSensitive(spell_itr, "format_tags");
+		if ( format_tags && cJSON_IsArray(format_tags) )
 		{
-			for ( rapidjson::Value::ConstValueIterator arr_itr = spell_itr->value["format_tags"].Begin();
-				arr_itr != spell_itr->value["format_tags"].End(); ++arr_itr )
+			for ( cJSON* arr_itr = format_tags->child;
+				arr_itr; arr_itr = arr_itr->next )
 			{
-				t.spellFormatTags.push_back(arr_itr->GetString());
+				t.spellFormatTags.push_back(arr_itr->valuestring ? arr_itr->valuestring : "");
 			}
 		}
 
-		if ( spell_itr->value.HasMember("spellbook_item_icon_padding") )
+		cJSON* spellbook_icon = cJSON_GetObjectItemCaseSensitive(spell_itr, "spellbook_item_icon_padding");
+		if ( spellbook_icon && cJSON_IsArray(spellbook_icon) )
 		{
-			for ( rapidjson::Value::ConstValueIterator arr_itr = spell_itr->value["spellbook_item_icon_padding"].Begin();
-				arr_itr != spell_itr->value["spellbook_item_icon_padding"].End(); ++arr_itr )
+			for ( cJSON* arr_itr = spellbook_icon->child;
+				arr_itr; arr_itr = arr_itr->next )
 			{
-				t.spellbookItemIconPaddingLines.push_back(arr_itr->GetInt());
+				t.spellbookItemIconPaddingLines.push_back((int)arr_itr->valueint);
 			}
 		}
 
-		for ( rapidjson::Value::ConstValueIterator arr_itr = spell_itr->value["effect_tags"].Begin();
-			arr_itr != spell_itr->value["effect_tags"].End(); ++arr_itr )
+		cJSON* effect_tags = cJSON_GetObjectItemCaseSensitive(spell_itr, "effect_tags");
+		if ( effect_tags && cJSON_IsArray(effect_tags) )
 		{
-			t.spellTagsStr.push_back(arr_itr->GetString());
+		for ( cJSON* arr_itr = effect_tags->child;
+			arr_itr; arr_itr = arr_itr->next )
+		{
+			t.spellTagsStr.push_back(arr_itr->valuestring ? arr_itr->valuestring : "");
 			//hash += djb2Hash(const_cast<char*>(t.spellTagsStr.back().c_str()));
 			if ( t.spellTagsStr[t.spellTagsStr.size() - 1] == "DAMAGE" )
 			{
@@ -453,13 +482,17 @@ void ItemTooltips_t::readItemsFromFile()
 				t.spellLevelTags.insert(spell_t::SPELL_LEVEL_EVENT_ASSIST);
 			}
 		}
+		}
 
-		t.spellbookInternalName = spell_itr->value["spellbook_internal_name"].GetString();
-		t.magicstaffInternalName = spell_itr->value["magicstaff_internal_name"].GetString();
+		cJSON* spellbook_internal_name = cJSON_GetObjectItemCaseSensitive(spell_itr, "spellbook_internal_name");
+		t.spellbookInternalName = spellbook_internal_name && spellbook_internal_name->valuestring ? spellbook_internal_name->valuestring : "";
+		cJSON* magicstaff_internal_name = cJSON_GetObjectItemCaseSensitive(spell_itr, "magicstaff_internal_name");
+		t.magicstaffInternalName = magicstaff_internal_name && magicstaff_internal_name->valuestring ? magicstaff_internal_name->valuestring : "";
 		t.fociInternalName = "";
-		if ( spell_itr->value.HasMember("foci_internal_name") )
+		cJSON* foci_internal_name = cJSON_GetObjectItemCaseSensitive(spell_itr, "foci_internal_name");
+		if ( foci_internal_name && foci_internal_name->valuestring )
 		{
-			t.fociInternalName = spell_itr->value["foci_internal_name"].GetString();
+			t.fociInternalName = foci_internal_name->valuestring;
 		}
 		for ( int i = 0; i < NUMITEMS; ++i )
 		{
@@ -520,20 +553,21 @@ void ItemTooltips_t::readItemsFromFile()
 		setSpellValueIfKeyPresent(t, spell_itr, hash, shift, "sustain_mult", t.sustain_mult);
 		setSpellValueIfKeyPresent(t, spell_itr, hash, shift, "drop_table", t.drop_table);
 
-		if ( spell_itr->value.HasMember("school") )
+		cJSON* school = cJSON_GetObjectItemCaseSensitive(spell_itr, "school");
+		if ( school && school->valuestring )
 		{
-			std::string school = spell_itr->value["school"].GetString();
-			if ( school == "sorcery" )
+			std::string schoolStr = school->valuestring;
+			if ( schoolStr == "sorcery" )
 			{
 				t.skillID = PRO_SORCERY;
 				//hash += (Uint32)((Uint32)t.skillID << (shift % 32)); ++shift;
 			}
-			else if ( school == "mysticism" )
+			else if ( schoolStr == "mysticism" )
 			{
 				t.skillID = PRO_MYSTICISM;
 				//hash += (Uint32)((Uint32)t.skillID << (shift % 32)); ++shift;
 			}
-			else if ( school == "thaumaturgy" )
+			else if ( schoolStr == "thaumaturgy" )
 			{
 				t.skillID = PRO_THAUMATURGY;
 				//hash += (Uint32)((Uint32)t.skillID << (shift % 32)); ++shift;
@@ -550,7 +584,9 @@ void ItemTooltips_t::readItemsFromFile()
 		spellItems.insert(std::make_pair(t.id, t));
 		++spellsRead;
 	}
+	} // if (spells)
 	printlog("[JSON]: Successfully read %d spells from '%s'", spellsRead, inputPath.c_str());
+	cJSON_Delete(d);
 
 	for ( int i = 0; i < NUM_SPELLS; ++i )
 	{
@@ -683,73 +719,85 @@ void ItemTooltips_t::readItemLocalizationsFromFile(bool forceLoadBaseDirectory)
 	static char buf[buffer_size];
 	const int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	//rapidjson::FileReadStream is(fp, buf, sizeof(buf)); - use this for large chunks.
-	rapidjson::StringStream is(buf);
-
-	rapidjson::Document d;
-	d.ParseStream(is);
 	FileIO::close(fp);
 
-	if ( !d.IsObject() )
+	cJSON* d = cJSON_Parse(buf);
+	if (!d)
+	{
+		printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+		return;
+	}
+
+	if ( !cJSON_IsObject(d) )
 	{
 		printlog("[JSON]: Error: json file does not define a complete object. Is there a syntax error? %s", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
 
-	if ( !d.HasMember("version") )
+	if ( !cJSON_HasObjectItem(d, "version") )
 	{
 		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
-	int version = d["version"].GetInt();
+	cJSON* versionItem = cJSON_GetObjectItemCaseSensitive(d, "version");
+	int version = versionItem ? (int)versionItem->valueint : 0;
 
-	if ( d.HasMember("items") )
+	cJSON* itemsItem = cJSON_GetObjectItemCaseSensitive(d, "items");
+	if ( itemsItem )
 	{
 		if ( forceLoadBaseDirectory )
 		{
 			itemNameLocalizations.clear();
 		}
-		for ( rapidjson::Value::ConstMemberIterator items_itr = d["items"].MemberBegin();
-			items_itr != d["items"].MemberEnd(); ++items_itr )
+		for ( cJSON* items_itr = itemsItem->child;
+			items_itr; items_itr = items_itr->next )
 		{
-			if ( items_itr->value.HasMember("name_identified") )
+			cJSON* name_identified = cJSON_GetObjectItemCaseSensitive(items_itr, "name_identified");
+			if ( name_identified && name_identified->valuestring )
 			{
-				itemNameLocalizations[items_itr->name.GetString()].name_identified = items_itr->value["name_identified"].GetString();
+				itemNameLocalizations[items_itr->string ? items_itr->string : ""].name_identified = name_identified->valuestring;
 			}
 			else
 			{
-				printlog("[JSON]: Warning: item '%s' has no member 'name_identified'!", items_itr->name.GetString());
+				printlog("[JSON]: Warning: item '%s' has no member 'name_identified'!", items_itr->string ? items_itr->string : "?");
 			}
-			if ( items_itr->value.HasMember("name_unidentified") )
+			cJSON* name_unidentified = cJSON_GetObjectItemCaseSensitive(items_itr, "name_unidentified");
+			if ( name_unidentified && name_unidentified->valuestring )
 			{
-				itemNameLocalizations[items_itr->name.GetString()].name_unidentified = items_itr->value["name_unidentified"].GetString();
+				itemNameLocalizations[items_itr->string ? items_itr->string : ""].name_unidentified = name_unidentified->valuestring;
 			}
 			else
 			{
-				printlog("[JSON]: Warning: item '%s' has no member 'name_unidentified'!", items_itr->name.GetString());
+				printlog("[JSON]: Warning: item '%s' has no member 'name_unidentified'!", items_itr->string ? items_itr->string : "?");
 			}
 		}
 	}
 
-	if ( d.HasMember("spell_names") )
+	cJSON* spell_names = cJSON_GetObjectItemCaseSensitive(d, "spell_names");
+	if ( spell_names )
 	{
 		if ( forceLoadBaseDirectory )
 		{
 			spellNameLocalizations.clear();
 		}
-		for ( rapidjson::Value::ConstMemberIterator spell_itr = d["spell_names"].MemberBegin();
-			spell_itr != d["spell_names"].MemberEnd(); ++spell_itr )
+		for ( cJSON* spell_itr = spell_names->child;
+			spell_itr; spell_itr = spell_itr->next )
 		{
-			if ( spell_itr->value.HasMember("name") )
+			cJSON* name = cJSON_GetObjectItemCaseSensitive(spell_itr, "name");
+			if ( name && name->valuestring )
 			{
-				spellNameLocalizations[spell_itr->name.GetString()] = spell_itr->value["name"].GetString();
+				spellNameLocalizations[spell_itr->string ? spell_itr->string : ""] = name->valuestring;
 			}
 			else
 			{
-				printlog("[JSON]: Warning: spell '%s' has no member 'name'!", spell_itr->name.GetString());
+				printlog("[JSON]: Warning: spell '%s' has no member 'name'!", spell_itr->string ? spell_itr->string : "?");
 			}
 		}
 	}
+
+	cJSON_Delete(d);
 
 	printlog("[JSON]: Successfully read %d item names, %d spell names from '%s'", itemNameLocalizations.size(), spellNameLocalizations.size(), inputPath.c_str());
 	assert(itemNameLocalizations.size() == (NUMITEMS));
@@ -837,38 +885,44 @@ void ItemTooltips_t::readBookLocalizationsFromFile(bool forceLoadBaseDirectory)
 	static char buf[buffer_size];
 	const int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	//rapidjson::FileReadStream is(fp, buf, sizeof(buf)); - use this for large chunks.
-	rapidjson::StringStream is(buf);
-
-	rapidjson::Document d;
-	d.ParseStream(is);
 	FileIO::close(fp);
 
-	if ( !d.IsObject() )
+	cJSON* d = cJSON_Parse(buf);
+	if (!d)
+	{
+		printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
+		return;
+	}
+
+	if ( !cJSON_IsObject(d) )
 	{
 		printlog("[JSON]: Error: json file does not define a complete object. Is there a syntax error? %s", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
 
-	if ( !d.HasMember("version") )
+	if ( !cJSON_HasObjectItem(d, "version") )
 	{
 		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
-	int version = d["version"].GetInt();
 
-	if ( d.HasMember("book_names") )
+	cJSON* book_names = cJSON_GetObjectItemCaseSensitive(d, "book_names");
+	if ( book_names )
 	{
 		if ( forceLoadBaseDirectory )
 		{
 			bookNameLocalizations.clear();
 		}
-		for ( rapidjson::Value::ConstMemberIterator books_itr = d["book_names"].MemberBegin();
-			books_itr != d["book_names"].MemberEnd(); ++books_itr )
+		for ( cJSON* books_itr = book_names->child;
+			books_itr; books_itr = books_itr->next )
 		{
-			bookNameLocalizations[books_itr->name.GetString()] = books_itr->value.GetString();
+			bookNameLocalizations[books_itr->string ? books_itr->string : ""] = books_itr->valuestring ? books_itr->valuestring : "";
 		}
 	}
+
+	cJSON_Delete(d);
 
 	printlog("[JSON]: Successfully read %d book names from '%s'", bookNameLocalizations.size(), inputPath.c_str());
 }
@@ -918,113 +972,143 @@ void ItemTooltips_t::readTooltipsFromFile(bool forceLoadBaseDirectory)
 	static char buf[buffer_size];
 	const int count = fp->read(buf, sizeof(buf[0]), sizeof(buf) - 1);
 	buf[count] = '\0';
-	//rapidjson::FileReadStream is(fp, buf, sizeof(buf)); - use this for large chunks.
-	rapidjson::StringStream is(buf);
-
-	rapidjson::Document d;
-	d.ParseStream(is);
 	FileIO::close(fp);
 
-	if ( !d.IsObject() )
+	cJSON* d = cJSON_Parse(buf);
+	if (!d)
 	{
-		printlog("[JSON]: Error: json file does not define a complete object. Is there a syntax error? %s", inputPath.c_str());
+		printlog("[JSON]: Error: Could not parse json file %s", inputPath.c_str());
 		return;
 	}
 
-	if ( !d.HasMember("version") )
+	if ( !cJSON_IsObject(d) )
 	{
-		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		printlog("[JSON]: Error: json file does not define a complete object. Is there a syntax error? %s", inputPath.c_str());
+		cJSON_Delete(d);
 		return;
 	}
-	int version = d["version"].GetInt();
+
+	if ( !cJSON_HasObjectItem(d, "version") )
+	{
+		printlog("[JSON]: Error: No 'version' value in json file, or JSON syntax incorrect! %s", inputPath.c_str());
+		cJSON_Delete(d);
+		return;
+	}
 
 	if ( forceLoadBaseDirectory )
 	{
 		adjectives.clear();
 	}
-	if ( d.HasMember("adjectives") )
+	cJSON* adjectivesObj = cJSON_GetObjectItemCaseSensitive(d, "adjectives");
+	if ( adjectivesObj )
 	{
-		for ( rapidjson::Value::ConstMemberIterator adj_itr = d["adjectives"].MemberBegin();
-			adj_itr != d["adjectives"].MemberEnd(); ++adj_itr )
+		for ( cJSON* adj_itr = adjectivesObj->child;
+			adj_itr; adj_itr = adj_itr->next )
 		{
 			std::map<std::string, std::string> m;
-			for ( rapidjson::Value::ConstMemberIterator inner_itr = adj_itr->value.MemberBegin();
-				inner_itr != adj_itr->value.MemberEnd(); ++inner_itr )
+			for ( cJSON* inner_itr = adj_itr->child;
+				inner_itr; inner_itr = inner_itr->next )
 			{
-				m[inner_itr->name.GetString()] = inner_itr->value.GetString();
+				m[inner_itr->string ? inner_itr->string : ""] = inner_itr->valuestring ? inner_itr->valuestring : "";
 			}
-			adjectives[adj_itr->name.GetString()] = m;
+			adjectives[adj_itr->string ? adj_itr->string : ""] = m;
 		}
 	}
 
-	if ( d.HasMember("default_text_colors") )
+	cJSON* default_text_colors = cJSON_GetObjectItemCaseSensitive(d, "default_text_colors");
+	if ( default_text_colors )
 	{
-		defaultHeadingTextColor = makeColor( 
-			d["default_text_colors"]["heading"]["r"].GetInt(), 
-			d["default_text_colors"]["heading"]["g"].GetInt(), 
-			d["default_text_colors"]["heading"]["b"].GetInt(),
-			d["default_text_colors"]["heading"]["a"].GetInt());
-		defaultIconTextColor = makeColor(
-			d["default_text_colors"]["icons"]["r"].GetInt(),
-			d["default_text_colors"]["icons"]["g"].GetInt(),
-			d["default_text_colors"]["icons"]["b"].GetInt(), 
-			d["default_text_colors"]["icons"]["a"].GetInt());
-		defaultDescriptionTextColor = makeColor(
-			d["default_text_colors"]["description"]["r"].GetInt(),
-			d["default_text_colors"]["description"]["g"].GetInt(), 
-			d["default_text_colors"]["description"]["b"].GetInt(),
-			d["default_text_colors"]["description"]["a"].GetInt());
-		defaultDetailsTextColor = makeColor(
-			d["default_text_colors"]["details"]["r"].GetInt(), 
-			d["default_text_colors"]["details"]["g"].GetInt(), 
-			d["default_text_colors"]["details"]["b"].GetInt(), 
-			d["default_text_colors"]["details"]["a"].GetInt());
-		defaultPositiveTextColor = makeColor(
-			d["default_text_colors"]["positive_color"]["r"].GetInt(),
-			d["default_text_colors"]["positive_color"]["g"].GetInt(),
-			d["default_text_colors"]["positive_color"]["b"].GetInt(),
-			d["default_text_colors"]["positive_color"]["a"].GetInt());
-		defaultNegativeTextColor = makeColor(
-			d["default_text_colors"]["negative_color"]["r"].GetInt(),
-			d["default_text_colors"]["negative_color"]["g"].GetInt(),
-			d["default_text_colors"]["negative_color"]["b"].GetInt(),
-			d["default_text_colors"]["negative_color"]["a"].GetInt());
-		defaultStatusEffectTextColor = makeColor(
-			d["default_text_colors"]["status_effect"]["r"].GetInt(),
-			d["default_text_colors"]["status_effect"]["g"].GetInt(),
-			d["default_text_colors"]["status_effect"]["b"].GetInt(),
-			d["default_text_colors"]["status_effect"]["a"].GetInt());
-		defaultFaintTextColor = makeColor(
-			d["default_text_colors"]["faint_text"]["r"].GetInt(),
-			d["default_text_colors"]["faint_text"]["g"].GetInt(),
-			d["default_text_colors"]["faint_text"]["b"].GetInt(),
-			d["default_text_colors"]["faint_text"]["a"].GetInt());
+		cJSON* heading = cJSON_GetObjectItemCaseSensitive(default_text_colors, "heading");
+		if (heading) {
+			defaultHeadingTextColor = makeColor( 
+				cJSON_GetObjectItemCaseSensitive(heading, "r")->valueint, 
+				cJSON_GetObjectItemCaseSensitive(heading, "g")->valueint, 
+				cJSON_GetObjectItemCaseSensitive(heading, "b")->valueint,
+				cJSON_GetObjectItemCaseSensitive(heading, "a")->valueint);
+		}
+		cJSON* iconsColors = cJSON_GetObjectItemCaseSensitive(default_text_colors, "icons");
+		if (iconsColors) {
+			defaultIconTextColor = makeColor(
+				cJSON_GetObjectItemCaseSensitive(iconsColors, "r")->valueint,
+				cJSON_GetObjectItemCaseSensitive(iconsColors, "g")->valueint,
+				cJSON_GetObjectItemCaseSensitive(iconsColors, "b")->valueint, 
+				cJSON_GetObjectItemCaseSensitive(iconsColors, "a")->valueint);
+		}
+		cJSON* description = cJSON_GetObjectItemCaseSensitive(default_text_colors, "description");
+		if (description) {
+			defaultDescriptionTextColor = makeColor(
+				cJSON_GetObjectItemCaseSensitive(description, "r")->valueint,
+				cJSON_GetObjectItemCaseSensitive(description, "g")->valueint, 
+				cJSON_GetObjectItemCaseSensitive(description, "b")->valueint,
+				cJSON_GetObjectItemCaseSensitive(description, "a")->valueint);
+		}
+		cJSON* details = cJSON_GetObjectItemCaseSensitive(default_text_colors, "details");
+		if (details) {
+			defaultDetailsTextColor = makeColor(
+				cJSON_GetObjectItemCaseSensitive(details, "r")->valueint, 
+				cJSON_GetObjectItemCaseSensitive(details, "g")->valueint, 
+				cJSON_GetObjectItemCaseSensitive(details, "b")->valueint, 
+				cJSON_GetObjectItemCaseSensitive(details, "a")->valueint);
+		}
+		cJSON* positive_color = cJSON_GetObjectItemCaseSensitive(default_text_colors, "positive_color");
+		if (positive_color) {
+			defaultPositiveTextColor = makeColor(
+				cJSON_GetObjectItemCaseSensitive(positive_color, "r")->valueint,
+				cJSON_GetObjectItemCaseSensitive(positive_color, "g")->valueint,
+				cJSON_GetObjectItemCaseSensitive(positive_color, "b")->valueint,
+				cJSON_GetObjectItemCaseSensitive(positive_color, "a")->valueint);
+		}
+		cJSON* negative_color = cJSON_GetObjectItemCaseSensitive(default_text_colors, "negative_color");
+		if (negative_color) {
+			defaultNegativeTextColor = makeColor(
+				cJSON_GetObjectItemCaseSensitive(negative_color, "r")->valueint,
+				cJSON_GetObjectItemCaseSensitive(negative_color, "g")->valueint,
+				cJSON_GetObjectItemCaseSensitive(negative_color, "b")->valueint,
+				cJSON_GetObjectItemCaseSensitive(negative_color, "a")->valueint);
+		}
+		cJSON* status_effect = cJSON_GetObjectItemCaseSensitive(default_text_colors, "status_effect");
+		if (status_effect) {
+			defaultStatusEffectTextColor = makeColor(
+				cJSON_GetObjectItemCaseSensitive(status_effect, "r")->valueint,
+				cJSON_GetObjectItemCaseSensitive(status_effect, "g")->valueint,
+				cJSON_GetObjectItemCaseSensitive(status_effect, "b")->valueint,
+				cJSON_GetObjectItemCaseSensitive(status_effect, "a")->valueint);
+		}
+		cJSON* faint_text = cJSON_GetObjectItemCaseSensitive(default_text_colors, "faint_text");
+		if (faint_text) {
+			defaultFaintTextColor = makeColor(
+				cJSON_GetObjectItemCaseSensitive(faint_text, "r")->valueint,
+				cJSON_GetObjectItemCaseSensitive(faint_text, "g")->valueint,
+				cJSON_GetObjectItemCaseSensitive(faint_text, "b")->valueint,
+				cJSON_GetObjectItemCaseSensitive(faint_text, "a")->valueint);
+		}
 	}
 
 	if ( forceLoadBaseDirectory )
 	{
 		templates.clear();
 	}
-	if ( d.HasMember("templates") )
+	cJSON* templatesObj = cJSON_GetObjectItemCaseSensitive(d, "templates");
+	if ( templatesObj )
 	{
-		for ( rapidjson::Value::ConstMemberIterator template_itr = d["templates"].MemberBegin();
-			template_itr != d["templates"].MemberEnd(); ++template_itr )
+		for ( cJSON* template_itr = templatesObj->child;
+			template_itr; template_itr = template_itr->next )
 		{
-			if ( !template_itr->value.IsArray() )
+			if ( !cJSON_IsArray(template_itr) )
 			{
-				printlog("[JSON]: Error: template entry for template %s did not have [] format!", template_itr->name.GetString());
+				printlog("[JSON]: Error: template entry for template %s did not have [] format!", template_itr->string ? template_itr->string : "?");
 			}
 			else
 			{
-				std::string template_name = template_itr->name.GetString();
+				std::string template_name = template_itr->string ? template_itr->string : "";
 				if ( templates.find(template_name) != templates.end() )
 				{
 					templates[template_name].clear();
 				}
-				for ( auto lines = template_itr->value.Begin();
-					lines != template_itr->value.End(); ++lines )
+				for ( cJSON* lines = template_itr->child;
+					lines; lines = lines->next )
 				{
-					templates[template_name].push_back(lines->GetString());
+					templates[template_name].push_back(lines->valuestring ? lines->valuestring : "");
 				}
 			}
 		}
@@ -1036,10 +1120,11 @@ void ItemTooltips_t::readTooltipsFromFile(bool forceLoadBaseDirectory)
 	}
 	std::unordered_set<std::string> tagsRead;
 
-	if ( d.HasMember("tooltips") )
+	cJSON* tooltipsObj = cJSON_GetObjectItemCaseSensitive(d, "tooltips");
+	if ( tooltipsObj )
 	{
-		for ( rapidjson::Value::ConstMemberIterator tooltipType_itr = d["tooltips"].MemberBegin();
-			tooltipType_itr != d["tooltips"].MemberEnd(); ++tooltipType_itr )
+		for ( cJSON* tooltipType_itr = tooltipsObj->child;
+			tooltipType_itr; tooltipType_itr = tooltipType_itr->next )
 		{
 			ItemTooltip_t tooltip;
 			tooltip.setColorHeading(this->defaultHeadingTextColor);
@@ -1050,171 +1135,182 @@ void ItemTooltips_t::readTooltipsFromFile(bool forceLoadBaseDirectory)
 			tooltip.setColorStatus(this->defaultStatusEffectTextColor);
 			tooltip.setColorFaintText(this->defaultFaintTextColor);
 
-			if ( tooltipType_itr->value.HasMember("icons") )
+			cJSON* icons = cJSON_GetObjectItemCaseSensitive(tooltipType_itr, "icons");
+			if ( icons )
 			{
-				if ( !tooltipType_itr->value["icons"].IsArray() )
+				if ( !cJSON_IsArray(icons) )
 				{
-					printlog("[JSON]: Error: 'icons' entry for tooltip %s did not have [] format", tooltipType_itr->name.GetString());
+					printlog("[JSON]: Error: 'icons' entry for tooltip %s did not have [] format", tooltipType_itr->string ? tooltipType_itr->string : "?");
 				}
 				else
 				{
-					for ( auto icons = tooltipType_itr->value["icons"].Begin();
-						icons != tooltipType_itr->value["icons"].End(); ++icons )
+					for ( cJSON* icon = icons->child;
+						icon; icon = icon->next )
 					{
-						// you need to FindMember() if getting objects from an array...
-						auto textMember = icons->FindMember("text");
-						auto iconPathMember = icons->FindMember("icon_path");
-						if ( !textMember->value.IsString() || !iconPathMember->value.IsString() )
+						cJSON* textMember = cJSON_GetObjectItemCaseSensitive(icon, "text");
+						cJSON* iconPathMember = cJSON_GetObjectItemCaseSensitive(icon, "icon_path");
+						if ( !cJSON_IsString(textMember) || !cJSON_IsString(iconPathMember) )
 						{
 							printlog("[JSON]: Error: Icon text or path was not string!");
 							continue;
 						}
 
-						tooltip.icons.push_back(ItemTooltipIcons_t(iconPathMember->value.GetString(), textMember->value.GetString()));
+						tooltip.icons.push_back(ItemTooltipIcons_t(iconPathMember->valuestring, textMember->valuestring));
 
 						Uint32 color = this->defaultIconTextColor;
-						if ( icons->HasMember("color") && icons->FindMember("color")->value.HasMember("r") )
+						cJSON* iconColor = cJSON_GetObjectItemCaseSensitive(icon, "color");
+						if ( iconColor )
 						{
-							// icons->FindMember("color")->value.isObject() always returning true?? so check for "r" member instead
-							color = makeColor(
-								icons->FindMember("color")->value["r"].GetInt(),
-								icons->FindMember("color")->value["g"].GetInt(),
-								icons->FindMember("color")->value["b"].GetInt(),
-								icons->FindMember("color")->value["a"].GetInt());
+							cJSON* r = cJSON_GetObjectItemCaseSensitive(iconColor, "r");
+							if (r)
+							{
+								color = makeColor(
+									(int)r->valueint,
+									(int)cJSON_GetObjectItemCaseSensitive(iconColor, "g")->valueint,
+									(int)cJSON_GetObjectItemCaseSensitive(iconColor, "b")->valueint,
+									(int)cJSON_GetObjectItemCaseSensitive(iconColor, "a")->valueint);
+							}
 						}
 						tooltip.icons[tooltip.icons.size() - 1].setColor(color);
-						if ( icons->HasMember("conditional_attribute") )
+						cJSON* conditional_attribute = cJSON_GetObjectItemCaseSensitive(icon, "conditional_attribute");
+						if ( conditional_attribute && conditional_attribute->valuestring )
 						{
-							tooltip.icons[tooltip.icons.size() - 1].setConditionalAttribute(icons->FindMember("conditional_attribute")->value.GetString());
+							tooltip.icons[tooltip.icons.size() - 1].setConditionalAttribute(conditional_attribute->valuestring);
 						}
 					}
 				}
 			}
 
-			if ( tooltipType_itr->value.HasMember("description") )
+			cJSON* description = cJSON_GetObjectItemCaseSensitive(tooltipType_itr, "description");
+			if ( description )
 			{
-				if ( tooltipType_itr->value["description"].IsString() )
+				if ( cJSON_IsString(description) )
 				{
-					//printlog("[JSON]: Found template string '%s' for tooltip '%s'", tooltipType_itr->value["description"].GetString(), tooltipType_itr->name.GetString());
-					if ( templates.find(tooltipType_itr->value["description"].GetString()) != templates.end() )
+					if ( templates.find(description->valuestring) != templates.end() )
 					{
-						tooltip.descriptionText = templates[tooltipType_itr->value["description"].GetString()];
+						tooltip.descriptionText = templates[description->valuestring];
 					}
 					else
 					{
-						printlog("[JSON]: Error: Could not find template tag '%s'", tooltipType_itr->value["description"].GetString());
+						printlog("[JSON]: Error: Could not find template tag '%s'", description->valuestring ? description->valuestring : "?");
 					}
 				}
 				else
 				{
-					for ( auto descriptions = tooltipType_itr->value["description"].Begin();
-						descriptions != tooltipType_itr->value["description"].End(); ++descriptions )
+					for ( cJSON* descriptions = description->child;
+						descriptions; descriptions = descriptions->next )
 					{
-						tooltip.descriptionText.push_back(descriptions->GetString());
+						tooltip.descriptionText.push_back(descriptions->valuestring ? descriptions->valuestring : "");
 					}
 				}
 			}
 
-			if ( tooltipType_itr->value.HasMember("details") )
+			cJSON* details = cJSON_GetObjectItemCaseSensitive(tooltipType_itr, "details");
+			if ( details )
 			{
-				if ( !tooltipType_itr->value["details"].IsArray() )
+				if ( !cJSON_IsArray(details) )
 				{
-					printlog("[JSON]: Error: 'details' entry for tooltip '%s' did not have [] format!", tooltipType_itr->name.GetString());
+					printlog("[JSON]: Error: 'details' entry for tooltip '%s' did not have [] format!", tooltipType_itr->string ? tooltipType_itr->string : "?");
 				}
 				else
 				{
-					for ( auto details_itr = tooltipType_itr->value["details"].Begin();
-						details_itr != tooltipType_itr->value["details"].End(); ++details_itr )
+					for ( cJSON* details_itr = details->child;
+						details_itr; details_itr = details_itr->next )
 					{
-						for ( auto keyValue_itr = details_itr->MemberBegin();
-							keyValue_itr != details_itr->MemberEnd(); ++keyValue_itr )
+						for ( cJSON* keyValue_itr = details_itr->child;
+							keyValue_itr; keyValue_itr = keyValue_itr->next )
 						{
-							tagsRead.insert(keyValue_itr->name.GetString());
+							tagsRead.insert(keyValue_itr->string ? keyValue_itr->string : "");
 							std::vector<std::string> detailEntry;
-							if ( keyValue_itr->value.IsString() )
+							if ( cJSON_IsString(keyValue_itr) )
 							{
-								//printlog("[JSON]: Found template string '%s' for tooltip '%s'", keyValue_itr->value.GetString(), tooltipType_itr->name.GetString());
-								if ( templates.find(keyValue_itr->value.GetString()) != templates.end() )
+								if ( templates.find(keyValue_itr->valuestring) != templates.end() )
 								{
-									detailEntry = templates[keyValue_itr->value.GetString()];
+									detailEntry = templates[keyValue_itr->valuestring];
 								}
 								else
 								{
-									printlog("[JSON]: Error: Could not find template tag '%s'", keyValue_itr->value.GetString());
+									printlog("[JSON]: Error: Could not find template tag '%s'", keyValue_itr->valuestring ? keyValue_itr->valuestring : "?");
 								}
 							}
-							else
+							else if ( cJSON_IsArray(keyValue_itr) )
 							{
-								for ( auto detailTag = keyValue_itr->value.Begin();
-									detailTag != keyValue_itr->value.End(); ++detailTag )
+								for ( cJSON* detailTag = keyValue_itr->child;
+									detailTag; detailTag = detailTag->next )
 								{
-									detailEntry.push_back(detailTag->GetString());
+									detailEntry.push_back(detailTag->valuestring ? detailTag->valuestring : "");
 								}
 							}
-							tooltip.detailsText[keyValue_itr->name.GetString()] = detailEntry;
-							tooltip.detailsTextInsertOrder.push_back(keyValue_itr->name.GetString());
+							tooltip.detailsText[keyValue_itr->string ? keyValue_itr->string : ""] = detailEntry;
+							tooltip.detailsTextInsertOrder.push_back(keyValue_itr->string ? keyValue_itr->string : "");
 						}
 					}
 				}
 			}
 
-			if ( tooltipType_itr->value.HasMember("size") )
+			cJSON* size = cJSON_GetObjectItemCaseSensitive(tooltipType_itr, "size");
+			if ( size )
 			{
-				if ( tooltipType_itr->value["size"].HasMember("min_width") )
+				cJSON* min_width = cJSON_GetObjectItemCaseSensitive(size, "min_width");
+				if ( min_width )
 				{
-					tooltip.minWidths["default"] = tooltipType_itr->value["size"]["min_width"].GetInt();
+					tooltip.minWidths["default"] = (int)min_width->valueint;
 				}
 				else
 				{
 					tooltip.minWidths["default"] = 0;
 				}
-				if ( tooltipType_itr->value["size"].HasMember("max_width") )
+				cJSON* max_width = cJSON_GetObjectItemCaseSensitive(size, "max_width");
+				if ( max_width )
 				{
-					tooltip.maxWidths["default"] = tooltipType_itr->value["size"]["max_width"].GetInt();
+					tooltip.maxWidths["default"] = (int)max_width->valueint;
 				}
 				else
 				{
 					tooltip.maxWidths["default"] = 0;
 				}
-				if ( tooltipType_itr->value["size"].HasMember("max_header_width") )
+				cJSON* max_header_width = cJSON_GetObjectItemCaseSensitive(size, "max_header_width");
+				if ( max_header_width )
 				{
-					tooltip.headerMaxWidths["default"] = tooltipType_itr->value["size"]["max_header_width"].GetInt();
+					tooltip.headerMaxWidths["default"] = (int)max_header_width->valueint;
 				}
 				else
 				{
 					tooltip.headerMaxWidths["default"] = 0;
 				}
 
-				if ( tooltipType_itr->value["size"].HasMember("item_overrides") )
+				cJSON* item_overrides = cJSON_GetObjectItemCaseSensitive(size, "item_overrides");
+				if ( item_overrides )
 				{
-					for ( auto itemOverride_itr = tooltipType_itr->value["size"]["item_overrides"].MemberBegin();
-						itemOverride_itr != tooltipType_itr->value["size"]["item_overrides"].MemberEnd(); ++itemOverride_itr )
+					for ( cJSON* itemOverride_itr = item_overrides->child;
+						itemOverride_itr; itemOverride_itr = itemOverride_itr->next )
 					{
-						if ( itemOverride_itr->value.HasMember("min_width") )
+						cJSON* override_min_width = cJSON_GetObjectItemCaseSensitive(itemOverride_itr, "min_width");
+						if ( override_min_width )
 						{
-							tooltip.minWidths[itemOverride_itr->name.GetString()] = itemOverride_itr->value["min_width"].GetInt();
+							tooltip.minWidths[itemOverride_itr->string ? itemOverride_itr->string : ""] = (int)override_min_width->valueint;
 						}
-						if ( itemOverride_itr->value.HasMember("max_width") )
+						cJSON* override_max_width = cJSON_GetObjectItemCaseSensitive(itemOverride_itr, "max_width");
+						if ( override_max_width )
 						{
-							tooltip.maxWidths[itemOverride_itr->name.GetString()] = itemOverride_itr->value["max_width"].GetInt();
+							tooltip.maxWidths[itemOverride_itr->string ? itemOverride_itr->string : ""] = (int)override_max_width->valueint;
 						}
-						if ( itemOverride_itr->value.HasMember("max_header_width") )
+						cJSON* override_max_header_width = cJSON_GetObjectItemCaseSensitive(itemOverride_itr, "max_header_width");
+						if ( override_max_header_width )
 						{
-							tooltip.headerMaxWidths[itemOverride_itr->name.GetString()] = itemOverride_itr->value["max_header_width"].GetInt();
+							tooltip.headerMaxWidths[itemOverride_itr->string ? itemOverride_itr->string : ""] = (int)override_max_header_width->valueint;
 						}
 					}
 				}
 			}
 
-			tooltips[tooltipType_itr->name.GetString()] = tooltip;
+			tooltips[tooltipType_itr->string ? tooltipType_itr->string : ""] = tooltip;
 		}
 	}
 
+	cJSON_Delete(d);
+
 	printlog("[JSON]: Successfully read %d item tooltips from '%s'", tooltips.size(), inputPath.c_str());
-	/*for ( auto tmp : tagsRead )
-	{
-		printlog("%s", tmp.c_str());
-	}*/
 }
 
 std::string& ItemTooltips_t::getItemStatusAdjective(Uint32 itemType, Status status)

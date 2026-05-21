@@ -12,10 +12,7 @@ See LICENSE for details.
 
 #pragma once
 
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
-#include "rapidjson/filewritestream.h"
-#include "rapidjson/prettywriter.h"
+#include "cJSON.h"
 
 #define MOD_TOOLS_CPP
 #include "items.hpp"

@@ -28,22 +28,26 @@ class CustomHelpers
 {
 public:
 #ifdef MOD_TOOLS_CPP
-	static void addMemberToSubkey(rapidjson::Document& d, std::string subkey, std::string name, const rapidjson::Value& value)
+	static void addMemberToSubkey(cJSON* d, std::string subkey, std::string name, const cJSON* value)
 	{
-		rapidjson::Value key(name.c_str(), d.GetAllocator());
-		rapidjson::Value val(value, d.GetAllocator());
-		d[subkey.c_str()].AddMember(key, val, d.GetAllocator());
+		cJSON* val_copy = cJSON_Duplicate(value, 1);
+		cJSON* sub = cJSON_GetObjectItemCaseSensitive(d, subkey.c_str());
+		if (sub) {
+			cJSON_AddItemToObject(sub, name.c_str(), val_copy);
+		}
 	}
-	static void addMemberToRoot(rapidjson::Document& d, std::string name, const rapidjson::Value& value)
+	static void addMemberToRoot(cJSON* d, std::string name, const cJSON* value)
 	{
-		rapidjson::Value key(name.c_str(), d.GetAllocator());
-		rapidjson::Value val(value, d.GetAllocator());
-		d.AddMember(key, val, d.GetAllocator());
+		cJSON* val_copy = cJSON_Duplicate(value, 1);
+		cJSON_AddItemToObject(d, name.c_str(), val_copy);
 	}
-	static void addArrayMemberToSubkey(rapidjson::Document& d, std::string subkey, const rapidjson::Value& value)
+	static void addArrayMemberToSubkey(cJSON* d, std::string subkey, const cJSON* value)
 	{
-		rapidjson::Value val(value, d.GetAllocator());
-		d[subkey.c_str()].PushBack(val, d.GetAllocator());
+		cJSON* sub = cJSON_GetObjectItemCaseSensitive(d, subkey.c_str());
+		if (sub) {
+			cJSON* val_copy = cJSON_Duplicate(value, 1);
+			cJSON_AddItemToArray(sub, val_copy);
+		}
 	}
 #else
 	static void addMemberToSubkey(void*, const char*, const char*, void*) {}
@@ -1549,16 +1553,8 @@ public:
 		void setColorStatus(Uint32 color) { statusEffectTextColor = color; }
 		void setColorFaintText(Uint32 color) { faintTextColor = color; }
 	};
-#ifdef MOD_TOOLS_CPP
-	void setSpellValueIfKeyPresent(spellItem_t& t, rapidjson::Value::ConstMemberIterator item_itr, Uint32& hash, Uint32& hashShift, const char* key, int& toSet);
-#else
-	void setSpellValueIfKeyPresent(spellItem_t& t, void* item_itr, Uint32& hash, Uint32& hashShift, const char* key, int& toSet);
-#endif
-#ifdef MOD_TOOLS_CPP
-	void setSpellValueIfKeyPresent(spellItem_t& t, rapidjson::Value::ConstMemberIterator item_itr, Uint32& hash, Uint32& hashShift, const char* key, real_t& toSet);
-#else
-	void setSpellValueIfKeyPresent(spellItem_t& t, void* item_itr, Uint32& hash, Uint32& hashShift, const char* key, real_t& toSet);
-#endif
+	void setSpellValueIfKeyPresent(spellItem_t& t, cJSON* item_itr, Uint32& hash, Uint32& hashShift, const char* key, int& toSet);
+	void setSpellValueIfKeyPresent(spellItem_t& t, cJSON* item_itr, Uint32& hash, Uint32& hashShift, const char* key, real_t& toSet);
 	void readItemsFromFile();
 	static const Uint32 kItemsJsonHash;
 	static Uint32 itemsJsonHashRead;

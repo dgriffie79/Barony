@@ -8,10 +8,6 @@ Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
 See LICENSE for details.
 
 -------------------------------------------------------------------------------*/
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
-#include "rapidjson/filewritestream.h"
-#include "rapidjson/prettywriter.h"
 #define MOD_TOOLS_CPP
 #include "items.hpp"
 #include "mod_tools.hpp"
