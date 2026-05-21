@@ -9,16 +9,16 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "items.hpp"
 #include "engine/audio/sound.hpp"
 #include "net.hpp"
 #include "player.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "scores.hpp"
-#include "collision.hpp"
+#include "collision.h"
 
 /*-------------------------------------------------------------------------------
 

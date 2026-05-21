@@ -15,7 +15,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "prng.hpp"
+#include "prng.h"
 
 template<typename T>
 T randomEntryFromVector(std::vector<T> vector)

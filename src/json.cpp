@@ -1,6 +1,6 @@
-#include "main.hpp"
+#include "main.h"
 #include "files.hpp"
-#include "json.hpp"
+#include "json.h"
 #include "cJSON.h"
 
 #include <cassert>

@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "messages.hpp"
@@ -17,9 +17,9 @@
 #include "net.hpp"
 #include "entity.hpp"
 #include "player.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "scores.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "mod_tools.hpp"
 
 /*-------------------------------------------------------------------------------

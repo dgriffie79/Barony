@@ -9,24 +9,24 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
 #include "files.hpp"
 #include "items.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "monster.hpp"
 #include "magic/magic.hpp"
 #include "interface/interface.hpp"
 #include "book.hpp"
 #include "net.hpp"
-#include "paths.hpp"
-#include "collision.hpp"
+#include "paths.h"
+#include "collision.h"
 #include "player.hpp"
 #include "scores.hpp"
 #include "mod_tools.hpp"
-#include "menu.hpp"
+#include "menu.h"
 #include "ui/MainMenu.hpp"
 
 int startfloor = 0;
@@ -1201,7 +1201,7 @@ bool loadSubRoomData(std::string fullMapPath, list_t* mapList)
 
 -------------------------------------------------------------------------------*/
 
-int generateDungeon(char* levelset, Uint32 seed, std::tuple<int, int, int, int> mapParameters)
+int generateDungeon(char* levelset, Uint32 seed, int secretChance, int darknessChance, int minotaurChance, int disableNormalExit)
 {
 	char sublevelnum[3];
 	list_t mapList, subRoomMapList;
@@ -1237,10 +1237,10 @@ int generateDungeon(char* levelset, Uint32 seed, std::tuple<int, int, int, int> 
 		map.lootexcludelocations = nullptr;
 	}
 
-	if ( std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) == -1
-		&& std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) == -1
-		&& std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) == -1
-		&& std::get<LEVELPARAM_DISABLE_NORMAL_EXIT>(mapParameters) == 0 )
+	if ( secretChance == -1
+		&& darknessChance == -1
+		&& minotaurChance == -1
+		&& disableNormalExit == 0 )
 	{
 		printlog("generating a dungeon from level set '%s' (seed %lu)...\n", levelset, seed);
 	}
@@ -1248,24 +1248,24 @@ int generateDungeon(char* levelset, Uint32 seed, std::tuple<int, int, int, int> 
 	{
 		char generationLog[256] = "generating a dungeon from level set '%s'";
 		char tmpBuffer[32];
-		if ( std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) != -1 )
+		if ( secretChance != -1 )
 		{
-			snprintf(tmpBuffer, 31, ", secret chance %d%%%%", std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters));
+			snprintf(tmpBuffer, 31, ", secret chance %d%%%%", secretChance);
 			strcat(generationLog, tmpBuffer);
 		}
-		if ( std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) != -1 )
+		if ( darknessChance != -1 )
 		{
-			snprintf(tmpBuffer, 31, ", darkmap chance %d%%%%", std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters));
+			snprintf(tmpBuffer, 31, ", darkmap chance %d%%%%", darknessChance);
 			strcat(generationLog, tmpBuffer);
 		}
-		if ( std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) != -1 )
+		if ( minotaurChance != -1 )
 		{
-			snprintf(tmpBuffer, 31, ", minotaur chance %d%%%%", std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters));
+			snprintf(tmpBuffer, 31, ", minotaur chance %d%%%%", minotaurChance);
 			strcat(generationLog, tmpBuffer);
 		}
-		if ( std::get<LEVELPARAM_DISABLE_NORMAL_EXIT>(mapParameters) != 0 )
+		if ( disableNormalExit != 0 )
 		{
-			snprintf(tmpBuffer, 31, ", disabled normal exit %d%%%%", std::get<LEVELPARAM_DISABLE_NORMAL_EXIT>(mapParameters));
+			snprintf(tmpBuffer, 31, ", disabled normal exit %d%%%%", disableNormalExit);
 			strcat(generationLog, tmpBuffer);
 		}
 		strcat(generationLog, ", (seed %lu)...\n");
@@ -1317,9 +1317,9 @@ int generateDungeon(char* levelset, Uint32 seed, std::tuple<int, int, int, int> 
 	{
 		// function sets mino level for us.
 	}
-	else if ( std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) != -1 )
+	else if ( minotaurChance != -1 )
 	{
-		if ( map_rng.rand() % 100 < std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) && (svFlags & SV_FLAG_MINOTAURS) )
+		if ( map_rng.rand() % 100 < minotaurChance && (svFlags & SV_FLAG_MINOTAURS) )
 		{
 			minotaurlevel = 1;
 		}
@@ -1356,9 +1356,9 @@ int generateDungeon(char* levelset, Uint32 seed, std::tuple<int, int, int, int> 
 	}
 	else if ( !secretlevel )
 	{
-		if ( std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) != -1 )
+		if ( darknessChance != -1 )
 		{
-			if ( map_rng.rand() % 100 < std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) )
+			if ( map_rng.rand() % 100 < darknessChance )
 			{
 				darkmap = true;
 				if ( !strncmp(map.filename, "fortress", 8) )
@@ -1399,9 +1399,9 @@ int generateDungeon(char* levelset, Uint32 seed, std::tuple<int, int, int, int> 
 	// secret stuff
 	if ( !secretlevel )
 	{
-		if ( std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) != -1 )
+		if ( secretChance != -1 )
 		{
-			if ( map_rng.rand() % 100 < std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) )
+			if ( map_rng.rand() % 100 < secretChance )
 			{
 				secretlevelexit = 7;
 			}
@@ -3949,7 +3949,7 @@ int generateDungeon(char* levelset, Uint32 seed, std::tuple<int, int, int, int> 
 		// create entity
 		entity = nullptr;
 		if ( (c == 0 || (minotaurlevel && c < 2)) && (!secretlevel || currentlevel != 7) && (!secretlevel || currentlevel != 20)
-			&& std::get<LEVELPARAM_DISABLE_NORMAL_EXIT>(mapParameters) == 0 )
+			&& disableNormalExit == 0 )
 		{
 			if ( !strcmp(map.name, "Hell") && secretlevelexit == 8 )
 			{

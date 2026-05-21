@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
-	File: light.hpp
+	File: light.h
 	Desc: prototypes for light.cpp, light-related types and prototypes
 
 	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
@@ -24,9 +24,15 @@ typedef struct light_t
 light_t* lightSphereShadow(int index, Sint32 x, Sint32 y, Sint32 radius, float r, float g, float b, float a, float exp);
 light_t* lightSphere(int index, Sint32 x, Sint32 y, Sint32 radius, float r, float g, float b, float a, float exp);
 light_t* newLight(int index, Sint32 x, Sint32 y, Sint32 radius);
+#ifdef __cplusplus
 light_t* addLight(Sint32 x, Sint32 y, const char* name, int range_bonus = 0, int index = 0);
 bool loadLights(bool forceLoadBaseDirectory = false);
+#else
+light_t* addLight(Sint32 x, Sint32 y, const char* name, int range_bonus, int index);
+bool loadLights(bool forceLoadBaseDirectory);
+#endif
 
+#ifdef __cplusplus
 struct LightDef {
     int radius = 0;
     float r = 0.f;
@@ -37,3 +43,4 @@ struct LightDef {
     bool shadows = false;
 };
 extern std::unordered_map<std::string, LightDef> lightDefs;
+#endif

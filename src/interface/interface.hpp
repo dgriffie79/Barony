@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../game.hpp"
 #include "../draw.hpp"
 #include "../ui/Frame.hpp"

@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../game.hpp"
 #include "../stat.hpp"
 #include "../entity.hpp"
@@ -21,9 +21,9 @@
 #include "../net.hpp"
 #include "../scores.hpp"
 #include "../ui/MainMenu.hpp"
-#include "../prng.hpp"
+#include "../prng.h"
 #include "../mod_tools.hpp"
-#include "../collision.hpp"
+#include "../collision.h"
 
 //The spellcasting animation stages:
 #define ANIM_SPELL_CIRCLE 0 //One circle

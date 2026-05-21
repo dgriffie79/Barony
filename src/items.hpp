@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include "main.hpp"
-#include "prng.hpp"
+#include "main.h"
+#include "prng.h"
 #include "game.hpp"
 
 class Entity; // forward declare

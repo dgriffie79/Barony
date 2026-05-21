@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
-	File: hash.hpp
+	File: hash.h
 	Desc: header for hash.cpp
 
 	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
@@ -21,7 +21,15 @@ typedef struct ttfTextHash_t
 	bool outline;
 } ttfTextHash_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 unsigned long djb2Hash(char* str);
 SDL_Surface* ttfTextHashRetrieve(list_t* buckets, char* str, TTF_Font* font, bool outline);
 SDL_Surface* ttfTextHashStore(list_t* buckets, char* str, TTF_Font* font, bool outline, SDL_Surface* surf);
 void ttfTextHash_deconstructor(void* data);
+
+#ifdef __cplusplus
+}
+#endif

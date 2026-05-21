@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "files.hpp"
 #include "game.hpp"
 #include "interface/interface.hpp"

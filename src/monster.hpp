@@ -12,9 +12,9 @@
 #pragma once
 
 #include "stat.hpp"
-#include "json.hpp"
+#include "json.h"
 
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 extern ConsoleVariable<bool> cvar_summonBosses;
 
 enum Monster : int

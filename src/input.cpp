@@ -1,4 +1,4 @@
-#include "main.hpp"
+#include "main.h"
 #include "input.hpp"
 #include "player.hpp"
 #include "mod_tools.hpp"

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
-	File: menu.hpp
+	File: menu.h
 	Desc: definitions and prototypes for menu.c
 
 	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
@@ -31,12 +31,12 @@ extern int thirdendmovietime;
 extern int fourthendmoviestage;
 extern int fourthendmovietime;
 extern int DLCendmovieStageAndTime[8][2];
-enum NewMovieStageAndTimeIndex : int
+enum NewMovieStageAndTimeIndex
 {
 	MOVIE_STAGE,
 	MOVIE_TIME,
 };
-enum NewMovieCrawlTypes : int
+enum NewMovieCrawlTypes
 {
 	MOVIE_MIDGAME_HERX_MONSTERS,
 	MOVIE_MIDGAME_BAPHOMET_MONSTERS,
@@ -97,7 +97,9 @@ void buttonInviteFriends(button_t* my);
 
 void windowEnterSerialPrompt();
 void windowSerialResult(int success);
+#ifdef __cplusplus
 size_t serialHash(const std::string& input);
+#endif
 extern char serialInputText[64];
 
 #define SLIDERFONT font12x12_bmp
@@ -117,7 +119,11 @@ void openGameoverWindow();
 void openSteamLobbyBrowserWindow(button_t* my);
 void openLoadGameWindow(button_t* my);
 void openNewLoadGameWindow(button_t* my);
+#ifdef __cplusplus
 void doSlider(int x, int y, int dots, int minvalue, int maxvalue, int increment, int* var, SDL_Surface* slider_font = SLIDERFONT, int slider_font_char_width = 16);
+#else
+void doSlider(int x, int y, int dots, int minvalue, int maxvalue, int increment, int* var, SDL_Surface* slider_font, int slider_font_char_width);
+#endif
 void doSliderF(int x, int y, int dots, real_t minvalue, real_t maxvalue, real_t increment, real_t* var);
 
 // menu variables
@@ -138,13 +144,17 @@ extern int gamemods_window_scroll;
 extern int gamemods_window_fileSelect;
 extern int gamemods_uploadStatus;
 //extern int gamemods_numCurrentModsLoaded;
+#ifdef __cplusplus
 extern std::list<std::string> currentDirectoryFiles;
 extern std::string directoryPath;
+#endif
 void gamemodsWindowClearVariables();
 void gamemodsCustomContentInit();
+#ifdef __cplusplus
 bool gamemodsDrawClickableButton(int padx, int pady, int padw, int padh, Uint32 btnColor, std::string btnText, int action);
 bool gamemodsRemovePathFromMountedFiles(std::string findStr);
 bool gamemodsIsPathInMountedFiles(std::string findStr);
+#endif
 bool gamemodsClearAllMountedPaths();
 bool gamemodsMountAllExistingPaths();
 //extern std::vector<std::pair<std::string, std::string>> gamemods_mountedFilepaths;
@@ -154,7 +164,9 @@ bool gamemodsMountAllExistingPaths();
 
 bool drawClickableButton(int padx, int pady, int padw, int padh, Uint32 btnColor);
 extern bool scoreDisplayMultiplayer;
+#ifdef __cplusplus
 extern std::vector<std::tuple<int, int, int, std::string>> savegamesList; // tuple - last modified, multiplayer type, file entry, and description of save game.
+#endif
 
 extern Sint32 slidery, slidersize, oslidery;
 
@@ -239,6 +251,7 @@ extern Sint32 oldYres;
 extern button_t* revertResolutionButton;
 
 int getNumDisplays();
+#ifdef __cplusplus
 struct resolution {
 	int x;
 	int y;
@@ -249,14 +262,17 @@ struct resolution {
 	}
 };
 void getResolutionList(int device_id, std::list<resolution>&);
+#endif
 void applySettings();
 void openConfirmResolutionWindow();
 void buttonAcceptResolution(button_t* my);
 void buttonRevertResolution(button_t* my);
 void revertResolution();
 
+#ifdef __cplusplus
 class Stat;
 int isCharacterValidFromDLC(Stat& myStats, int characterClass);
+#endif
 int isCharacterValidFromDLC(int player, int characterClass, int race, int appearance);
 
 // handle intro stage stuff
@@ -273,7 +289,7 @@ void doEndgameCitadel();
 void doEndgameClassicAndExtraMidGame();
 void doEndgameExpansion();
 
-enum CharacterDLCValidation : int
+enum CharacterDLCValidation
 {
 	INVALID_CHARACTER,
 	VALID_OK_CHARACTER,
@@ -283,6 +299,7 @@ enum CharacterDLCValidation : int
 	INVALID_REQUIREDLC3
 };
 
+#ifdef __cplusplus
 struct LastCreatedCharacter {
 	static const int NUM_LAST_CHARACTERS = 6;
 	static const int LASTCHAR_LAN_PERSONA_INDEX = 4;
@@ -305,5 +322,6 @@ struct LastCreatedCharacter {
 	}
 };
 extern LastCreatedCharacter LastCreatedCharacterSettings;
+#endif
 
 bool isAchievementUnlockedForClassUnlock(int race);

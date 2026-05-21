@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../game.hpp"
 #include "../stat.hpp"
 #include "../entity.hpp"
@@ -19,10 +19,10 @@
 #include "../net.hpp"
 #include "../player.hpp"
 #include "magic.hpp"
-#include "../collision.hpp"
-#include "../classdescriptions.hpp"
+#include "../collision.h"
+#include "../classdescriptions.h"
 #include "../scores.hpp"
-#include "../prng.hpp"
+#include "../prng.h"
 #include "../mod_tools.hpp"
 
 std::map<Uint32, std::map<Uint32, ParticleEmitterHit_t>> particleTimerEmitterHitEntities;

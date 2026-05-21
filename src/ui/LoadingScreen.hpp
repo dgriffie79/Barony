@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../main.hpp"
+#include "../main.h"
 
 void createLoadingScreen(real_t progress);
 void createLevelLoadScreen(real_t progress);

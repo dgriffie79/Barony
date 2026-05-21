@@ -9,32 +9,32 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../main.hpp"
+#include "../main.h"
 #include "cJSON.h"
-#include "consolecommand.hpp"
+#include "consolecommand.h"
 
 #include <sstream>
 #include "../files.hpp"
 #include "../game.hpp"
 #include "../stat.hpp"
 #include "../items.hpp"
-#include "../init.hpp"
+#include "../init.h"
 #include "../book.hpp"
 #include "../engine/audio/sound.hpp"
-#include "../menu.hpp"
+#include "../menu.h"
 #include "../monster.hpp"
 #include "../net.hpp"
-#include "../paths.hpp"
+#include "../paths.h"
 #include "../player.hpp"
 #include "interface.hpp"
 #include "../scores.hpp"
 #include "../magic/magic.hpp"
 #include "../mod_tools.hpp"
-#include "../collision.hpp"
+#include "../collision.h"
 #include "../player.hpp"
 #include "../ui/GameUI.hpp"
 #include "../ui/LoadingScreen.hpp"
-#include "../classdescriptions.hpp"
+#include "../classdescriptions.h"
 #include "../ui/MainMenu.hpp"
 
 bool spamming = false;

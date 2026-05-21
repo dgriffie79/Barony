@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../main.hpp"
+#include "../main.h"
 
 #include "../files.hpp"
 #include "../game.hpp"
@@ -23,24 +23,24 @@
 #include "../book.hpp"
 #include "../engine/audio/sound.hpp"
 #include "../shops.hpp"
-#include "../menu.hpp"
+#include "../menu.h"
 #include "../player.hpp"
 #include "../colors.hpp"
 #include "../net.hpp"
 #include "../draw.hpp"
 #include "../scores.hpp"
-#include "../scrolls.hpp"
-#include "../lobbies.hpp"
+#include "../scrolls.h"
+#include "../lobbies.h"
 #include "../ui/GameUI.hpp"
 #include "../ui/MainMenu.hpp"
-#include "../json.hpp"
+#include "../json.h"
 #include "../mod_tools.hpp"
 #include "../ui/Field.hpp"
 #include "../ui/Image.hpp"
 #include "../ui/Button.hpp"
 #include "../ui/Slider.hpp"
-#include "../collision.hpp"
-#include "../classdescriptions.hpp"
+#include "../collision.h"
+#include "../classdescriptions.h"
 
 Uint32 svFlags = 30;
 Uint32 settings_svFlags = svFlags;

@@ -11,19 +11,19 @@
 
 #include "player.hpp"
 #include "game.hpp"
-#include "main.hpp"
+#include "main.h"
 #include "interface/interface.hpp"
 #include "items.hpp"
 #include "shops.hpp"
-#include "menu.hpp"
-#include "collision.hpp"
+#include "menu.h"
+#include "collision.h"
 #include "mod_tools.hpp"
 #include "draw.hpp"
 #include "colors.hpp"
 #include "ui/GameUI.hpp"
 #include "ui/Frame.hpp"
 #include "ui/Slider.hpp"
-#include "lobbies.hpp"
+#include "lobbies.h"
 #include "ui/MainMenu.hpp"
 
 Player* players[MAXPLAYERS] = { nullptr };

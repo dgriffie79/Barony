@@ -10,11 +10,11 @@ See LICENSE for details.
 -------------------------------------------------------------------------------*/
 
 #pragma once
-#include "main.hpp"
+#include "main.h"
 #include "stat.hpp"
-#include "json.hpp"
+#include "json.h"
 #include "files.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "items.hpp"
 #include "cJSON.h"
 #include "net.hpp"

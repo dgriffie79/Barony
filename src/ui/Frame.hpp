@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../draw.hpp"
 #include "Font.hpp"
 #include "Widget.hpp"
@@ -495,5 +495,5 @@ extern bool drawingGui;
 void createTestUI();
 extern float uiScale;
 
-#include "../interface/consolecommand.hpp"
+#include "../interface/consolecommand.h"
 extern ConsoleVariable<bool> ui_filter;

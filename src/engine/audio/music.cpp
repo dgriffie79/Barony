@@ -9,72 +9,72 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../../main.hpp"
+#include "../../main.h"
 #include "../../game.hpp"
 #include "sound.hpp"
 #include "../../entity.hpp"
 #include "../../player.hpp"
-#include "../../prng.hpp"
+#include "../../prng.h"
 #include "../../files.hpp"
- #include "music_pc.hpp"
+ #include "music_pc.h"
 
 bool loadMusic()
 {
 #ifdef USE_FMOD
     if ( NUMMINESMUSIC > 0 )
     {
-        minesmusic = (FMOD::Sound**)malloc(sizeof(FMOD::Sound*) * NUMMINESMUSIC);
-        memset(minesmusic, 0, sizeof(FMOD::Sound*) * NUMMINESMUSIC);
+        minesmusic = (FMOD_SOUND**)malloc(sizeof(FMOD_SOUND*) * NUMMINESMUSIC);
+        memset(minesmusic, 0, sizeof(FMOD_SOUND*) * NUMMINESMUSIC);
     }
     if ( NUMSWAMPMUSIC > 0 )
     {
-        swampmusic = (FMOD::Sound**)malloc(sizeof(FMOD::Sound*) * NUMSWAMPMUSIC);
-        memset(swampmusic, 0, sizeof(FMOD::Sound*) * NUMSWAMPMUSIC);
+        swampmusic = (FMOD_SOUND**)malloc(sizeof(FMOD_SOUND*) * NUMSWAMPMUSIC);
+        memset(swampmusic, 0, sizeof(FMOD_SOUND*) * NUMSWAMPMUSIC);
     }
     if ( NUMLABYRINTHMUSIC > 0 )
     {
-        labyrinthmusic = (FMOD::Sound**)malloc(sizeof(FMOD::Sound*) * NUMLABYRINTHMUSIC);
-        memset(labyrinthmusic, 0, sizeof(FMOD::Sound*) * NUMLABYRINTHMUSIC);
+        labyrinthmusic = (FMOD_SOUND**)malloc(sizeof(FMOD_SOUND*) * NUMLABYRINTHMUSIC);
+        memset(labyrinthmusic, 0, sizeof(FMOD_SOUND*) * NUMLABYRINTHMUSIC);
     }
     if ( NUMRUINSMUSIC > 0 )
     {
-        ruinsmusic = (FMOD::Sound**)malloc(sizeof(FMOD::Sound*) * NUMRUINSMUSIC);
-        memset(ruinsmusic, 0, sizeof(FMOD::Sound*) * NUMRUINSMUSIC);
+        ruinsmusic = (FMOD_SOUND**)malloc(sizeof(FMOD_SOUND*) * NUMRUINSMUSIC);
+        memset(ruinsmusic, 0, sizeof(FMOD_SOUND*) * NUMRUINSMUSIC);
     }
     if ( NUMUNDERWORLDMUSIC > 0 )
     {
-        underworldmusic = (FMOD::Sound**)malloc(sizeof(FMOD::Sound*) * NUMUNDERWORLDMUSIC);
-        memset(underworldmusic, 0, sizeof(FMOD::Sound*) * NUMUNDERWORLDMUSIC);
+        underworldmusic = (FMOD_SOUND**)malloc(sizeof(FMOD_SOUND*) * NUMUNDERWORLDMUSIC);
+        memset(underworldmusic, 0, sizeof(FMOD_SOUND*) * NUMUNDERWORLDMUSIC);
     }
     if ( NUMHELLMUSIC > 0 )
     {
-        hellmusic = (FMOD::Sound**)malloc(sizeof(FMOD::Sound*) * NUMHELLMUSIC);
-        memset(hellmusic, 0, sizeof(FMOD::Sound*) * NUMHELLMUSIC);
+        hellmusic = (FMOD_SOUND**)malloc(sizeof(FMOD_SOUND*) * NUMHELLMUSIC);
+        memset(hellmusic, 0, sizeof(FMOD_SOUND*) * NUMHELLMUSIC);
     }
     if ( NUMMINOTAURMUSIC > 0 )
     {
-        minotaurmusic = (FMOD::Sound**)malloc(sizeof(FMOD::Sound*) * NUMMINOTAURMUSIC);
-        memset(minotaurmusic, 0, sizeof(FMOD::Sound*) * NUMMINOTAURMUSIC);
+        minotaurmusic = (FMOD_SOUND**)malloc(sizeof(FMOD_SOUND*) * NUMMINOTAURMUSIC);
+        memset(minotaurmusic, 0, sizeof(FMOD_SOUND*) * NUMMINOTAURMUSIC);
     }
     if ( NUMCAVESMUSIC > 0 )
     {
-        cavesmusic = (FMOD::Sound**)malloc(sizeof(FMOD::Sound*) * NUMCAVESMUSIC);
-        memset(cavesmusic, 0, sizeof(FMOD::Sound*) * NUMCAVESMUSIC);
+        cavesmusic = (FMOD_SOUND**)malloc(sizeof(FMOD_SOUND*) * NUMCAVESMUSIC);
+        memset(cavesmusic, 0, sizeof(FMOD_SOUND*) * NUMCAVESMUSIC);
     }
     if ( NUMCITADELMUSIC > 0 )
     {
-        citadelmusic = (FMOD::Sound**)malloc(sizeof(FMOD::Sound*) * NUMCITADELMUSIC);
-        memset(citadelmusic, 0, sizeof(FMOD::Sound*) * NUMCITADELMUSIC);
+        citadelmusic = (FMOD_SOUND**)malloc(sizeof(FMOD_SOUND*) * NUMCITADELMUSIC);
+        memset(citadelmusic, 0, sizeof(FMOD_SOUND*) * NUMCITADELMUSIC);
     }
     if ( NUMINTROMUSIC > 0 )
     {
-        intromusic = (FMOD::Sound**)malloc(sizeof(FMOD::Sound*) * NUMINTROMUSIC);
-        memset(intromusic, 0, sizeof(FMOD::Sound*) * NUMINTROMUSIC);
+        intromusic = (FMOD_SOUND**)malloc(sizeof(FMOD_SOUND*) * NUMINTROMUSIC);
+        memset(intromusic, 0, sizeof(FMOD_SOUND*) * NUMINTROMUSIC);
     }
 	if ( NUMFORTRESSMUSIC > 0 )
 	{
-		fortressmusic = (FMOD::Sound**)malloc(sizeof(FMOD::Sound*) * NUMINTROMUSIC);
-		memset(fortressmusic, 0, sizeof(FMOD::Sound*) * NUMINTROMUSIC);
+		fortressmusic = (FMOD_SOUND**)malloc(sizeof(FMOD_SOUND*) * NUMINTROMUSIC);
+		memset(fortressmusic, 0, sizeof(FMOD_SOUND*) * NUMINTROMUSIC);
 	}
 #endif
 
@@ -86,12 +86,12 @@ bool loadMusic()
 void stopMusic()
 {
 #ifdef SOUND
-    playMusic(nullptr, false, false, false);
+    playMusic(NULL, false, false, false);
 #endif
 }
 
 #ifdef USE_FMOD
-void playMusic(FMOD::Sound* sound, bool loop, bool crossfade, bool resume)
+void playMusic(FMOD_SOUND* sound, bool loop, bool crossfade, bool resume)
 {
 	if (no_sound)
 	{
@@ -112,53 +112,53 @@ void playMusic(FMOD::Sound* sound, bool loop, bool crossfade, bool resume)
 	}
 	if ( resume && music_channel2 )
 	{
-		FMOD::Sound* lastmusic = nullptr;
-		music_channel2->getCurrentSound(&lastmusic);
+		FMOD_SOUND* lastmusic = NULL;
+		FMOD_Channel_GetCurrentSound(music_channel2, &lastmusic);
 		if ( lastmusic == sound )
 		{
-			FMOD::Channel* tempmusic = music_channel;
+			FMOD_CHANNEL* tempmusic = music_channel;
 			music_channel = music_channel2;
 			music_channel2 = tempmusic;
 		}
 		else
 		{
-			music_channel2->stop();
+			FMOD_Channel_Stop(music_channel2);
 			music_channel2 = music_channel;
-			music_channel = nullptr;
+			music_channel = NULL;
 			if (sound) {
-			    fmod_result = fmod_system->playSound(sound, music_group, true, &music_channel);
+			    fmod_result = FMOD_System_PlaySound(fmod_system, sound, music_group, true, &music_channel);
 			}
 		}
 	}
 	else
 	{
-		music_channel2->stop();
+		FMOD_Channel_Stop(music_channel2);
 		music_channel2 = music_channel;
-		music_channel = nullptr;
+		music_channel = NULL;
 		if (sound) {
-		    fmod_result = fmod_system->playSound(sound, music_group, true, &music_channel);
+		    fmod_result = FMOD_System_PlaySound(fmod_system, sound, music_group, true, &music_channel);
 		}
 	}
 	//FMOD_Channel_SetChannelGroup(music_channel, music_group);
 	if (crossfade == true)
 	{
 		//Start at volume 0 to get louder.
-		music_channel->setVolume(0.0f); //Start at 0 then pop up.
+		FMOD_Channel_SetVolume(music_channel, 0.0f); //Start at 0 then pop up.
 	}
 	else
 	{
-		music_channel->setVolume(1.0f); // start at max volume
-		music_channel2->stop();
+		FMOD_Channel_SetVolume(music_channel, 1.0f); // start at max volume
+		FMOD_Channel_Stop(music_channel2);
 	}
 	if (loop == true)
 	{
 		//Loop the channel.
 		FMOD_MODE mode;
-		music_channel->getMode(&mode);
-		fmod_result = music_channel->setMode(FMOD_LOOP_NORMAL);
+		FMOD_Channel_GetMode(music_channel, &mode);
+		fmod_result = FMOD_Channel_SetMode(music_channel, FMOD_LOOP_NORMAL);
 		FMODErrorCheck();
 	}
-	music_channel->setPaused(false);
+	FMOD_Channel_SetPaused(music_channel, false);
 	if (FMODErrorCheck())
 	{
 		return; // What?
@@ -211,7 +211,7 @@ void handleLevelMusic()
 	bool herxaround = false;
 	bool magisteraround = false;
 	node_t* node;
-	for ( node = map.creatures->first; node != nullptr; node = node->next )
+	for ( node = map.creatures->first; node != NULL; node = node->next )
 	{
 		Entity* entity = (Entity*)node->element;
 		if ( entity->sprite == 274 )   // herx head
@@ -237,7 +237,7 @@ void handleLevelMusic()
 	}
 
 	bool playing = true;
-	music_channel->isPlaying(&playing);
+	FMOD_Channel_IsPlaying(music_channel, &playing);
 
 	if ( currenttrack == -1 )
 	{
@@ -584,3 +584,4 @@ void handleLevelMusic()
 	}
 }
 #endif
+

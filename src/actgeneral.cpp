@@ -9,21 +9,21 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "engine/audio/sound.hpp"
 #include "entity.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "player.hpp"
-#include "menu.hpp"
+#include "menu.h"
 #include "magic/magic.hpp"
 #include "interface/interface.hpp"
 #include "items.hpp"
 #include "scores.hpp"
 #include "mod_tools.hpp"
-#include "paths.hpp"
+#include "paths.h"
 
 /*-------------------------------------------------------------------------------
 

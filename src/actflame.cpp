@@ -9,11 +9,11 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "entity.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "player.hpp"
 
 /*-------------------------------------------------------------------------------

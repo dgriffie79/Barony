@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -17,9 +17,9 @@
 #include "monster.hpp"
 #include "engine/audio/sound.hpp"
 #include "net.hpp"
-#include "collision.hpp"
-#include "prng.hpp"
-#include "interface/consolecommand.hpp"
+#include "collision.h"
+#include "prng.h"
+#include "interface/consolecommand.h"
 #include "magic/magic.hpp"
 #include "mod_tools.hpp"
 

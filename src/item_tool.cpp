@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "engine/audio/sound.hpp"
 #include "net.hpp"
@@ -20,9 +20,9 @@
 #include "magic/magic.hpp"
 #include "scores.hpp"
 #include "shops.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "mod_tools.hpp"
-#include "collision.hpp"
+#include "collision.h"
 
 void Item::applySkeletonKey(int player, Entity& entity)
 {

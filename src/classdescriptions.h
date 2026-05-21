@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
-	File: classdescriptions.hpp
+	File: classdescriptions.h
 	Desc: class description strings
 
 	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.

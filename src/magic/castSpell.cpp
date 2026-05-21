@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../game.hpp"
 #include "../stat.hpp"
 #include "../entity.hpp"
@@ -17,15 +17,15 @@
 #include "../engine/audio/sound.hpp"
 #include "../items.hpp"
 #include "../net.hpp"
-#include "../collision.hpp"
+#include "../collision.h"
 #include "../player.hpp"
 #include "../scores.hpp"
 #include "../colors.hpp"
 #include "../ui/MainMenu.hpp"
 #include "magic.hpp"
-#include "../prng.hpp"
+#include "../prng.h"
 #include "../mod_tools.hpp"
-#include "../paths.hpp"
+#include "../paths.h"
 
 void castSpellInit(Uint32 caster_uid, spell_t* spell, bool usingSpellbook, bool usingTome)
 {

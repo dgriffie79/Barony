@@ -1,6 +1,6 @@
 // Font.cpp
 
-#include "../main.hpp"
+#include "../main.h"
 #include "Font.hpp"
 
 const char* Font::defaultFont = "lang/en.ttf#24";
@@ -107,7 +107,7 @@ void Font::dumpCache() {
 }
 
 #include "../net.hpp"
-#include "../interface/consolecommand.hpp"
+#include "../interface/consolecommand.h"
 static ConsoleCommand size("/fonts_cache_size", "measure font cache",
     [](int argc, const char** argv){
     messagePlayer(clientnum, MESSAGE_MISC, "cache size is: %d fonts", (int)hashed_fonts.size());

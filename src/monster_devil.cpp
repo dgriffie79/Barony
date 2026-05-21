@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -17,11 +17,11 @@
 #include "monster.hpp"
 #include "engine/audio/sound.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "player.hpp"
 #include "scores.hpp"
 #include "magic/magic.hpp"
-#include "prng.hpp"
+#include "prng.h"
 
 void initDevil(Entity* my, Stat* myStats)
 {

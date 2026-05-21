@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -17,12 +17,12 @@
 #include "monster.hpp"
 #include "engine/audio/sound.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "player.hpp"
 #include "magic/magic.hpp"
 #include "shops.hpp"
 #include "mod_tools.hpp"
-#include "prng.hpp"
+#include "prng.h"
 
 std::vector<Item*> generateShopkeeperConsumables(Entity& my, Stat& myStats, int storetype)
 {

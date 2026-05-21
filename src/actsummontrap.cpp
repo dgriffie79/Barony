@@ -9,14 +9,14 @@ See LICENSE for details.
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
 #include "items.hpp"
 #include "monster.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "magic/magic.hpp"
 #include "engine/audio/sound.hpp"
 #include "player.hpp"

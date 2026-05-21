@@ -14,7 +14,7 @@
 #include <vector>
 #include <chrono>
 
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 
 #include "Config.hpp"
 

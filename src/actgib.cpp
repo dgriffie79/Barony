@@ -9,15 +9,15 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "monster.hpp"
 #include "entity.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "player.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "ui/GameUI.hpp"
 #include "scores.hpp"
 

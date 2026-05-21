@@ -49,9 +49,20 @@ pub fn build(b: *std.Build) void {
     // -----------------------------------------------------------------------
     // Source file list
     // -----------------------------------------------------------------------
-    const sources = &.{
+    // C sources (converted .cpp → .c, compiled as C without -std=c++17)
+    const c_sources = &.{
+        "src/hash.c",
+        "src/savepng.c",
+        "src/shader.c",
+        "src/cursors.c",
+        "src/engine/audio/defines.c",
+        "src/prng.c",
+    };
+
+    // C++ sources (still being converted)
+    const cpp_sources = &.{
         "src/main.cpp", "src/init.cpp", "src/collision.cpp", "src/light.cpp",
-        "src/maps.cpp", "src/cursors.cpp", "src/draw.cpp", "src/opengl.cpp",
+        "src/maps.cpp", "src/draw.cpp", "src/opengl.cpp",
         "src/objects.cpp", "src/list.cpp", "src/files.cpp", "src/items.cpp",
         "src/paths.cpp", "src/charclass.cpp", "src/net.cpp", "src/game.cpp",
         "src/stat.cpp", "src/acttorch.cpp", "src/actplayer.cpp", "src/actmonster.cpp",
@@ -71,11 +82,11 @@ pub fn build(b: *std.Build) void {
         "src/monster_sentrybot.cpp", "src/monster_shadow.cpp", "src/monster_vampire.cpp",
         "src/monster_mimic.cpp", "src/monster_bugbear.cpp", "src/monster_bat.cpp",
         "src/shops.cpp", "src/mechanisms.cpp", "src/actgate.cpp", "src/actchest.cpp",
-        "src/actsprite.cpp", "src/menu.cpp", "src/savepng.cpp", "src/actarrow.cpp",
+        "src/actsprite.cpp", "src/menu.cpp", "src/actarrow.cpp",
         "src/actarrowtrap.cpp", "src/actboulder.cpp", "src/actheadstone.cpp",
         "src/actthrown.cpp", "src/actbeartrap.cpp", "src/actspeartrap.cpp",
-        "src/actwallbuster.cpp", "src/book.cpp", "src/init_game.cpp", "src/prng.cpp",
-        "src/scores.cpp", "src/achievements.cpp", "src/hash.cpp", "src/player.cpp",
+        "src/actwallbuster.cpp", "src/book.cpp", "src/init_game.cpp",
+        "src/scores.cpp", "src/achievements.cpp", "src/player.cpp",
         "src/entity_shared.cpp", "src/stat_shared.cpp", "src/item_tool.cpp",
         "src/actsummontrap.cpp", "src/actpowercrystal.cpp", "src/monster_shared.cpp",
         "src/actpedestal.cpp", "src/actteleporter.cpp", "src/actmagictrap.cpp",
@@ -87,7 +98,7 @@ pub fn build(b: *std.Build) void {
         "src/mod_tools_equip.cpp", 
         "src/mod_tools_editor.cpp", "src/json.cpp",
         "src/mod_tools.cpp",
-        "src/lobbies.cpp", "src/shader.cpp",
+        "src/lobbies.cpp",
         "src/monster_d.cpp", "src/monster_m.cpp", "src/monster_s.cpp", "src/monster_g.cpp",
         "src/monster_summons.cpp", "src/monster_moth.cpp", "src/monster_duck.cpp",
         "src/magic/magic.cpp", "src/magic/actmagic.cpp", "src/magic/spell.cpp",
@@ -104,7 +115,7 @@ pub fn build(b: *std.Build) void {
         "src/ui/Frame.cpp", "src/ui/Image.cpp", "src/ui/Slider.cpp",
         "src/ui/Text.cpp", "src/ui/Widget.cpp", "src/ui/GameUI.cpp",
         "src/ui/LoadingScreen.cpp", "src/ui/MainMenu.cpp",
-        "src/engine/audio/defines.cpp", "src/engine/audio/init_audio.cpp",
+        "src/engine/audio/init_audio.cpp",
         "src/engine/audio/sound.cpp", "src/engine/audio/sound_game.cpp",
         "src/engine/audio/music.cpp",
     };
@@ -140,8 +151,10 @@ pub fn build(b: *std.Build) void {
     game_mod.addCMacro("WIN32_LEAN_AND_MEAN", "");
     game_mod.addCMacro("GLEW_STATIC", "");
 
-    // Add source files
-    game_mod.addCSourceFiles(.{ .files = sources, .flags = cxx_flags });
+    // Add C++ source files (still being converted)
+    game_mod.addCSourceFiles(.{ .files = cpp_sources, .flags = cxx_flags });
+    // Add C source files (converted from .cpp — compiled without C++ flags)
+    game_mod.addCSourceFiles(.{ .files = c_sources, .flags = &.{} });
     game_mod.addCSourceFile(.{ .file = b.path("src/cJSON.c"), .flags = &.{} });
 
     // -----------------------------------------------------------------------

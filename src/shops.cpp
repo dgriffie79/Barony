@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "items.hpp"
@@ -19,7 +19,7 @@
 #include "net.hpp"
 #include "player.hpp"
 #include "scores.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "mod_tools.hpp"
 
 list_t* shopInv[MAXPLAYERS] = { nullptr };

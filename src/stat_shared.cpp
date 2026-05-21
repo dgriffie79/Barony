@@ -10,12 +10,12 @@ See LICENSE for details.
 -------------------------------------------------------------------------------*/
 
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
 #include "items.hpp"
-#include "prng.hpp"
+#include "prng.h"
 
 // Constructor
 Stat::Stat(Sint32 sprite) :

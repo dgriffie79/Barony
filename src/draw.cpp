@@ -9,16 +9,16 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "draw.hpp"
 #include "files.hpp"
-#include "hash.hpp"
+#include "hash.h"
 #include "entity.hpp"
 #include "player.hpp"
 #include "ui/Frame.hpp"
 #include "items.hpp"
 #include "ui/Image.hpp"
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 #include "colors.hpp"
 #include "ui/Text.hpp"
 #include "ui/GameUI.hpp"

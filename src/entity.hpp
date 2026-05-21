@@ -11,12 +11,12 @@
 
 #pragma once
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
-#include "light.hpp"
+#include "light.h"
 #include "monster.hpp"
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 
 // entity flags
 #define BRIGHT 1

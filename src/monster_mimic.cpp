@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -18,11 +18,11 @@
 #include "engine/audio/sound.hpp"
 #include "book.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "player.hpp"
 #include "magic/magic.hpp"
 #include "interface/interface.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "mod_tools.hpp"
 
 void initMimic(Entity* my, Stat* myStats)

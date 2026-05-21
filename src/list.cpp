@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "entity.hpp"
 #include "items.hpp"
 #include "interface/interface.hpp"

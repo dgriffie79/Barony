@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
     BARONY
-    File: consolecommand.hpp
+    File: consolecommand.h
     Desc: console command class
 
     Copyright 2022 (c) Turning Wheel LLC, all rights reserved.
@@ -10,6 +10,8 @@
 -------------------------------------------------------------------------------*/
 
 #pragma once
+
+#ifdef __cplusplus
 
 #include <string>
 #include <map>
@@ -89,3 +91,5 @@ private:
     using cvar_map_t = std::map<std::string, ConsoleVariable<T>&>;
     static cvar_map_t& getConsoleVariables();
 };
+
+#endif

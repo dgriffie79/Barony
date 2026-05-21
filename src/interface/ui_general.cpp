@@ -10,7 +10,7 @@
 -------------------------------------------------------------------------------*/
 
 #include "ui.hpp"
-#include "../menu.hpp"
+#include "../menu.h"
 #include "../scores.hpp"
 #include "../mod_tools.hpp"
 #ifdef WINDOWS
@@ -912,7 +912,7 @@ void sizeWindowDecorations(Frame& frame, SDL_Rect r) {
 	}
 }
 
-#include "consolecommand.hpp"
+#include "consolecommand.h"
 #include "../net.hpp"
 
 static ConsoleCommand ccmd_toastTestAchievement("/toast_test_achievement", "",

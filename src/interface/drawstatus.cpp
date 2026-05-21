@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../draw.hpp"
 #include "../game.hpp"
 #include "../stat.hpp"
@@ -17,7 +17,7 @@
 #include "../magic/magic.hpp"
 #include "../engine/audio/sound.hpp"
 #include "../net.hpp"
-#include "../menu.hpp"
+#include "../menu.h"
 #include "../player.hpp"
 #include "interface.hpp"
 #include "../colors.hpp"

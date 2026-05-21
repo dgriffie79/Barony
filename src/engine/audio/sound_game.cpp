@@ -11,7 +11,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../../main.hpp"
+#include "../../main.h"
 #include "../../game.hpp"
 #include "../../stat.hpp"
 #include "sound.hpp"
@@ -33,7 +33,7 @@
 -------------------------------------------------------------------------------*/
 #ifdef USE_FMOD
 
-FMOD::ChannelGroup* getChannelGroupForSoundIndex(Uint32 snd)
+FMOD_CHANNELGROUP* getChannelGroupForSoundIndex(Uint32 snd)
 {
 	if ( snd == 155 || snd == 135 ) // water/lava
 	{
@@ -50,17 +50,17 @@ FMOD::ChannelGroup* getChannelGroupForSoundIndex(Uint32 snd)
 	return sound_group;
 }
 
-FMOD::Channel* playSoundPlayer(int player, Uint16 snd, Uint8 vol)
+FMOD_CHANNEL* playSoundPlayer(int player, Uint16 snd, Uint8 vol)
 {
 	if (no_sound)
 	{
-		return nullptr;
+		return NULL;
 	}
 
 
 	if ( player < 0 || player >= MAXPLAYERS )   //Perhaps this can be reprogrammed to remove MAXPLAYERS, and use a pointer to the player instead of an int?
 	{
-		return nullptr;
+		return NULL;
 	}
 	if ( players[player]->isLocalPlayer() )
 	{
@@ -70,7 +70,7 @@ FMOD::Channel* playSoundPlayer(int player, Uint16 snd, Uint8 vol)
 	{
 		if ( client_disconnected[player] || player <= 0 )
 		{
-			return nullptr;
+			return NULL;
 		}
 		memcpy(net_packet->data, "SNDG", 4);
 		SDLNet_Write16(snd, &net_packet->data[4]);
@@ -79,23 +79,23 @@ FMOD::Channel* playSoundPlayer(int player, Uint16 snd, Uint8 vol)
 		net_packet->address.port = net_clients[player - 1].port;
 		net_packet->len = 7;
 		sendPacketSafe(net_sock, -1, net_packet, player - 1);
-		return nullptr;
+		return NULL;
 	}
 
-	return nullptr;
+	return NULL;
 }
 
-FMOD::Channel* playSoundNotificationPlayer(int player, Uint16 snd, Uint8 vol)
+FMOD_CHANNEL* playSoundNotificationPlayer(int player, Uint16 snd, Uint8 vol)
 {
 	if ( no_sound )
 	{
-		return nullptr;
+		return NULL;
 	}
 
 
 	if ( player < 0 || player >= MAXPLAYERS )   //Perhaps this can be reprogrammed to remove MAXPLAYERS, and use a pointer to the player instead of an int?
 	{
-		return nullptr;
+		return NULL;
 	}
 	if ( players[player]->isLocalPlayer() )
 	{
@@ -105,7 +105,7 @@ FMOD::Channel* playSoundNotificationPlayer(int player, Uint16 snd, Uint8 vol)
 	{
 		if ( client_disconnected[player] || player <= 0 )
 		{
-			return nullptr;
+			return NULL;
 		}
 		memcpy(net_packet->data, "SNDN", 4);
 		SDLNet_Write16(snd, &net_packet->data[4]);
@@ -114,10 +114,10 @@ FMOD::Channel* playSoundNotificationPlayer(int player, Uint16 snd, Uint8 vol)
 		net_packet->address.port = net_clients[player - 1].port;
 		net_packet->len = 7;
 		sendPacketSafe(net_sock, -1, net_packet, player - 1);
-		return nullptr;
+		return NULL;
 	}
 
-	return nullptr;
+	return NULL;
 }
 
 /*-------------------------------------------------------------------------------
@@ -129,7 +129,7 @@ FMOD::Channel* playSoundNotificationPlayer(int player, Uint16 snd, Uint8 vol)
 
 -------------------------------------------------------------------------------*/
 
-FMOD::Channel* playSoundPos(real_t x, real_t y, Uint16 snd, Uint8 vol)
+FMOD_CHANNEL* playSoundPos(real_t x, real_t y, Uint16 snd, Uint8 vol)
 {
 	auto result = playSoundPosLocal(x, y, snd, vol);
 
@@ -156,35 +156,35 @@ FMOD::Channel* playSoundPos(real_t x, real_t y, Uint16 snd, Uint8 vol)
 	return result;
 }
 
-FMOD::Channel* playSoundPosLocal(real_t x, real_t y, Uint16 snd, Uint8 vol)
+FMOD_CHANNEL* playSoundPosLocal(real_t x, real_t y, Uint16 snd, Uint8 vol)
 {
 	if (no_sound)
 	{
-		return nullptr;
+		return NULL;
 	}
 
 #ifndef SOUND
-	return nullptr;
+	return NULL;
 #endif
 
-	FMOD::Channel* channel;
+	FMOD_CHANNEL* channel;
 
 	if (intro)
 	{
-		return nullptr;
+		return NULL;
 	}
 	if (snd < 0 || snd >= numsounds)
 	{
-		return nullptr;
+		return NULL;
 	}
-	if (sounds[snd] == nullptr || vol == 0)
+	if (sounds[snd] == NULL || vol == 0)
 	{
-		return nullptr;
+		return NULL;
 	}
 
 	if (!fmod_system)   //For the client.
 	{
-		return nullptr;
+		return NULL;
 	}
 
 	FMOD_VECTOR position;
@@ -195,25 +195,25 @@ FMOD::Channel* playSoundPosLocal(real_t x, real_t y, Uint16 snd, Uint8 vol)
 	if ( soundAmbient_group && getChannelGroupForSoundIndex(snd) == soundAmbient_group )
 	{
 		int numChannels = 0;
-		soundAmbient_group->getNumChannels(&numChannels);
+		FMOD_ChannelGroup_GetNumChannels(soundAmbient_group, &numChannels);
 		for ( int i = 0; i < numChannels; ++i )
 		{
-			FMOD::Channel* c;
-			if ( soundAmbient_group->getChannel(i, &c) == FMOD_RESULT::FMOD_OK )
+			FMOD_CHANNEL* c;
+			if ( FMOD_ChannelGroup_GetChannel(soundAmbient_group, i, &c) == FMOD_OK )
 			{
 				float audibility = 0.f;
-				c->getAudibility(&audibility);
+				FMOD_Channel_GetAudibility(c, &audibility);
 				float volume = 0.f;
-				c->getVolume(&volume);
+				FMOD_Channel_GetVolume(c, &volume);
 				FMOD_VECTOR playingPosition;
-				c->get3DAttributes(&playingPosition, nullptr);
+				FMOD_Channel_Get3DAttributes(c, &playingPosition, NULL);
 				//printlog("Channel index: %d, audibility: %f, vol: %f, pos x: %.2f | y: %.2f", i, audibility, volume, playingPosition.z, playingPosition.x);
 				if ( abs(volume - (vol / 255.f)) < 0.05 )
 				{
 					if ( (pow(playingPosition.x - position.x, 2) + pow(playingPosition.z - position.z, 2)) <= 2.25 )
 					{
 						//printlog("Culling sound due to proximity, pos x: %.2f | y: %.2f", position.z, position.x);
-						return nullptr;
+						return NULL;
 					}
 				}
 			}
@@ -223,25 +223,25 @@ FMOD::Channel* playSoundPosLocal(real_t x, real_t y, Uint16 snd, Uint8 vol)
 	if ( soundEnvironment_group && getChannelGroupForSoundIndex(snd) == soundEnvironment_group )
 	{
 		int numChannels = 0;
-		soundEnvironment_group->getNumChannels(&numChannels);
+		FMOD_ChannelGroup_GetNumChannels(soundEnvironment_group, &numChannels);
 		for ( int i = 0; i < numChannels; ++i )
 		{
-			FMOD::Channel* c;
-			if ( soundEnvironment_group->getChannel(i, &c) == FMOD_RESULT::FMOD_OK )
+			FMOD_CHANNEL* c;
+			if ( FMOD_ChannelGroup_GetChannel(soundEnvironment_group, i, &c) == FMOD_OK )
 			{
 				float audibility = 0.f;
-				c->getAudibility(&audibility);
+				FMOD_Channel_GetAudibility(c, &audibility);
 				float volume = 0.f;
-				c->getVolume(&volume);
+				FMOD_Channel_GetVolume(c, &volume);
 				FMOD_VECTOR playingPosition;
-				c->get3DAttributes(&playingPosition, nullptr);
+				FMOD_Channel_Get3DAttributes(c, &playingPosition, NULL);
 				//printlog("Channel index: %d, audibility: %f, vol: %f, pos x: %.2f | y: %.2f", i, audibility, volume, playingPosition.z, playingPosition.x);
 				if ( abs(volume - (vol / 255.f)) < 0.05 )
 				{
 					if ( (pow(playingPosition.x - position.x, 2) + pow(playingPosition.z - position.z, 2)) <= 4.5 )
 					{
 						//printlog("Culling sound due to proximity, pos x: %.2f | y: %.2f", position.z, position.x);
-						return nullptr;
+						return NULL;
 					}
 				}
 			}
@@ -252,18 +252,18 @@ FMOD::Channel* playSoundPosLocal(real_t x, real_t y, Uint16 snd, Uint8 vol)
 	unsigned int percentBuffered = 0;
 	bool starving = false;
 	bool diskbusy = false;
-	sounds[snd]->getOpenState(&openState, &percentBuffered, &starving, &diskbusy);
+	FMOD_Sound_GetOpenState(sounds[snd], &openState, &percentBuffered, &starving, &diskbusy);
 	printlog("Sound: %d state: %d pc: %d starving: %d diskbusy: %d", snd, openState, percentBuffered, starving, diskbusy);*/
-	fmod_result = fmod_system->playSound(sounds[snd], getChannelGroupForSoundIndex(snd), true, &channel);
+	fmod_result = FMOD_System_PlaySound(fmod_system, sounds[snd], getChannelGroupForSoundIndex(snd), true, &channel);
 	if (FMODErrorCheck())
 	{
-		return nullptr;
+		return NULL;
 	}
 
-	channel->setVolume(vol / 255.f);
-	channel->set3DAttributes(&position, nullptr);
-    channel->setMode(FMOD_3D_WORLDRELATIVE);
-	channel->setPaused(false);
+	FMOD_Channel_SetVolume(channel, vol / 255.f);
+	FMOD_Channel_Set3DAttributes(channel, &position, NULL);
+    FMOD_Channel_SetMode(channel, FMOD_3D_WORLDRELATIVE);
+	FMOD_Channel_SetPaused(channel, false);
 
 	return channel;
 }
@@ -277,25 +277,25 @@ FMOD::Channel* playSoundPosLocal(real_t x, real_t y, Uint16 snd, Uint8 vol)
 
 -------------------------------------------------------------------------------*/
 
-FMOD::Channel* playSoundEntity(Entity* entity, Uint16 snd, Uint8 vol)
+FMOD_CHANNEL* playSoundEntity(Entity* entity, Uint16 snd, Uint8 vol)
 {
 	if (no_sound)
 	{
-		return nullptr;
+		return NULL;
 	}
 
-	if ( entity == nullptr )
+	if ( entity == NULL )
 	{
-		return nullptr;
+		return NULL;
 	}
 	return playSoundPos(entity->x, entity->y, snd, vol);
 }
 
-FMOD::Channel* playSoundEntityLocal(Entity* entity, Uint16 snd, Uint8 vol)
+FMOD_CHANNEL* playSoundEntityLocal(Entity* entity, Uint16 snd, Uint8 vol)
 {
-	if ( entity == nullptr )
+	if ( entity == NULL )
 	{
-		return nullptr;
+		return NULL;
 	}
 	return playSoundPosLocal(entity->x, entity->y, snd, vol);
 }
@@ -309,25 +309,25 @@ FMOD::Channel* playSoundEntityLocal(Entity* entity, Uint16 snd, Uint8 vol)
 
 -------------------------------------------------------------------------------*/
 
-FMOD::Channel* playSound(Uint16 snd, Uint8 vol)
+FMOD_CHANNEL* playSound(Uint16 snd, Uint8 vol)
 {
 	if (no_sound)
 	{
-		return nullptr;
+		return NULL;
 	}
 #ifndef SOUND
-	return nullptr;
+	return NULL;
 #endif
 	if (!fmod_system || snd < 0 || snd >= numsounds || !getChannelGroupForSoundIndex(snd) )
 	{
-		return nullptr;
+		return NULL;
 	}
-	if (sounds[snd] == nullptr || vol == 0)
+	if (sounds[snd] == NULL || vol == 0)
 	{
-		return nullptr;
+		return NULL;
 	}
-	FMOD::Channel* channel = nullptr;
-	fmod_result = fmod_system->playSound(sounds[snd], getChannelGroupForSoundIndex(snd), true, &channel);
+	FMOD_CHANNEL* channel = NULL;
+	fmod_result = FMOD_System_PlaySound(fmod_system, sounds[snd], getChannelGroupForSoundIndex(snd), true, &channel);
     if (fmod_result == FMOD_OK && channel) {
         //Faux 3D. Set to 0 and then set the channel's mode to be relative  to the player's head to achieve global sound.
         FMOD_VECTOR position;
@@ -335,53 +335,53 @@ FMOD::Channel* playSound(Uint16 snd, Uint8 vol)
         position.y = 0.f;
         position.z = 0.f;
         
-        channel->setVolume(vol / 255.f);
-        channel->set3DAttributes(&position, nullptr);
-        channel->setMode(FMOD_3D_HEADRELATIVE);
+        FMOD_Channel_SetVolume(channel, vol / 255.f);
+        FMOD_Channel_Set3DAttributes(channel, &position, NULL);
+        FMOD_Channel_SetMode(channel, FMOD_3D_HEADRELATIVE);
         
         if (FMODErrorCheck())
         {
-            return nullptr;
+            return NULL;
         }
-        channel->setPaused(false);
+        FMOD_Channel_SetPaused(channel, false);
     }
 	return channel;
 }
 
-FMOD::Channel* playSoundNotification(Uint16 snd, Uint8 vol)
+FMOD_CHANNEL* playSoundNotification(Uint16 snd, Uint8 vol)
 {
 	if ( no_sound )
 	{
-		return nullptr;
+		return NULL;
 	}
 #ifndef SOUND
-	return nullptr;
+	return NULL;
 #endif
 	if ( !fmod_system || snd < 0 || snd >= numsounds || !getChannelGroupForSoundIndex(snd) )
 	{
-		return nullptr;
+		return NULL;
 	}
-	if ( sounds[snd] == nullptr || vol == 0 )
+	if ( sounds[snd] == NULL || vol == 0 )
 	{
-		return nullptr;
+		return NULL;
 	}
-	FMOD::Channel* channel;
-	fmod_result = fmod_system->playSound(sounds[snd], music_notification_group, true, &channel);
+	FMOD_CHANNEL* channel;
+	fmod_result = FMOD_System_PlaySound(fmod_system, sounds[snd], music_notification_group, true, &channel);
 	//Faux 3D. Set to 0 and then set the channel's mode to be relative  to the player's head to achieve global sound.
 	FMOD_VECTOR position;
 	position.x = 0.f;
 	position.y = 0.f;
 	position.z = 0.f;
 
-	channel->setVolume(vol / 255.f);
-	channel->set3DAttributes(&position, nullptr);
-	channel->setMode(FMOD_3D_HEADRELATIVE);
+	FMOD_Channel_SetVolume(channel, vol / 255.f);
+	FMOD_Channel_Set3DAttributes(channel, &position, NULL);
+	FMOD_Channel_SetMode(channel, FMOD_3D_HEADRELATIVE);
 
 	if ( FMODErrorCheck() )
 	{
-		return nullptr;
+		return NULL;
 	}
-	channel->setPaused(false);
+	FMOD_Channel_SetPaused(channel, false);
 	return channel;
 }
 
@@ -407,7 +407,7 @@ void* playSoundPos(real_t x, real_t y, Uint16 snd, Uint8 vol)
 
 	if (intro || vol == 0)
 	{
-		return nullptr;
+		return NULL;
 	}
 
 	if (multiplayer == SERVER)
@@ -489,20 +489,20 @@ void* playSoundPlayer(int player, Uint16 snd, Uint8 vol)
 
 void* playSoundNotification(Uint16 snd, Uint8 vol)
 {
-	return nullptr;
+	return NULL;
 }
 
 void* playSoundNotificationPlayer(int player, Uint16 snd, Uint8 vol)
 {
 	if ( no_sound )
 	{
-		return nullptr;
+		return NULL;
 	}
 
 
 	if ( player < 0 || player >= MAXPLAYERS )   //Perhaps this can be reprogrammed to remove MAXPLAYERS, and use a pointer to the player instead of an int?
 	{
-		return nullptr;
+		return NULL;
 	}
 	if ( players[player]->isLocalPlayer() )
 	{
@@ -512,7 +512,7 @@ void* playSoundNotificationPlayer(int player, Uint16 snd, Uint8 vol)
 	{
 		if ( client_disconnected[player] || player <= 0 )
 		{
-			return nullptr;
+			return NULL;
 		}
 		memcpy(net_packet->data, "SNDN", 4);
 		SDLNet_Write16(snd, &net_packet->data[4]);
@@ -521,10 +521,10 @@ void* playSoundNotificationPlayer(int player, Uint16 snd, Uint8 vol)
 		net_packet->address.port = net_clients[player - 1].port;
 		net_packet->len = 7;
 		sendPacketSafe(net_sock, -1, net_packet, player - 1);
-		return nullptr;
+		return NULL;
 	}
 
-	return nullptr;
+	return NULL;
 }
 #endif
 
@@ -544,8 +544,8 @@ FMOD_RESULT F_CALLBACK pcmreadcallback(FMOD_SOUND* sound, void* data, unsigned i
 {
 	char* bitbuffer = (char*)data;
 	if ( !sound ) { return FMOD_OK; }
-	void* userData = nullptr;
-	fmod_result = ((FMOD::Sound*)sound)->getUserData(&userData);
+	void* userData = NULL;
+	fmod_result = FMOD_Sound_GetUserData((FMOD_SOUND*)sound, &userData);
 	if ( FMODErrorCheck() ) { return FMOD_OK; }
 	int player = reinterpret_cast<intptr_t>(userData);
 	
@@ -589,7 +589,7 @@ void VoiceChat_t::PlayerChannels_t::updateLatency()
 		{
 			playbackRate = native_rate + (int)(native_rate * (driftCorrectionPercentage / 100.0f));
 		}
-		outputChannel->setFrequency(playbackRate);
+		FMOD_Channel_SetFrequency(outputChannel, playbackRate);
 	}
 }
 
@@ -696,16 +696,16 @@ void VoiceChat_t::deinitRecording(bool resetPushTalkToggle)
 	recordingLastPos = 0;
 	bIsRecording = false;
 	bRecordingInit = false;
-	fmod_result = fmod_system->recordStop(recordDeviceIndex);
+	fmod_result = FMOD_System_RecordStop(fmod_system, recordDeviceIndex);
 	if ( recordingChannel )
 	{
-		fmod_result = recordingChannel->stop();
-		recordingChannel = nullptr;
+		fmod_result = FMOD_Channel_Stop(recordingChannel);
+		recordingChannel = NULL;
 	}
 	if ( recordingSound )
 	{
-		recordingSound->release();
-		recordingSound = nullptr;
+		FMOD_Sound_Release(recordingSound);
+		recordingSound = NULL;
 	}
 	recordingSamples = 0;
 	if ( resetPushTalkToggle )
@@ -721,13 +721,13 @@ void VoiceChat_t::initRecording()
 	{
 		if ( recordingChannel )
 		{
-			fmod_result = recordingChannel->stop();
-			recordingChannel = nullptr;
+			fmod_result = FMOD_Channel_Stop(recordingChannel);
+			recordingChannel = NULL;
 		}
 		if ( recordingSound )
 		{
-			recordingSound->release();
-			recordingSound = nullptr;
+			FMOD_Sound_Release(recordingSound);
+			recordingSound = NULL;
 		}
 
 		FMOD_CREATESOUNDEXINFO exinfo = { 0 };
@@ -736,17 +736,17 @@ void VoiceChat_t::initRecording()
 		exinfo.format = FMOD_SOUND_FORMAT_PCM16;
 		exinfo.defaultfrequency = nativeRate;
 		exinfo.length = nativeRate * sizeof(short) * nativeChannels; // 1 second buffer
-		fmod_result = fmod_system->createSound(0, FMOD_LOOP_NORMAL | FMOD_OPENUSER, &exinfo, &recordingSound);
+		fmod_result = FMOD_System_CreateSound(fmod_system, 0, FMOD_LOOP_NORMAL | FMOD_OPENUSER, &exinfo, &recordingSound);
 		if ( FMODErrorCheck() ) { return; }
-		fmod_result = recordingSound->getLength(&recordingSoundLength, FMOD_TIMEUNIT_PCM);
+		fmod_result = FMOD_Sound_GetLength(recordingSound, &recordingSoundLength, FMOD_TIMEUNIT_PCM);
 		if ( FMODErrorCheck() ) { return; }
 
 		int numDrivers = 0;
-		fmod_result = fmod_system->getRecordNumDrivers(NULL, &numDrivers);
+		fmod_result = FMOD_System_GetRecordNumDrivers(fmod_system, NULL, &numDrivers);
 		if ( FMODErrorCheck() || numDrivers == 0 ) { return; }
-		//fmod_result = fmod_system->getRecordDriverInfo(recordDeviceIndex, NULL, 0, NULL, &nativeRate, NULL, &nativeChannels, NULL);
+		//fmod_result = FMOD_System_GetRecordDriverInfo(fmod_system, recordDeviceIndex, NULL, 0, NULL, &nativeRate, NULL, &nativeChannels, NULL);
 		//if ( FMODErrorCheck() ) { return; }
-		fmod_result = fmod_system->recordStart(recordDeviceIndex, recordingSound, true);
+		fmod_result = FMOD_System_RecordStart(fmod_system, recordDeviceIndex, recordingSound, true);
 		if ( FMODErrorCheck() ) { return; }
 		bRecordingInit = true;
 		logInfo("VoiceChat_t::initRecording()");
@@ -758,19 +758,19 @@ void VoiceChat_t::PlayerChannels_t::deinit()
 	audio_queue_mutex.lock();
 	if ( outputChannel )
 	{
-		outputChannel->stop();
-		outputChannel = nullptr;
+		FMOD_Channel_Stop(outputChannel);
+		outputChannel = NULL;
 	}
 	if ( outputSound )
 	{
-		outputSound->release();
-		outputSound = nullptr;
+		FMOD_Sound_Release(outputSound);
+		outputSound = NULL;
 	}
 
 	if ( VoiceChat.outChannelGroup )
 	{
-		VoiceChat.outChannelGroup->release();
-		VoiceChat.outChannelGroup = nullptr;
+		FMOD_Sound_Release(VoiceChat.outChannelGroup);
+		VoiceChat.outChannelGroup = NULL;
 	}
 
 	minimumSamplesWritten = -1;
@@ -862,39 +862,39 @@ void setReverbType(int type)
 	}
 }
 
-void setReverbSettings(FMOD::DSP* dsp_reverb, int type, float wetLevel, float dryLevel)
+void setReverbSettings(FMOD_DSP* dsp_reverb, int type, float wetLevel, float dryLevel)
 {
 	if ( !dsp_reverb ) { return; }
 	setReverbType(type);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_DECAYTIME, reverbProperties.DecayTime);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_EARLYDELAY, reverbProperties.EarlyDelay);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_LATEDELAY, reverbProperties.LateDelay);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_HFREFERENCE, reverbProperties.HFReference);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_HFDECAYRATIO, reverbProperties.HFDecayRatio);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_DIFFUSION, reverbProperties.Diffusion);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_DENSITY, reverbProperties.Density);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_LOWSHELFFREQUENCY, reverbProperties.LowShelfFrequency);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_LOWSHELFGAIN, reverbProperties.LowShelfGain);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_HIGHCUT, reverbProperties.HighCut);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_EARLYLATEMIX, reverbProperties.EarlyLateMix);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_WETLEVEL, reverbProperties.WetLevel + wetLevel);
-	dsp_reverb->setParameterFloat(FMOD_DSP_SFXREVERB_DRYLEVEL, 0.f + dryLevel);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_DECAYTIME, reverbProperties.DecayTime);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_EARLYDELAY, reverbProperties.EarlyDelay);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_LATEDELAY, reverbProperties.LateDelay);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_HFREFERENCE, reverbProperties.HFReference);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_HFDECAYRATIO, reverbProperties.HFDecayRatio);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_DIFFUSION, reverbProperties.Diffusion);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_DENSITY, reverbProperties.Density);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_LOWSHELFFREQUENCY, reverbProperties.LowShelfFrequency);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_LOWSHELFGAIN, reverbProperties.LowShelfGain);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_HIGHCUT, reverbProperties.HighCut);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_EARLYLATEMIX, reverbProperties.EarlyLateMix);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_WETLEVEL, reverbProperties.WetLevel + wetLevel);
+	FMOD_DSP_SetParameterFloat(dsp_reverb, FMOD_DSP_SFXREVERB_DRYLEVEL, 0.f + dryLevel);
 	if ( type == 0 )
 	{
-		dsp_reverb->setBypass(true);
+		FMOD_DSP_SetBypass(dsp_reverb, true);
 	}
 	else
 	{
-		dsp_reverb->setBypass(false);
+		FMOD_DSP_SetBypass(dsp_reverb, false);
 	}
 }
 
-void setEQSettings(FMOD::DSP* dsp_eq, float low, float mid, float high)
+void setEQSettings(FMOD_DSP* dsp_eq, float low, float mid, float high)
 {
 	if ( !dsp_eq ) { return; }
-	dsp_eq->setParameterFloat(FMOD_DSP_THREE_EQ_LOWGAIN, low);
-	dsp_eq->setParameterFloat(FMOD_DSP_THREE_EQ_MIDGAIN, mid);
-	dsp_eq->setParameterFloat(FMOD_DSP_THREE_EQ_HIGHGAIN, high);
+	FMOD_DSP_SetParameterFloat(dsp_eq, FMOD_DSP_THREE_EQ_LOWGAIN, low);
+	FMOD_DSP_SetParameterFloat(dsp_eq, FMOD_DSP_THREE_EQ_MIDGAIN, mid);
+	FMOD_DSP_SetParameterFloat(dsp_eq, FMOD_DSP_THREE_EQ_HIGHGAIN, high);
 }
 
 enum VoiceChat_t::DSPOrder : int
@@ -917,12 +917,12 @@ static ConsoleCommand ccmd_voice_reverb("/voice_reverb", "",
 			{
 				if ( VoiceChat.PlayerChannels[i].outputChannel )
 				{
-					FMOD::DSP* dsp_reverb = nullptr;
-					fmod_result = VoiceChat.PlayerChannels[i].outputChannel->getDSP(VoiceChat_t::DSPORDER_REVERB, &dsp_reverb);
+					FMOD_DSP* dsp_reverb = NULL;
+					fmod_result = FMOD_Channel_GetDSP(VoiceChat.PlayerChannels[i].outputChannel, VoiceChat_t::DSPORDER_REVERB, &dsp_reverb);
 					if ( dsp_reverb )
 					{
 						FMOD_DSP_TYPE type;
-						fmod_result = dsp_reverb->getType(&type);
+						fmod_result = FMOD_DSP_GetType(dsp_reverb, &type);
 						if ( type == FMOD_DSP_TYPE_SFXREVERB )
 						{
 							if ( atoi(argv[1]) < 0 )
@@ -953,12 +953,12 @@ static ConsoleCommand ccmd_voice_eq("/voice_eq", "",
 			{
 				if ( VoiceChat.PlayerChannels[i].outputChannel )
 				{
-					FMOD::DSP* dsp_eq = nullptr;
-					fmod_result = VoiceChat.PlayerChannels[i].outputChannel->getDSP(VoiceChat_t::DSPORDER_EQ, &dsp_eq);
+					FMOD_DSP* dsp_eq = NULL;
+					fmod_result = FMOD_Channel_GetDSP(VoiceChat.PlayerChannels[i].outputChannel, VoiceChat_t::DSPORDER_EQ, &dsp_eq);
 					if ( dsp_eq )
 					{
 						FMOD_DSP_TYPE type;
-						fmod_result = dsp_eq->getType(&type);
+						fmod_result = FMOD_DSP_GetType(dsp_eq, &type);
 						if ( type == FMOD_DSP_TYPE_THREE_EQ )
 						{
 							setEQSettings(dsp_eq, atoi(argv[1]), atoi(argv[2]), atoi(argv[3]));
@@ -977,15 +977,15 @@ static ConsoleCommand ccmd_voice_limiter_release("/voice_limiter_release", "",
 			{
 				if ( VoiceChat.PlayerChannels[i].outputChannel )
 				{
-					FMOD::DSP* dsp_limiter = nullptr;
-					fmod_result = VoiceChat.PlayerChannels[i].outputChannel->getDSP(VoiceChat_t::DSPORDER_LIMITER, &dsp_limiter);
+					FMOD_DSP* dsp_limiter = NULL;
+					fmod_result = FMOD_Channel_GetDSP(VoiceChat.PlayerChannels[i].outputChannel, VoiceChat_t::DSPORDER_LIMITER, &dsp_limiter);
 					if ( dsp_limiter )
 					{
 						FMOD_DSP_TYPE type;
-						fmod_result = dsp_limiter->getType(&type);
+						fmod_result = FMOD_DSP_GetType(dsp_limiter, &type);
 						if ( type == FMOD_DSP_TYPE_LIMITER )
 						{
-							fmod_result = dsp_limiter->setParameterFloat(FMOD_DSP_LIMITER_RELEASETIME, atoi(argv[1]));
+							fmod_result = FMOD_DSP_SetParameterFloat(dsp_limiter, FMOD_DSP_LIMITER_RELEASETIME, atoi(argv[1]));
 						}
 					}
 				}
@@ -993,11 +993,11 @@ static ConsoleCommand ccmd_voice_limiter_release("/voice_limiter_release", "",
 		}
 	});
 
-//void setPitchShiftSettings(FMOD::DSP* dsp, float pitch)
+//void setPitchShiftSettings(FMOD_DSP* dsp, float pitch)
 //{
 //	if ( !dsp ) { return; }
-//	dsp->setBypass(false);
-//	dsp->setParameterFloat(FMOD_DSP_PITCHSHIFT_PITCH, pitch);
+//	FMOD_DSP_SetBypass(dsp, false);
+//	FMOD_DSP_SetParameterFloat(dsp, FMOD_DSP_PITCHSHIFT_PITCH, pitch);
 //}
 //static ConsoleCommand ccmd_voice_pitchshift("/voice_pitchshift", "",
 //	[](int argc, const char* argv[]) {
@@ -1007,12 +1007,12 @@ static ConsoleCommand ccmd_voice_limiter_release("/voice_limiter_release", "",
 //			{
 //				if ( VoiceChat.PlayerChannels[i].outputChannel )
 //				{
-//					FMOD::DSP* dsp = nullptr;
-//					fmod_result = VoiceChat.PlayerChannels[i].outputChannel->getDSP(4, &dsp);
+//					FMOD_DSP* dsp = NULL;
+//					fmod_result = FMOD_Channel_GetDSP(VoiceChat.PlayerChannels[i].outputChannel, 4, &dsp);
 //					if ( dsp )
 //					{
 //						FMOD_DSP_TYPE type;
-//						fmod_result = dsp->getType(&type);
+//						fmod_result = FMOD_DSP_GetType(dsp, &type);
 //						if ( type == FMOD_DSP_TYPE_PITCHSHIFT )
 //						{
 //							setPitchShiftSettings(dsp, atoi(argv[1]));
@@ -1022,13 +1022,13 @@ static ConsoleCommand ccmd_voice_limiter_release("/voice_limiter_release", "",
 //			}
 //		}
 //	});
-//void setChorusSettings(FMOD::DSP* dsp, float mix, float rate, float depth)
+//void setChorusSettings(FMOD_DSP* dsp, float mix, float rate, float depth)
 //{
 //	if ( !dsp ) { return; }
-//	dsp->setBypass(false);
-//	dsp->setParameterFloat(FMOD_DSP_CHORUS_MIX, mix);
-//	dsp->setParameterFloat(FMOD_DSP_CHORUS_RATE, rate);
-//	dsp->setParameterFloat(FMOD_DSP_CHORUS_DEPTH, depth);
+//	FMOD_DSP_SetBypass(dsp, false);
+//	FMOD_DSP_SetParameterFloat(dsp, FMOD_DSP_CHORUS_MIX, mix);
+//	FMOD_DSP_SetParameterFloat(dsp, FMOD_DSP_CHORUS_RATE, rate);
+//	FMOD_DSP_SetParameterFloat(dsp, FMOD_DSP_CHORUS_DEPTH, depth);
 //}
 //static ConsoleCommand ccmd_voice_chorus("/voice_chorus", "",
 //	[](int argc, const char* argv[]) {
@@ -1038,12 +1038,12 @@ static ConsoleCommand ccmd_voice_limiter_release("/voice_limiter_release", "",
 //			{
 //				if ( VoiceChat.PlayerChannels[i].outputChannel )
 //				{
-//					FMOD::DSP* dsp = nullptr;
-//					fmod_result = VoiceChat.PlayerChannels[i].outputChannel->getDSP(5, &dsp);
+//					FMOD_DSP* dsp = NULL;
+//					fmod_result = FMOD_Channel_GetDSP(VoiceChat.PlayerChannels[i].outputChannel, 5, &dsp);
 //					if ( dsp )
 //					{
 //						FMOD_DSP_TYPE type;
-//						fmod_result = dsp->getType(&type);
+//						fmod_result = FMOD_DSP_GetType(dsp, &type);
 //						if ( type == FMOD_DSP_TYPE_CHORUS )
 //						{
 //							setChorusSettings(dsp, atoi(argv[1]), atoi(argv[2]), atoi(argv[3]));
@@ -1099,11 +1099,11 @@ void VoiceChat_t::updateOnMapChange3DRolloff()
 		{
 			if ( VoiceChat.getAudioSettingBool(VoiceChat_t::AudioSettingBool::VOICE_SETTING_USE_CUSTOM_ROLLOFF) )
 			{
-				fmod_result = VoiceChat.PlayerChannels[i].outputChannel->set3DCustomRolloff(bossMap ? fmod_rolloff_points_arena : fmod_rolloff_points, 6);
+				fmod_result = FMOD_Channel_Set3DCustomRolloff(VoiceChat.PlayerChannels[i].outputChannel, bossMap ? fmod_rolloff_points_arena : fmod_rolloff_points, 6);
 			}
 			else
 			{
-				fmod_result = VoiceChat.PlayerChannels[i].outputChannel->set3DCustomRolloff(bossMap ? fmod_rolloff_points_arena : fmod_rolloff_null_points, 4);
+				fmod_result = FMOD_Channel_Set3DCustomRolloff(VoiceChat.PlayerChannels[i].outputChannel, bossMap ? fmod_rolloff_points_arena : fmod_rolloff_null_points, 4);
 			}
 		}
 	}
@@ -1124,7 +1124,7 @@ void VoiceChat_t::PlayerChannels_t::setupPlayback()
 	exinfoBuffer.length = windowSize/* * sizeof(short) * nativeChannels*/;
 	exinfoBuffer.pcmreadcallback = pcmreadcallback;
 	exinfoBuffer.userdata = (void*)(intptr_t)(player);
-	fmod_result = fmod_system->createSound(nullptr, FMOD_LOOP_NORMAL 
+	fmod_result = FMOD_System_CreateSound(fmod_system, NULL, FMOD_LOOP_NORMAL 
 		| FMOD_OPENUSER 
 		| FMOD_CREATESTREAM 
 		| FMOD_3D
@@ -1132,16 +1132,16 @@ void VoiceChat_t::PlayerChannels_t::setupPlayback()
 
 	if ( !VoiceChat.outChannelGroup )
 	{
-		fmod_result = fmod_system->createChannelGroup(nullptr, &VoiceChat.outChannelGroup);
+		fmod_result = FMOD_System_CreateChannelGroup(fmod_system, NULL, &VoiceChat.outChannelGroup);
 		if ( VoiceChat.outChannelGroup )
 		{
-			VoiceChat.outChannelGroup->setVolume(std::max(0.0f, MainMenu::master_volume));
+			FMOD_ChannelGroup_SetVolume(VoiceChat.outChannelGroup, std::max(0.0f, MainMenu::master_volume));
 		}
 	}
 
-	fmod_result = fmod_system->playSound(outputSound, VoiceChat.outChannelGroup, false, &outputChannel);
+	fmod_result = FMOD_System_PlaySound(fmod_system, outputSound, VoiceChat.outChannelGroup, false, &outputChannel);
 
-	outputChannel->setPriority(64); // default 128
+	FMOD_Channel_SetPriority(outputChannel, 64); // default 128
 
 	static ConsoleCommand ccmd_voice_rolloff("/voice_rolloff", "",
 		[](int argc, const char* argv[]) {
@@ -1157,7 +1157,7 @@ void VoiceChat_t::PlayerChannels_t::setupPlayback()
 							fmod_rolloff_points[index].x = atoi(argv[2]) / 100.f;
 							fmod_rolloff_points[index].y = atoi(argv[3]) / 100.f;
 						}
-						VoiceChat.PlayerChannels[i].outputChannel->set3DCustomRolloff(fmod_rolloff_points, 6);
+						FMOD_Channel_Set3DCustomRolloff(VoiceChat.PlayerChannels[i].outputChannel, fmod_rolloff_points, 6);
 					}
 				}
 			}
@@ -1169,119 +1169,119 @@ void VoiceChat_t::PlayerChannels_t::setupPlayback()
 	);
 	if ( !VoiceChat.getAudioSettingBool(VoiceChat_t::AudioSettingBool::VOICE_SETTING_USE_CUSTOM_ROLLOFF) )
 	{
-		fmod_result = outputChannel->set3DCustomRolloff(fmod_rolloff_null_points, 4);
+		fmod_result = FMOD_Channel_Set3DCustomRolloff(outputChannel, fmod_rolloff_null_points, 4);
 	}
 	else
 	{
-		fmod_result = outputChannel->set3DCustomRolloff(fmod_rolloff_points, 6);
+		fmod_result = FMOD_Channel_Set3DCustomRolloff(outputChannel, fmod_rolloff_points, 6);
 	}
 
 	for ( int i = 1; i < DSPORDER_END; ++i )
 	{
 		if ( i == DSPORDER_REVERB )
 		{
-			FMOD::DSP* dsp_reverb = nullptr;
-			fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_SFXREVERB, &dsp_reverb);
+			FMOD_DSP* dsp_reverb = NULL;
+			fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_SFXREVERB, &dsp_reverb);
 			if ( dsp_reverb )
 			{
-				fmod_result = outputChannel->addDSP(i, dsp_reverb);
+				fmod_result = FMOD_Channel_AddDSP(outputChannel, i, dsp_reverb);
 				setReverbSettings(dsp_reverb, cvar_voice_reverb_player->x, cvar_voice_reverb_player->y, cvar_voice_reverb_player->z);
 				if ( i == 1 || (i == DSPORDER_END - 1) )
 				{
-					dsp_reverb->setMeteringEnabled(true, true);
+					FMOD_DSP_SetMeteringEnabled(dsp_reverb, true, true);
 				}
 			}
 		}
 		else if ( i == DSPORDER_EQ )
 		{
-			FMOD::DSP* dsp_eq = nullptr;
-			fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_THREE_EQ, &dsp_eq);
+			FMOD_DSP* dsp_eq = NULL;
+			fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_THREE_EQ, &dsp_eq);
 			if ( dsp_eq )
 			{
-				fmod_result = outputChannel->addDSP(i, dsp_eq);
+				fmod_result = FMOD_Channel_AddDSP(outputChannel, i, dsp_eq);
 				setEQSettings(dsp_eq, cvar_voice_eq_player->x, cvar_voice_eq_player->y, cvar_voice_eq_player->z);
 				if ( i == 1 || (i == DSPORDER_END - 1) )
 				{
-					dsp_eq->setMeteringEnabled(true, true);
+					FMOD_DSP_SetMeteringEnabled(dsp_eq, true, true);
 				}
 			}
 		}
 		else if ( i == DSPORDER_NORMALIZE )
 		{
-			FMOD::DSP* dsp_normalize = nullptr;
-			fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_NORMALIZE, &dsp_normalize);
+			FMOD_DSP* dsp_normalize = NULL;
+			fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_NORMALIZE, &dsp_normalize);
 			if ( dsp_normalize )
 			{
-				fmod_result = outputChannel->addDSP(i, dsp_normalize);
-				dsp_normalize->setParameterFloat(FMOD_DSP_NORMALIZE_FADETIME, kNormalizeFadeTime);
-				dsp_normalize->setMeteringEnabled(true, true);
+				fmod_result = FMOD_Channel_AddDSP(outputChannel, i, dsp_normalize);
+				FMOD_DSP_SetParameterFloat(dsp_normalize, FMOD_DSP_NORMALIZE_FADETIME, kNormalizeFadeTime);
+				FMOD_DSP_SetMeteringEnabled(dsp_normalize, true, true);
 				if ( i == 1 || (i == DSPORDER_END - 1) )
 				{
-					dsp_normalize->setMeteringEnabled(true, true);
+					FMOD_DSP_SetMeteringEnabled(dsp_normalize, true, true);
 				}
 			}
 		}
 		else if ( i == DSPORDER_LIMITER )
 		{
-			FMOD::DSP* dsp_limiter = nullptr;
-			fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_LIMITER, &dsp_limiter);
+			FMOD_DSP* dsp_limiter = NULL;
+			fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_LIMITER, &dsp_limiter);
 			if ( dsp_limiter )
 			{
-				fmod_result = outputChannel->addDSP(i, dsp_limiter);
-				fmod_result = dsp_limiter->setParameterFloat(FMOD_DSP_LIMITER_MAXIMIZERGAIN, 0.f);
-				fmod_result = dsp_limiter->setParameterFloat(FMOD_DSP_LIMITER_CEILING, 0.f);
-				fmod_result = dsp_limiter->setParameterFloat(FMOD_DSP_LIMITER_RELEASETIME, 1000.f);
+				fmod_result = FMOD_Channel_AddDSP(outputChannel, i, dsp_limiter);
+				fmod_result = FMOD_DSP_SetParameterFloat(dsp_limiter, FMOD_DSP_LIMITER_MAXIMIZERGAIN, 0.f);
+				fmod_result = FMOD_DSP_SetParameterFloat(dsp_limiter, FMOD_DSP_LIMITER_CEILING, 0.f);
+				fmod_result = FMOD_DSP_SetParameterFloat(dsp_limiter, FMOD_DSP_LIMITER_RELEASETIME, 1000.f);
 				if ( i == 1 || (i == DSPORDER_END - 1) )
 				{
-					dsp_limiter->setMeteringEnabled(true, true);
+					FMOD_DSP_SetMeteringEnabled(dsp_limiter, true, true);
 				}
 			}
 		}
 		else if ( i == DSPORDER_FADER_LOCALGAIN )
 		{
-			FMOD::DSP* dsp_local_fader = nullptr;
-			fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_FADER, &dsp_local_fader);
+			FMOD_DSP* dsp_local_fader = NULL;
+			fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_FADER, &dsp_local_fader);
 			if ( dsp_local_fader )
 			{
-				fmod_result = outputChannel->addDSP(i, dsp_local_fader);
-				fmod_result = dsp_local_fader->setParameterFloat(FMOD_DSP_FADER_GAIN, std::min(kMaxGain, (std::max(-80.f, (localChannelGain - 100.f)))));
+				fmod_result = FMOD_Channel_AddDSP(outputChannel, i, dsp_local_fader);
+				fmod_result = FMOD_DSP_SetParameterFloat(dsp_local_fader, FMOD_DSP_FADER_GAIN, std::min(kMaxGain, (std::max(-80.f, (localChannelGain - 100.f)))));
 				if ( i == 1 || (i == DSPORDER_END - 1) )
 				{
-					dsp_local_fader->setMeteringEnabled(true, true);
+					FMOD_DSP_SetMeteringEnabled(dsp_local_fader, true, true);
 				}
 			}
 		}
 		else if ( i == DSPORDER_FADER_CHANNELGAIN )
 		{
-			FMOD::DSP* dsp_fader = nullptr;
-			fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_FADER, &dsp_fader);
+			FMOD_DSP* dsp_fader = NULL;
+			fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_FADER, &dsp_fader);
 			if ( dsp_fader )
 			{
-				fmod_result = outputChannel->addDSP(i, dsp_fader);
-				fmod_result = dsp_fader->setParameterFloat(FMOD_DSP_FADER_GAIN, (std::min(kMaxGain, std::max(-80.f, (channelGain - 100.f)))));
+				fmod_result = FMOD_Channel_AddDSP(outputChannel, i, dsp_fader);
+				fmod_result = FMOD_DSP_SetParameterFloat(dsp_fader, FMOD_DSP_FADER_GAIN, (std::min(kMaxGain, std::max(-80.f, (channelGain - 100.f)))));
 				if ( i == 1 || (i == DSPORDER_END - 1) )
 				{
-					dsp_fader->setMeteringEnabled(true, true);
+					FMOD_DSP_SetMeteringEnabled(dsp_fader, true, true);
 				}
 			}
 		}
 	}
 
 
-	/*FMOD::DSP* dsp_misc = nullptr;
-	fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_PITCHSHIFT, &dsp_misc);
+	/*FMOD_DSP* dsp_misc = NULL;
+	fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_PITCHSHIFT, &dsp_misc);
 	if ( dsp_misc )
 	{
-		outputChannel->addDSP(4, dsp_misc);
-		dsp_misc->setBypass(true);
+		FMOD_Channel_AddDSP(outputChannel, 4, dsp_misc);
+		FMOD_DSP_SetBypass(dsp_misc, true);
 	}
 
-	dsp_misc = nullptr;
-	fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_CHORUS, &dsp_misc);
+	dsp_misc = NULL;
+	fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_CHORUS, &dsp_misc);
 	if ( dsp_misc )
 	{
-		outputChannel->addDSP(5, dsp_misc);
-		dsp_misc->setBypass(true);
+		FMOD_Channel_AddDSP(outputChannel, 5, dsp_misc);
+		FMOD_DSP_SetBypass(dsp_misc, true);
 	}*/
 
 	logInfo("VoiceChat_t::PlayerChannels_t::setupPlayback()");
@@ -1463,7 +1463,7 @@ void VoiceChat_t::updateRecording()
 		initRecording();
 	}
 
-	fmod_result = fmod_system->isRecording(recordDeviceIndex, &bIsRecording);
+	fmod_result = FMOD_System_IsRecording(fmod_system, recordDeviceIndex, &bIsRecording);
 	if ( (fmod_result != FMOD_ERR_RECORD_DISCONNECTED && fmod_result != FMOD_OK)
 		|| !bIsRecording )
 	{
@@ -1600,7 +1600,7 @@ void VoiceChat_t::updateRecording()
 	if ( true )
 	{
 		unsigned int recordPos = 0;
-		fmod_result = fmod_system->getRecordPosition(recordDeviceIndex, &recordPos);
+		fmod_result = FMOD_System_GetRecordPosition(fmod_system, recordDeviceIndex, &recordPos);
 		if ( fmod_result != FMOD_ERR_RECORD_DISCONNECTED )
 		{
 			if ( FMODErrorCheck() ) { return; }
@@ -1623,59 +1623,59 @@ void VoiceChat_t::updateRecording()
 		{
 			if ( !recordingChannel )
 			{
-				fmod_result = fmod_system->playSound(recordingSound, 0, false, &recordingChannel);
+				fmod_result = FMOD_System_PlaySound(fmod_system, recordingSound, 0, false, &recordingChannel);
 				if ( FMODErrorCheck() ) { return; }
-				//recordingChannel->setVolume(0.f);
+				//FMOD_Channel_SetVolume(recordingChannel, 0.f);
 				if ( FMODErrorCheck() ) { return; }
 
-				FMOD::DSP* dsp_fader = nullptr;
-				fmod_result = recordingChannel->getDSP(0, &dsp_fader);
+				FMOD_DSP* dsp_fader = NULL;
+				fmod_result = FMOD_Channel_GetDSP(recordingChannel, 0, &dsp_fader);
 				if ( dsp_fader )
 				{
-					dsp_fader->setParameterFloat(FMOD_DSP_FADER_GAIN, -79.9);
+					FMOD_DSP_SetParameterFloat(dsp_fader, FMOD_DSP_FADER_GAIN, -79.9);
 				}
 
-				FMOD::DSP* dsp_limiter = nullptr;
-				fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_LIMITER, &dsp_limiter);
+				FMOD_DSP* dsp_limiter = NULL;
+				fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_LIMITER, &dsp_limiter);
 				if ( dsp_limiter )
 				{
-					recordingChannel->addDSP(1, dsp_limiter);
-					//fmod_result = dsp_limiter->setParameterFloat(FMOD_DSP_LIMITER_MAXIMIZERGAIN, (std::max(0.f, (getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_RECORDINGGAIN) - 100.f))));
-					//dsp_limiter->setMeteringEnabled(true, true);
-					fmod_result = dsp_limiter->setParameterFloat(FMOD_DSP_LIMITER_MAXIMIZERGAIN, 0.f);
-					fmod_result = dsp_limiter->setParameterFloat(FMOD_DSP_LIMITER_CEILING, 0.f);
-					fmod_result = dsp_limiter->setParameterFloat(FMOD_DSP_LIMITER_RELEASETIME, 1000.f);
+					FMOD_Channel_AddDSP(recordingChannel, 1, dsp_limiter);
+					//fmod_result = FMOD_DSP_SetParameterFloat(dsp_limiter, FMOD_DSP_LIMITER_MAXIMIZERGAIN, (std::max(0.f, (getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_RECORDINGGAIN) - 100.f))));
+					//FMOD_DSP_SetMeteringEnabled(dsp_limiter, true, true);
+					fmod_result = FMOD_DSP_SetParameterFloat(dsp_limiter, FMOD_DSP_LIMITER_MAXIMIZERGAIN, 0.f);
+					fmod_result = FMOD_DSP_SetParameterFloat(dsp_limiter, FMOD_DSP_LIMITER_CEILING, 0.f);
+					fmod_result = FMOD_DSP_SetParameterFloat(dsp_limiter, FMOD_DSP_LIMITER_RELEASETIME, 1000.f);
 				}
 
-				fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_FADER, &dsp_fader);
+				fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_FADER, &dsp_fader);
 				if ( dsp_fader )
 				{
-					recordingChannel->addDSP(2, dsp_fader);
-					dsp_fader->setChannelFormat(0, nativeChannels, FMOD_SPEAKERMODE_MONO);
-					fmod_result = dsp_fader->setParameterFloat(FMOD_DSP_FADER_GAIN, std::min(kMaxGain, 
+					FMOD_Channel_AddDSP(recordingChannel, 2, dsp_fader);
+					FMOD_DSP_SetChannelFormat(dsp_fader, 0, nativeChannels, FMOD_SPEAKERMODE_MONO);
+					fmod_result = FMOD_DSP_SetParameterFloat(dsp_fader, FMOD_DSP_FADER_GAIN, std::min(kMaxGain, 
 						getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_RECORDINGGAIN) - 100.f));
-					dsp_fader->setMeteringEnabled(true, true);
+					FMOD_DSP_SetMeteringEnabled(dsp_fader, true, true);
 				}
 
-				FMOD::DSP* dsp_normalize = nullptr;
-				fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_NORMALIZE, &dsp_normalize);
+				FMOD_DSP* dsp_normalize = NULL;
+				fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_NORMALIZE, &dsp_normalize);
 				if ( dsp_normalize )
 				{
-					recordingChannel->addDSP(3, dsp_normalize);
-					dsp_normalize->setParameterFloat(FMOD_DSP_NORMALIZE_FADETIME, kNormalizeFadeTime);
+					FMOD_Channel_AddDSP(recordingChannel, 3, dsp_normalize);
+					FMOD_DSP_SetParameterFloat(dsp_normalize, FMOD_DSP_NORMALIZE_FADETIME, kNormalizeFadeTime);
 					if ( getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_NORMALIZE_AMP) < 1.f )
 					{
-						dsp_normalize->setBypass(true);
+						FMOD_DSP_SetBypass(dsp_normalize, true);
 					}
 					else
 					{
-						dsp_normalize->setBypass(false);
-						fmod_result = dsp_normalize->setParameterFloat(FMOD_DSP_NORMALIZE_MAXAMP, 
+						FMOD_DSP_SetBypass(dsp_normalize, false);
+						fmod_result = FMOD_DSP_SetParameterFloat(dsp_normalize, FMOD_DSP_NORMALIZE_MAXAMP, 
 							std::min(100.f, std::max(1.f, getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_NORMALIZE_AMP))));
-						fmod_result = dsp_normalize->setParameterFloat(FMOD_DSP_NORMALIZE_THRESHOLD,
+						fmod_result = FMOD_DSP_SetParameterFloat(dsp_normalize, FMOD_DSP_NORMALIZE_THRESHOLD,
 							std::min(1.f, std::max(0.f, getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_NORMALIZE_THRESHOLD))));
 					}
-					dsp_normalize->setMeteringEnabled(true, true);
+					FMOD_DSP_SetMeteringEnabled(dsp_normalize, true, true);
 				}
 			}
 		}
@@ -1685,58 +1685,58 @@ void VoiceChat_t::updateRecording()
 			if ( recordingChannel )
 			{
 				int num_dsps = 0;
-				fmod_result = recordingChannel->getNumDSPs(&num_dsps);
+				fmod_result = FMOD_Channel_GetNumDSPs(recordingChannel, &num_dsps);
 				if ( fmod_result != FMOD_ERR_INVALID_HANDLE )
 				{
 					for ( int i = 0; i < num_dsps; ++i )
 					{
-						FMOD::DSP* dsp = nullptr;
-						fmod_result = recordingChannel->getDSP(i, &dsp);
+						FMOD_DSP* dsp = NULL;
+						fmod_result = FMOD_Channel_GetDSP(recordingChannel, i, &dsp);
 						FMOD_DSP_TYPE type;
-						dsp->getType(&type);
+						FMOD_DSP_GetType(dsp, &type);
 
 						bool in, out;
-						dsp->getMeteringEnabled(&in, &out);
-						if ( type == FMOD_DSP_TYPE::FMOD_DSP_TYPE_FADER )
+						FMOD_DSP_GetMeteringEnabled(dsp, &in, &out);
+						if ( type == FMOD_DSP_TYPE_FADER )
 						{
 							if ( i == 0 )
 							{
-								dsp->setParameterFloat(FMOD_DSP_FADER_GAIN, -79.9);
+								FMOD_DSP_SetParameterFloat(dsp, FMOD_DSP_FADER_GAIN, -79.9);
 							}
 						}
 						if ( type == FMOD_DSP_TYPE_NORMALIZE )
 						{
 							if ( getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_NORMALIZE_AMP) < 1.f )
 							{
-								dsp->setBypass(true);
+								FMOD_DSP_SetBypass(dsp, true);
 							}
 							else
 							{
-								dsp->setBypass(false);
-								fmod_result = dsp->setParameterFloat(FMOD_DSP_NORMALIZE_MAXAMP,
+								FMOD_DSP_SetBypass(dsp, false);
+								fmod_result = FMOD_DSP_SetParameterFloat(dsp, FMOD_DSP_NORMALIZE_MAXAMP,
 									std::min(kMaxNormalizeAmp, std::max(1.f, getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_NORMALIZE_AMP))));
-								fmod_result = dsp->setParameterFloat(FMOD_DSP_NORMALIZE_THRESHOLD,
+								fmod_result = FMOD_DSP_SetParameterFloat(dsp, FMOD_DSP_NORMALIZE_THRESHOLD,
 									std::min(kMaxNormalizeThreshold, std::max(0.f, getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_NORMALIZE_THRESHOLD))));
 							}
 							if ( in && out )
 							{
 								FMOD_DSP_METERING_INFO input_metering{};
 								FMOD_DSP_METERING_INFO output_metering{};
-								fmod_result = dsp->getMeteringInfo(&input_metering, &output_metering);
+								fmod_result = FMOD_DSP_GetMeteringInfo(dsp, &input_metering, &output_metering);
 								loopback_input_volume = std::max(input_metering.peaklevel[0], loopback_input_volume - 0.02f);
 							}
 						}
 						/*if ( type == FMOD_DSP_TYPE_LIMITER )
 						{
-							fmod_result = dsp->setParameterFloat(FMOD_DSP_LIMITER_MAXIMIZERGAIN, (std::max(0.f, (getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_RECORDINGGAIN) - 100.f))));
+							fmod_result = FMOD_DSP_SetParameterFloat(dsp, FMOD_DSP_LIMITER_MAXIMIZERGAIN, (std::max(0.f, (getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_RECORDINGGAIN) - 100.f))));
 						}*/
-						if ( type == FMOD_DSP_TYPE::FMOD_DSP_TYPE_FADER && in && out )
+						if ( type == FMOD_DSP_TYPE_FADER && in && out )
 						{
-							fmod_result = dsp->setParameterFloat(FMOD_DSP_FADER_GAIN, std::min(kMaxGain, 
+							fmod_result = FMOD_DSP_SetParameterFloat(dsp, FMOD_DSP_FADER_GAIN, std::min(kMaxGain, 
 								std::max(-80.f, getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_RECORDINGGAIN) - 100.f)));
 							FMOD_DSP_METERING_INFO input_metering{};
 							FMOD_DSP_METERING_INFO output_metering{};
-							dsp->getMeteringInfo(&input_metering, &output_metering);
+							FMOD_DSP_GetMeteringInfo(dsp, &input_metering, &output_metering);
 							loopback_output_volume = std::max(output_metering.peaklevel[0], loopback_output_volume - 0.02f);
 						}
 					}
@@ -1752,14 +1752,14 @@ void VoiceChat_t::updateRecording()
 				blocklength += (int)recordingSoundLength;
 			}
 
-			void* ptr1 = nullptr;
+			void* ptr1 = NULL;
 			unsigned len1 = 0;
-			void* ptr2 = nullptr;
+			void* ptr2 = NULL;
 			unsigned len2 = 0;
 
 			if ( doRecord )
 			{
-				recordingSound->lock(recordingLastPos * nativeChannels * sizeof(short),
+				FMOD_Sound_Lock(recordingSound, recordingLastPos * nativeChannels * sizeof(short),
 					blocklength * sizeof(short) * nativeChannels, &ptr1, &ptr2, &len1, &len2);
 
 				if ( len1 > 0 )
@@ -1770,7 +1770,7 @@ void VoiceChat_t::updateRecording()
 				{
 					VoiceChat_t::ringBufferRecord.Write((char*)ptr2, len2);
 				}
-				recordingSound->unlock(ptr1, ptr2, len1, len2);
+				FMOD_Sound_Unlock(recordingSound, ptr1, ptr2, len1, len2);
 			}
 		}
 		recordingLastPos = recordPos;
@@ -1792,7 +1792,7 @@ void VoiceChat_t::update()
 	sendPackets();
 
 	FMOD_VECTOR listener_pos;
-	fmod_result = fmod_system->get3DListenerAttributes(0, &listener_pos, nullptr, nullptr, nullptr);
+	fmod_result = FMOD_System_Get3DListenerAttributes(fmod_system, 0, &listener_pos, NULL, NULL, NULL);
 	bool hasListenerPos = fmod_result == FMOD_OK;
 
 	static bool prevCustomRolloff = true;
@@ -1815,7 +1815,7 @@ void VoiceChat_t::update()
 		if ( PlayerChannels[i].outputChannel )
 		{
 			bool isVirtual = false;
-			fmod_result = PlayerChannels[i].outputChannel->isVirtual(&isVirtual);
+			fmod_result = FMOD_Channel_IsVirtual(PlayerChannels[i].outputChannel, &isVirtual);
 			if ( isVirtual )
 			{
 				PlayerChannels[i].audio_queue_mutex.lock();
@@ -1824,52 +1824,52 @@ void VoiceChat_t::update()
 			}
 
 			float volume = std::min(std::max(0.0f, getAudioSettingFloat(AudioSettingFloat::VOICE_SETTING_VOICE_GLOBAL_VOLUME)), 1.f);
-			PlayerChannels[i].outputChannel->setVolume(volume);
+			FMOD_Channel_SetVolume(PlayerChannels[i].outputChannel, volume);
 
 			if ( (multiplayer == SINGLE && !*cvar_voice_debug) )
 			{
 				if ( !mainMenuAudioTabOpen() )
 				{
-					PlayerChannels[i].outputChannel->setVolume(0.f);
+					FMOD_Channel_SetVolume(PlayerChannels[i].outputChannel, 0.f);
 				}
 			}
 			if ( client_disconnected[i] )
 			{
-				PlayerChannels[i].outputChannel->setVolume(0.f);
+				FMOD_Channel_SetVolume(PlayerChannels[i].outputChannel, 0.f);
 			}
 
-			FMOD::DSP* dsp_reverb = nullptr;
-			FMOD::DSP* dsp_eq = nullptr;
+			FMOD_DSP* dsp_reverb = NULL;
+			FMOD_DSP* dsp_eq = NULL;
 			{
-				fmod_result = PlayerChannels[i].outputChannel->getDSP(DSPORDER_REVERB, &dsp_reverb);
-				fmod_result = PlayerChannels[i].outputChannel->getDSP(DSPORDER_EQ, &dsp_eq);
+				fmod_result = FMOD_Channel_GetDSP(PlayerChannels[i].outputChannel, DSPORDER_REVERB, &dsp_reverb);
+				fmod_result = FMOD_Channel_GetDSP(PlayerChannels[i].outputChannel, DSPORDER_EQ, &dsp_eq);
 				if ( dsp_eq )
 				{
-					dsp_eq->setBypass(client_disconnected[i] || (i != clientnum && multiplayer == SINGLE));
+					FMOD_DSP_SetBypass(dsp_eq, client_disconnected[i] || (i != clientnum && multiplayer == SINGLE));
 				}
 			}
 
 			{
-				FMOD::DSP* dsp_normalize = nullptr;
-				fmod_result = PlayerChannels[i].outputChannel->getDSP(DSPORDER_NORMALIZE, &dsp_normalize);
+				FMOD_DSP* dsp_normalize = NULL;
+				fmod_result = FMOD_Channel_GetDSP(PlayerChannels[i].outputChannel, DSPORDER_NORMALIZE, &dsp_normalize);
 				if ( dsp_normalize )
 				{
 					if ( PlayerChannels[i].normalize_amp < 1.f )
 					{
-						dsp_normalize->setBypass(true);
+						FMOD_DSP_SetBypass(dsp_normalize, true);
 					}
 					else
 					{
-						dsp_normalize->setBypass(client_disconnected[i] || (i != clientnum && multiplayer == SINGLE));
-						fmod_result = dsp_normalize->setParameterFloat(FMOD_DSP_NORMALIZE_MAXAMP, PlayerChannels[i].normalize_amp);
-						fmod_result = dsp_normalize->setParameterFloat(FMOD_DSP_NORMALIZE_THRESHOLD, PlayerChannels[i].normalize_threshold);
+						FMOD_DSP_SetBypass(dsp_normalize, client_disconnected[i] || (i != clientnum && multiplayer == SINGLE));
+						fmod_result = FMOD_DSP_SetParameterFloat(dsp_normalize, FMOD_DSP_NORMALIZE_MAXAMP, PlayerChannels[i].normalize_amp);
+						fmod_result = FMOD_DSP_SetParameterFloat(dsp_normalize, FMOD_DSP_NORMALIZE_THRESHOLD, PlayerChannels[i].normalize_threshold);
 					}
 				}
 			}
 
 			{
-				FMOD::DSP* dsp_fader_local = nullptr;
-				fmod_result = PlayerChannels[i].outputChannel->getDSP(DSPORDER_FADER_LOCALGAIN, &dsp_fader_local);
+				FMOD_DSP* dsp_fader_local = NULL;
+				fmod_result = FMOD_Channel_GetDSP(PlayerChannels[i].outputChannel, DSPORDER_FADER_LOCALGAIN, &dsp_fader_local);
 				if ( dsp_fader_local )
 				{
 					if ( i == clientnum )
@@ -1878,31 +1878,31 @@ void VoiceChat_t::update()
 					}
 					if ( intro )
 					{
-						fmod_result = dsp_fader_local->setParameterFloat(FMOD_DSP_FADER_GAIN, 0.f);
+						fmod_result = FMOD_DSP_SetParameterFloat(dsp_fader_local, FMOD_DSP_FADER_GAIN, 0.f);
 					}
 					else
 					{
-						fmod_result = dsp_fader_local->setParameterFloat(FMOD_DSP_FADER_GAIN,
+						fmod_result = FMOD_DSP_SetParameterFloat(dsp_fader_local, FMOD_DSP_FADER_GAIN,
 							std::min(kMaxGain, (std::max(-80.f, (PlayerChannels[i].localChannelGain - 100.f)))));
 					}
 				}
 			}
 
 			{
-				FMOD::DSP* dsp_limiter_channelGain = nullptr;
-				fmod_result = PlayerChannels[i].outputChannel->getDSP(DSPORDER_LIMITER, &dsp_limiter_channelGain);
+				FMOD_DSP* dsp_limiter_channelGain = NULL;
+				fmod_result = FMOD_Channel_GetDSP(PlayerChannels[i].outputChannel, DSPORDER_LIMITER, &dsp_limiter_channelGain);
 				if ( dsp_limiter_channelGain )
 				{
-					/*fmod_result = dsp_limiter_channelGain->setParameterFloat(FMOD_DSP_LIMITER_MAXIMIZERGAIN,
+					/*fmod_result = FMOD_DSP_SetParameterFloat(dsp_limiter_channelGain, FMOD_DSP_LIMITER_MAXIMIZERGAIN,
 						std::max(0.f, PlayerChannels[i].channelGain - 100.f));*/
 				}
 			}
 			{
-				FMOD::DSP* dsp_fader = nullptr;
-				fmod_result = PlayerChannels[i].outputChannel->getDSP(DSPORDER_FADER_CHANNELGAIN, &dsp_fader);
+				FMOD_DSP* dsp_fader = NULL;
+				fmod_result = FMOD_Channel_GetDSP(PlayerChannels[i].outputChannel, DSPORDER_FADER_CHANNELGAIN, &dsp_fader);
 				if ( dsp_fader )
 				{
-					fmod_result = dsp_fader->setParameterFloat(FMOD_DSP_FADER_GAIN, 
+					fmod_result = FMOD_DSP_SetParameterFloat(dsp_fader, FMOD_DSP_FADER_GAIN, 
 						std::min(kMaxGain, (std::max(-80.f, PlayerChannels[i].channelGain - 100.f))));
 				}
 			}
@@ -1927,20 +1927,20 @@ void VoiceChat_t::update()
 			{
 				FMOD_DSP_METERING_INFO input_metering{};
 				FMOD_DSP_METERING_INFO output_metering{};
-				FMOD::DSP* dsp_end = nullptr;
-				PlayerChannels[i].outputChannel->getDSP(DSPORDER_END - 1, &dsp_end);
-				FMOD::DSP* dsp_start = nullptr;
-				PlayerChannels[i].outputChannel->getDSP(1, &dsp_start);
+				FMOD_DSP* dsp_end = NULL;
+				FMOD_Channel_GetDSP(PlayerChannels[i].outputChannel, DSPORDER_END - 1, &dsp_end);
+				FMOD_DSP* dsp_start = NULL;
+				FMOD_Channel_GetDSP(PlayerChannels[i].outputChannel, 1, &dsp_start);
 
 				if ( dsp_end )
 				{
-					fmod_result = dsp_end->getMeteringInfo(&input_metering, &output_metering);
+					fmod_result = FMOD_DSP_GetMeteringInfo(dsp_end, &input_metering, &output_metering);
 					PlayerChannels[i].monitor_input_volume = std::max(input_metering.peaklevel[0], PlayerChannels[i].monitor_input_volume - 0.02f);
 				}
 
 				if ( dsp_start )
 				{
-					fmod_result = dsp_start->getMeteringInfo(&input_metering, &output_metering);
+					fmod_result = FMOD_DSP_GetMeteringInfo(dsp_start, &input_metering, &output_metering);
 					PlayerChannels[i].monitor_output_volume = std::max(output_metering.peaklevel[0], PlayerChannels[i].monitor_output_volume - 0.02f);
 					if ( PlayerChannels[i].monitor_output_volume > 0.05 )
 					{
@@ -1951,13 +1951,13 @@ void VoiceChat_t::update()
 			//messagePlayer(i, MESSAGE_DEBUG, "In: %.2f Out: %.2f", PlayerChannels[i].monitor_input_volume, PlayerChannels[i].monitor_output_volume);
 
 			FMOD_MODE mode;
-			fmod_result = PlayerChannels[i].outputChannel->getMode(&mode);
+			fmod_result = FMOD_Channel_GetMode(PlayerChannels[i].outputChannel, &mode);
 
 			static ConsoleVariable<bool> cvar_voice_audibility("/voice_audibility", false);
 			if ( *cvar_voice_audibility && i == clientnum )
 			{
 				float audibility = 0.f;
-				PlayerChannels[i].outputChannel->getAudibility(&audibility);
+				FMOD_Channel_GetAudibility(PlayerChannels[i].outputChannel, &audibility);
 				if ( audibility > 0.0001 )
 				{
 					messagePlayer(i, MESSAGE_HINT, "Audibility: %.2f", audibility);
@@ -1968,7 +1968,7 @@ void VoiceChat_t::update()
 			{
 				mode &= ~(FMOD_3D);
 				mode |= FMOD_2D;
-				fmod_result = PlayerChannels[i].outputChannel->setMode(mode);
+				fmod_result = FMOD_Channel_SetMode(PlayerChannels[i].outputChannel, mode);
 
 				setReverbSettings(dsp_reverb, cvar_voice_reverb_player->x, cvar_voice_reverb_player->y, cvar_voice_reverb_player->z);
 				setEQSettings(dsp_eq, cvar_voice_eq_player->x, cvar_voice_eq_player->y, cvar_voice_eq_player->z);
@@ -1977,7 +1977,7 @@ void VoiceChat_t::update()
 			{
 				mode &= ~(FMOD_2D);
 				mode |= FMOD_3D;
-				fmod_result = PlayerChannels[i].outputChannel->setMode(mode);
+				fmod_result = FMOD_Channel_SetMode(PlayerChannels[i].outputChannel, mode);
 
 				constexpr real_t lowpassAmount = 12.0;
 				constexpr real_t lowpassMinDist = 2.0;
@@ -1987,7 +1987,7 @@ void VoiceChat_t::update()
 					position.x = (float)(entity->x / (real_t)16.0);
 					position.y = (float)(0.0);
 					position.z = (float)(entity->y / (real_t)16.0);
-					fmod_result = PlayerChannels[i].outputChannel->set3DAttributes(&position, nullptr);
+					fmod_result = FMOD_Channel_Set3DAttributes(PlayerChannels[i].outputChannel, &position, NULL);
 
 					real_t listenerMeters = 0.0;
 					if ( hasListenerPos )
@@ -2026,7 +2026,7 @@ void VoiceChat_t::update()
 					if ( hasListenerPos )
 					{
 						FMOD_VECTOR position;
-						fmod_result = PlayerChannels[i].outputChannel->get3DAttributes(&position, nullptr);
+						fmod_result = FMOD_Channel_Get3DAttributes(PlayerChannels[i].outputChannel, &position, NULL);
 						if ( fmod_result == FMOD_OK )
 						{
 							real_t dx = listener_pos.x - position.x;
@@ -2053,7 +2053,7 @@ void VoiceChat_t::update()
 			{
 				if ( client_disconnected[i] || (i != clientnum && multiplayer == SINGLE) )
 				{
-					dsp_reverb->setBypass(true);
+					FMOD_DSP_SetBypass(dsp_reverb, true);
 				}
 			}
 		}
@@ -2064,7 +2064,7 @@ void VoiceChat_t::deinit()
 	if ( loopbackPacket )
 	{
 		SDLNet_FreePacket(loopbackPacket);
-		loopbackPacket = nullptr;
+		loopbackPacket = NULL;
 	}
 
 	deinitRecording();
@@ -2072,14 +2072,14 @@ void VoiceChat_t::deinit()
 
 	if ( recordingChannel )
 	{
-		recordingChannel->stop();
-		recordingChannel = nullptr;
+		FMOD_Channel_Stop(recordingChannel);
+		recordingChannel = NULL;
 	}
 
 	if ( recordingSound )
 	{
-		recordingSound->release();
-		recordingSound = nullptr;
+		FMOD_Sound_Release(recordingSound);
+		recordingSound = NULL;
 	}
 	recordingLastPos = 0;
 	recordingSamples = 0;
@@ -2098,7 +2098,7 @@ void VoiceChat_t::deinit()
 int VoiceChat_t::packetVoiceDataIdx = 15;
 void VoiceChat_t::sendPackets()
 {
-	UDPpacket* packet = (net_packet) ? net_packet : (getAudioSettingBool(AudioSettingBool::VOICE_SETTING_LOOPBACK_LOCAL_RECORD) ? loopbackPacket : nullptr);
+	UDPpacket* packet = (net_packet) ? net_packet : (getAudioSettingBool(AudioSettingBool::VOICE_SETTING_LOOPBACK_LOCAL_RECORD) ? loopbackPacket : NULL);
 	if ( !packet )
 	{
 		recordingDatagrams.clear();
@@ -2392,9 +2392,9 @@ void EnsembleSounds_t::playSong()
 {
 	songTransitionState = TRANSITION_EXPLORE;
 	unsigned int dsp_block_len = 0;
-	fmod_result = fmod_system->getDSPBufferSize(&dsp_block_len, 0);
+	fmod_result = FMOD_System_GetDSPBufferSize(fmod_system, &dsp_block_len, 0);
 	int outputrate = 0;
-	fmod_result = fmod_system->getSoftwareFormat(&outputrate, 0, 0);
+	fmod_result = FMOD_System_GetSoftwareFormat(fmod_system, &outputrate, 0, 0);
 	FMODErrorCheck();
 	unsigned long long clock_start = 0;
 
@@ -2402,20 +2402,20 @@ void EnsembleSounds_t::playSong()
 
 	for ( int i = 0; i < NUMENSEMBLEMUSIC; i++ )
 	{
-		fmod_result = fmod_system->playSound(exploreSound[i], transceiver_group[i], true, &exploreChannel[i]);
-		fmod_result = exploreChannel[i]->setCallback(ensembleExplorationCallback);
+		fmod_result = FMOD_System_PlaySound(fmod_system, exploreSound[i], transceiver_group[i], true, &exploreChannel[i]);
+		fmod_result = FMOD_Channel_SetCallback(exploreChannel[i], ensembleExplorationCallback);
 
-		fmod_result = fmod_system->playSound(combatSound[i], transceiver_group[i], true, &combatChannel[i]);
-		fmod_result = combatChannel[i]->setCallback(ensembleCombatCallback);
+		fmod_result = FMOD_System_PlaySound(fmod_system, combatSound[i], transceiver_group[i], true, &combatChannel[i]);
+		fmod_result = FMOD_Channel_SetCallback(combatChannel[i], ensembleCombatCallback);
 
 		unsigned int songPos = 0;
-		FMOD_SYNCPOINT* syncPoint = nullptr;
-		fmod_result = exploreSound[i]->getSyncPoint(exploreSongSeek, &syncPoint);
-		fmod_result = exploreSound[i]->getSyncPointInfo(syncPoint, nullptr, 0, &songPos, FMOD_TIMEUNIT_PCM);
-		fmod_result = exploreChannel[i]->setPosition(songPos, FMOD_TIMEUNIT_PCM);
+		FMOD_SYNCPOINT* syncPoint = NULL;
+		fmod_result = FMOD_Sound_GetSyncPoint(exploreSound[i], exploreSongSeek, &syncPoint);
+		fmod_result = FMOD_Sound_GetSyncPointInfo(exploreSound[i], syncPoint, NULL, 0, &songPos, FMOD_TIMEUNIT_PCM);
+		fmod_result = FMOD_Channel_SetPosition(exploreChannel[i], songPos, FMOD_TIMEUNIT_PCM);
 
 		unsigned long long clock_now = 0;
-		fmod_result = exploreChannel[i]->getDSPClock(0, &clock_now);
+		fmod_result = FMOD_Channel_GetDSPClock(exploreChannel[i], 0, &clock_now);
 		if ( !clock_start )
 		{
 			clock_start = clock_now;
@@ -2430,29 +2430,29 @@ void EnsembleSounds_t::playSong()
 		{
 			float freq;
 			unsigned int slen = 0;
-			fmod_result = sound[count]->getLength(&slen, FMOD_TIMEUNIT_PCM);
+			fmod_result = FMOD_Sound_GetLength(sound[count], &slen, FMOD_TIMEUNIT_PCM);
 
-			fmod_result = sound[count]->getDefaults(&freq, 0);
+			fmod_result = FMOD_Sound_GetDefaults(sound[count], &freq, 0);
 			slen = (unsigned int)((float)slen / freq * outputrate);
 
 			clock_start += slen;
 		}*/
 
-		exploreChannel[i]->setDelay(clock_start, 0, false);
+		FMOD_Channel_SetDelay(exploreChannel[i], clock_start, 0, false);
 
 		unsigned long long fade_delay = (1000.f / buffer_ms) * dsp_block_len;
-		fmod_result = exploreChannel[i]->removeFadePoints(0, (unsigned long long)(-1));
-		fmod_result = exploreChannel[i]->addFadePoint(clock_start, 0.f);
-		fmod_result = exploreChannel[i]->addFadePoint(clock_start + fade_delay, 1.f);
+		fmod_result = FMOD_Channel_RemoveFadePoints(exploreChannel[i], 0, (unsigned long long)(-1));
+		fmod_result = FMOD_Channel_AddFadePoint(exploreChannel[i], clock_start, 0.f);
+		fmod_result = FMOD_Channel_AddFadePoint(exploreChannel[i], clock_start + fade_delay, 1.f);
 
-		fmod_result = exploreChannel[i]->setPaused(false);
+		fmod_result = FMOD_Channel_SetPaused(exploreChannel[i], false);
 
-		transceiver_group[i]->setVolume(0.f);
+		FMOD_ChannelGroup_SetVolume(transceiver_group[i], 0.f);
 
-		fmod_result = exploreChannel[i]->setMode(FMOD_3D_HEADRELATIVE);
-		fmod_result = exploreChannel[i]->set3DAttributes(&ensemble_global_position, nullptr);
-		fmod_result = combatChannel[i]->setMode(FMOD_3D_HEADRELATIVE);
-		fmod_result = combatChannel[i]->set3DAttributes(&ensemble_global_position, nullptr);
+		fmod_result = FMOD_Channel_SetMode(exploreChannel[i], FMOD_3D_HEADRELATIVE);
+		fmod_result = FMOD_Channel_Set3DAttributes(exploreChannel[i], &ensemble_global_position, NULL);
+		fmod_result = FMOD_Channel_SetMode(combatChannel[i], FMOD_3D_HEADRELATIVE);
+		fmod_result = FMOD_Channel_Set3DAttributes(combatChannel[i], &ensemble_global_position, NULL);
 	}
 }
 
@@ -2465,20 +2465,20 @@ void EnsembleSounds_t::stopPlaying(bool setCombatDelay)
 	}
 	for ( int i = 0; i < NUMENSEMBLEMUSIC; ++i )
 	{
-		fmod_result = exploreChannel[i] ? exploreChannel[i]->stop() : FMOD_OK;
-		exploreChannel[i] = nullptr;
-		fmod_result = combatChannel[i] ? combatChannel[i]->stop() : FMOD_OK;
-		combatChannel[i] = nullptr;
+		fmod_result = exploreChannel[i] ? FMOD_Channel_Stop(exploreChannel[i]) : FMOD_OK;
+		exploreChannel[i] = NULL;
+		fmod_result = combatChannel[i] ? FMOD_Channel_Stop(combatChannel[i]) : FMOD_OK;
+		combatChannel[i] = NULL;
 
 		for ( int j = 0; j < NUM_COMBAT_TRANS; ++j )
 		{
-			fmod_result = combatTransChannel[j][i] ? combatTransChannel[j][i]->stop() : FMOD_OK;
-			combatTransChannel[j][i] = nullptr;
+			fmod_result = combatTransChannel[j][i] ? FMOD_Channel_Stop(combatTransChannel[j][i]) : FMOD_OK;
+			combatTransChannel[j][i] = NULL;
 		}
 		for ( int j = 0; j < NUM_EXPLORE_TRANS; ++j )
 		{
-			fmod_result = exploreTransChannel[j][i] ? exploreTransChannel[j][i]->stop() : FMOD_OK;
-			exploreTransChannel[j][i] = nullptr;
+			fmod_result = exploreTransChannel[j][i] ? FMOD_Channel_Stop(exploreTransChannel[j][i]) : FMOD_OK;
+			exploreTransChannel[j][i] = NULL;
 		}
 	}
 }
@@ -2489,28 +2489,28 @@ void EnsembleSounds_t::deinit()
 
 	for ( int i = 0; i < NUMENSEMBLEMUSIC; ++i )
 	{
-		fmod_result = exploreChannel[i] ? exploreChannel[i]->stop() : FMOD_OK;
-		exploreChannel[i] = nullptr;
-		fmod_result = combatChannel[i] ? combatChannel[i]->stop() : FMOD_OK;
-		combatChannel[i] = nullptr;
-		fmod_result = exploreSound[i] ? exploreSound[i]->release() : FMOD_OK;
-		exploreSound[i] = nullptr;
-		fmod_result = combatSound[i] ? combatSound[i]->release() : FMOD_OK;
-		combatSound[i] = nullptr;
+		fmod_result = exploreChannel[i] ? FMOD_Channel_Stop(exploreChannel[i]) : FMOD_OK;
+		exploreChannel[i] = NULL;
+		fmod_result = combatChannel[i] ? FMOD_Channel_Stop(combatChannel[i]) : FMOD_OK;
+		combatChannel[i] = NULL;
+		fmod_result = exploreSound[i] ? FMOD_Sound_Release(exploreSound[i]) : FMOD_OK;
+		exploreSound[i] = NULL;
+		fmod_result = combatSound[i] ? FMOD_Sound_Release(combatSound[i]) : FMOD_OK;
+		combatSound[i] = NULL;
 
 		for ( int j = 0; j < NUM_COMBAT_TRANS; ++j )
 		{
-			fmod_result = combatTransChannel[j][i] ? combatTransChannel[j][i]->stop() : FMOD_OK;
-			combatTransChannel[j][i] = nullptr;
-			fmod_result = combatTransSound[j][i] ? combatTransSound[j][i]->release() : FMOD_OK;
-			combatTransSound[j][i] = nullptr;
+			fmod_result = combatTransChannel[j][i] ? FMOD_Channel_Stop(combatTransChannel[j][i]) : FMOD_OK;
+			combatTransChannel[j][i] = NULL;
+			fmod_result = combatTransSound[j][i] ? FMOD_Sound_Release(combatTransSound[j][i]) : FMOD_OK;
+			combatTransSound[j][i] = NULL;
 		}
 		for ( int j = 0; j < NUM_EXPLORE_TRANS; ++j )
 		{
-			fmod_result = exploreTransChannel[j][i] ? exploreTransChannel[j][i]->stop() : FMOD_OK;
-			exploreTransChannel[j][i] = nullptr;
-			fmod_result = exploreTransSound[j][i] ? exploreTransSound[j][i]->release() : FMOD_OK;
-			exploreTransSound[j][i] = nullptr;
+			fmod_result = exploreTransChannel[j][i] ? FMOD_Channel_Stop(exploreTransChannel[j][i]) : FMOD_OK;
+			exploreTransChannel[j][i] = NULL;
+			fmod_result = exploreTransSound[j][i] ? FMOD_Sound_Release(exploreTransSound[j][i]) : FMOD_OK;
+			exploreTransSound[j][i] = NULL;
 		}
 	}
 }
@@ -2533,7 +2533,7 @@ static ConsoleCommand ccmd_ensemble_transition_state("/ensemble_transition_state
 		}
 	});
 
-bool checkSoundReady(FMOD::Sound* sound, const char* str, int i, int j)
+bool checkSoundReady(FMOD_SOUND* sound, const char* str, int i, int j)
 {
 	if ( !sound ) { 
 		printlog("EnsembleSounds_t::setup() Warn: no sound pointer for %s: %d %d", str, i, j);
@@ -2543,7 +2543,7 @@ bool checkSoundReady(FMOD::Sound* sound, const char* str, int i, int j)
 	unsigned int percentBuffered = 0;
 	bool starving = false;
 	bool diskBusy = false;
-	fmod_result = sound->getOpenState(&openState, &percentBuffered, &starving, &diskBusy);
+	fmod_result = FMOD_Sound_GetOpenState(sound, &openState, &percentBuffered, &starving, &diskBusy);
 
 	if ( fmod_result == FMOD_OK )
 	{
@@ -2569,7 +2569,7 @@ void EnsembleSounds_t::setup()
 
 	for ( int i = 0; i < NUMENSEMBLEMUSIC; )
 	{
-		fmod_system->update();
+		FMOD_System_Update(fmod_system);
 		bool result = checkSoundReady(exploreSound[i], "explore sound", i, 0);
 		if ( !result )
 		{
@@ -2581,7 +2581,7 @@ void EnsembleSounds_t::setup()
 
 	for ( int i = 0; i < NUMENSEMBLEMUSIC; )
 	{
-		fmod_system->update();
+		FMOD_System_Update(fmod_system);
 		bool result = checkSoundReady(combatSound[i], "combat sound", i, 0);
 		if ( !result )
 		{
@@ -2593,7 +2593,7 @@ void EnsembleSounds_t::setup()
 
 	for ( int i = 0; i < NUMENSEMBLEMUSIC; )
 	{
-		fmod_system->update();
+		FMOD_System_Update(fmod_system);
 		bool result = false;
 		for ( int j = 0; j < NUM_COMBAT_TRANS; ++j )
 		{
@@ -2648,62 +2648,62 @@ void EnsembleSounds_t::setup()
 
 	for ( int i = 0; i < NUMENSEMBLEMUSIC; ++i )
 	{
-		fmod_result = exploreChannel[i] ? exploreChannel[i]->stop() : FMOD_OK;
-		fmod_result = combatChannel[i] ? combatChannel[i]->stop() : FMOD_OK;
-		//fmod_result = exploreSound[i] ? exploreSound[i]->release() : FMOD_OK;
-		//fmod_result = combatSound[i] ? combatSound[i]->release() : FMOD_OK;
+		fmod_result = exploreChannel[i] ? FMOD_Channel_Stop(exploreChannel[i]) : FMOD_OK;
+		fmod_result = combatChannel[i] ? FMOD_Channel_Stop(combatChannel[i]) : FMOD_OK;
+		//fmod_result = exploreSound[i] ? FMOD_Sound_Release(exploreSound[i]) : FMOD_OK;
+		//fmod_result = combatSound[i] ? FMOD_Sound_Release(combatSound[i]) : FMOD_OK;
 		for ( int j = 0; j < NUM_COMBAT_TRANS; ++j )
 		{
-			fmod_result = combatTransChannel[j][i] ? combatTransChannel[j][i]->stop() : FMOD_OK;
-			//fmod_result = combatTransSound[j][i] ? combatTransSound[j][i]->release() : FMOD_OK;
+			fmod_result = combatTransChannel[j][i] ? FMOD_Channel_Stop(combatTransChannel[j][i]) : FMOD_OK;
+			//fmod_result = combatTransSound[j][i] ? FMOD_Sound_Release(combatTransSound[j][i]) : FMOD_OK;
 		}
 		for ( int j = 0; j < NUM_EXPLORE_TRANS; ++j )
 		{
-			fmod_result = exploreTransChannel[j][i] ? exploreTransChannel[j][i]->stop() : FMOD_OK;
-			//fmod_result = exploreTransSound[j][i] ? exploreTransSound[j][i]->release() : FMOD_OK;
+			fmod_result = exploreTransChannel[j][i] ? FMOD_Channel_Stop(exploreTransChannel[j][i]) : FMOD_OK;
+			//fmod_result = exploreTransSound[j][i] ? FMOD_Sound_Release(exploreTransSound[j][i]) : FMOD_OK;
 		}
 
 		if ( !transceiver_group[i] )
 		{
-			fmod_result = fmod_system->createChannelGroup(nullptr, &transceiver_group[i]);
+			fmod_result = FMOD_System_CreateChannelGroup(fmod_system, NULL, &transceiver_group[i]);
 
-			FMOD::DSP* transceiver = nullptr;
-			fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_TRANSCEIVER, &transceiver);
-			fmod_result = transceiver_group[i]->addDSP(0, transceiver);
-			fmod_result = transceiver->setParameterBool(FMOD_DSP_TRANSCEIVER_TRANSMIT, true); // sending signal
-			fmod_result = transceiver->setParameterInt(FMOD_DSP_TRANSCEIVER_CHANNEL, 1 + i); // sending on channel x
+			FMOD_DSP* transceiver = NULL;
+			fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_TRANSCEIVER, &transceiver);
+			fmod_result = FMOD_ChannelGroup_AddDSP(transceiver_group[i], 0, transceiver);
+			fmod_result = FMOD_DSP_SetParameterBool(transceiver, FMOD_DSP_TRANSCEIVER_TRANSMIT, true); // sending signal
+			fmod_result = FMOD_DSP_SetParameterInt(transceiver, FMOD_DSP_TRANSCEIVER_CHANNEL, 1 + i); // sending on channel x
 
-			music_ensemble_global_send_group->addGroup(transceiver_group[i]);
+			FMOD_ChannelGroup_AddGroup(music_ensemble_global_send_group, transceiver_group[i]);
 		}
 
 		if ( exploreSound[i] )
 		{
 			int syncPoints = 0;
-			exploreSound[i]->getNumSyncPoints(&syncPoints);
+			FMOD_Sound_GetNumSyncPoints(exploreSound[i], &syncPoints);
 			for ( int point = 0; point < syncPoints; ++point )
 			{
-				FMOD_SYNCPOINT* syncpoint = nullptr;
-				fmod_result = exploreSound[i]->getSyncPoint(point, &syncpoint);
+				FMOD_SYNCPOINT* syncpoint = NULL;
+				fmod_result = FMOD_Sound_GetSyncPoint(exploreSound[i], point, &syncpoint);
 				if ( syncpoint )
 				{
-					exploreSound[i]->deleteSyncPoint(syncpoint);
+					FMOD_Sound_DeleteSyncPoint(exploreSound[i], syncpoint);
 				}
 			}
 
 			FMOD_SOUND_TYPE type;
 			int chan = 0;
 			unsigned int len = 0;
-			exploreSound[i]->getLength(&len, FMOD_TIMEUNIT_PCM);
-			exploreSound[i]->getFormat(&type, nullptr, &chan, nullptr);
+			FMOD_Sound_GetLength(exploreSound[i], &len, FMOD_TIMEUNIT_PCM);
+			FMOD_Sound_GetFormat(exploreSound[i], &type, NULL, &chan, NULL);
 			float freq = 0;
-			exploreSound[i]->getDefaults(&freq, nullptr);
+			FMOD_Sound_GetDefaults(exploreSound[i], &freq, NULL);
 			int beatTime = freq * (60 / 120.f); // beats per sample, 120bpm
 
 			int interval = 1;
 			int numBeats = 2;
 			exploreSoundSyncPointInterval = interval * (beatTime * numBeats);
 			unsigned int beat = beatTime * 3 / 4; // starting point from beginning of song
-			//exploreSound[i]->setLoopPoints(0, FMOD_TIMEUNIT_PCM, len - beat, FMOD_TIMEUNIT_PCM);
+			//FMOD_Sound_SetLoopPoints(exploreSound[i], 0, FMOD_TIMEUNIT_PCM, len - beat, FMOD_TIMEUNIT_PCM);
 			int numSyncPoints = ((len - beat) / (interval * beatTime * numBeats)) + 1;
 			int index = -1;
 			if ( i == 0 )
@@ -2753,7 +2753,7 @@ void EnsembleSounds_t::setup()
 					}
 					oldSeekBar = seekBar;
 				}
-				fmod_result = exploreSound[i]->addSyncPoint(beat, FMOD_TIMEUNIT_PCM, nullptr, nullptr);
+				fmod_result = FMOD_Sound_AddSyncPoint(exploreSound[i], beat, FMOD_TIMEUNIT_PCM, NULL, NULL);
 				if ( i == 0 )
 				{
 					exploreSyncPoints.push_back(beat);
@@ -2763,34 +2763,34 @@ void EnsembleSounds_t::setup()
 				beat += interval * (beatTime * numBeats);
 			}
 
-			fmod_result = fmod_system->playSound(exploreSound[i], transceiver_group[i], true, &exploreChannel[i]);
-			fmod_result = exploreChannel[i]->setMode(FMOD_3D_HEADRELATIVE);
-			fmod_result = exploreChannel[i]->set3DAttributes(&ensemble_global_position, nullptr);
+			fmod_result = FMOD_System_PlaySound(fmod_system, exploreSound[i], transceiver_group[i], true, &exploreChannel[i]);
+			fmod_result = FMOD_Channel_SetMode(exploreChannel[i], FMOD_3D_HEADRELATIVE);
+			fmod_result = FMOD_Channel_Set3DAttributes(exploreChannel[i], &ensemble_global_position, NULL);
 			FMODErrorCheck();
-			fmod_result = exploreChannel[i]->setCallback(ensembleExplorationCallback);
+			fmod_result = FMOD_Channel_SetCallback(exploreChannel[i], ensembleExplorationCallback);
 		}
 
 		if ( combatSound[i] )
 		{
 			int syncPoints = 0;
-			combatSound[i]->getNumSyncPoints(&syncPoints);
+			FMOD_Sound_GetNumSyncPoints(combatSound[i], &syncPoints);
 			for ( int point = 0; point < syncPoints; ++point )
 			{
-				FMOD_SYNCPOINT* syncpoint = nullptr;
-				combatSound[i]->getSyncPoint(point, &syncpoint);
+				FMOD_SYNCPOINT* syncpoint = NULL;
+				FMOD_Sound_GetSyncPoint(combatSound[i], point, &syncpoint);
 				if ( syncpoint )
 				{
-					combatSound[i]->deleteSyncPoint(syncpoint);
+					FMOD_Sound_DeleteSyncPoint(combatSound[i], syncpoint);
 				}
 			}
 
 			FMOD_SOUND_TYPE type;
 			int chan = 0;
 			unsigned int len = 0;
-			combatSound[i]->getLength(&len, FMOD_TIMEUNIT_PCM);
-			combatSound[i]->getFormat(&type, nullptr, &chan, nullptr);
+			FMOD_Sound_GetLength(combatSound[i], &len, FMOD_TIMEUNIT_PCM);
+			FMOD_Sound_GetFormat(combatSound[i], &type, NULL, &chan, NULL);
 			float freq = 0;
-			combatSound[i]->getDefaults(&freq, nullptr);
+			FMOD_Sound_GetDefaults(combatSound[i], &freq, NULL);
 			int beatTime = freq * (60 / 90.f) / 8.f; // eighths, 90bpm
 			combatBeat = beatTime;
 			int interval = 2;
@@ -2806,7 +2806,7 @@ void EnsembleSounds_t::setup()
 			while ( beat < len )
 			{
 				++index;
-				fmod_result = combatSound[i]->addSyncPoint(beat, FMOD_TIMEUNIT_PCM, nullptr, nullptr);
+				fmod_result = FMOD_Sound_AddSyncPoint(combatSound[i], beat, FMOD_TIMEUNIT_PCM, NULL, NULL);
 				if ( i == 0 )
 				{
 					combatSyncPoints.push_back(beat);
@@ -2815,11 +2815,11 @@ void EnsembleSounds_t::setup()
 				beat += interval * beatTime * numBeats;
 			}
 
-			fmod_result = fmod_system->playSound(combatSound[i], transceiver_group[i], true, &combatChannel[i]);
-			fmod_result = combatChannel[i]->setMode(FMOD_3D_HEADRELATIVE);
-			fmod_result = combatChannel[i]->set3DAttributes(&ensemble_global_position, nullptr);
+			fmod_result = FMOD_System_PlaySound(fmod_system, combatSound[i], transceiver_group[i], true, &combatChannel[i]);
+			fmod_result = FMOD_Channel_SetMode(combatChannel[i], FMOD_3D_HEADRELATIVE);
+			fmod_result = FMOD_Channel_Set3DAttributes(combatChannel[i], &ensemble_global_position, NULL);
 			FMODErrorCheck();
-			combatChannel[i]->setCallback(ensembleCombatCallback);
+			FMOD_Channel_SetCallback(combatChannel[i], ensembleCombatCallback);
 		}
 
 		for ( int j = 0; j < NUM_EXPLORE_TRANS; ++j )
@@ -2830,24 +2830,24 @@ void EnsembleSounds_t::setup()
 			}
 
 			int syncPoints = 0;
-			exploreTransSound[j][i]->getNumSyncPoints(&syncPoints);
+			FMOD_Sound_GetNumSyncPoints(exploreTransSound[j][i], &syncPoints);
 			for ( int point = 0; point < syncPoints; ++point )
 			{
-				FMOD_SYNCPOINT* syncpoint = nullptr;
-				fmod_result = exploreTransSound[j][i]->getSyncPoint(point, &syncpoint);
+				FMOD_SYNCPOINT* syncpoint = NULL;
+				fmod_result = FMOD_Sound_GetSyncPoint(exploreTransSound[j][i], point, &syncpoint);
 				if ( syncpoint )
 				{
-					exploreTransSound[j][i]->deleteSyncPoint(syncpoint);
+					FMOD_Sound_DeleteSyncPoint(exploreTransSound[j][i], syncpoint);
 				}
 			}
 
 			FMOD_SOUND_TYPE type;
 			int chan = 0;
 			unsigned int len = 0;
-			exploreTransSound[j][i]->getLength(&len, FMOD_TIMEUNIT_PCM);
-			exploreTransSound[j][i]->getFormat(&type, nullptr, &chan, nullptr);
+			FMOD_Sound_GetLength(exploreTransSound[j][i], &len, FMOD_TIMEUNIT_PCM);
+			FMOD_Sound_GetFormat(exploreTransSound[j][i], &type, NULL, &chan, NULL);
 			float freq = 0;
-			exploreTransSound[j][i]->getDefaults(&freq, nullptr);
+			FMOD_Sound_GetDefaults(exploreTransSound[j][i], &freq, NULL);
 			int beatTime = freq * (60 / 120.f); // beats per sample, 120bpm
 
 			int interval = 1;
@@ -2855,16 +2855,16 @@ void EnsembleSounds_t::setup()
 			unsigned int beat = interval * beatTime * numBeats;
 			if ( j == 3 )
 			{
-				fmod_result = exploreTransSound[j][i]->addSyncPoint(0, FMOD_TIMEUNIT_PCM, nullptr, nullptr);
-				fmod_result = exploreTransSound[j][i]->addSyncPoint(8 * beat / 16, FMOD_TIMEUNIT_PCM, nullptr, nullptr);
+				fmod_result = FMOD_Sound_AddSyncPoint(exploreTransSound[j][i], 0, FMOD_TIMEUNIT_PCM, NULL, NULL);
+				fmod_result = FMOD_Sound_AddSyncPoint(exploreTransSound[j][i], 8 * beat / 16, FMOD_TIMEUNIT_PCM, NULL, NULL);
 			}
 			else
 			{
-				fmod_result = exploreTransSound[j][i]->addSyncPoint(4 * beat / 8, FMOD_TIMEUNIT_PCM, nullptr, nullptr);
-				fmod_result = exploreTransSound[j][i]->addSyncPoint(beat, FMOD_TIMEUNIT_PCM, nullptr, nullptr);
+				fmod_result = FMOD_Sound_AddSyncPoint(exploreTransSound[j][i], 4 * beat / 8, FMOD_TIMEUNIT_PCM, NULL, NULL);
+				fmod_result = FMOD_Sound_AddSyncPoint(exploreTransSound[j][i], beat, FMOD_TIMEUNIT_PCM, NULL, NULL);
 			}
 			FMODErrorCheck();
-			//result = fmod_system->playSound(exploreTransSound[j][i], groupTx[i], true, &channelTrans[j][count]);
+			//result = FMOD_System_PlaySound(fmod_system, exploreTransSound[j][i], groupTx[i], true, &channelTrans[j][count]);
 			//FMODErrorCheck();
 		}
 
@@ -2876,24 +2876,24 @@ void EnsembleSounds_t::setup()
 			}
 
 			int syncPoints = 0;
-			combatTransSound[j][i]->getNumSyncPoints(&syncPoints);
+			FMOD_Sound_GetNumSyncPoints(combatTransSound[j][i], &syncPoints);
 			for ( int point = 0; point < syncPoints; ++point )
 			{
-				FMOD_SYNCPOINT* syncpoint = nullptr;
-				fmod_result = combatTransSound[j][i]->getSyncPoint(point, &syncpoint);
+				FMOD_SYNCPOINT* syncpoint = NULL;
+				fmod_result = FMOD_Sound_GetSyncPoint(combatTransSound[j][i], point, &syncpoint);
 				if ( syncpoint )
 				{
-					combatTransSound[j][i]->deleteSyncPoint(syncpoint);
+					FMOD_Sound_DeleteSyncPoint(combatTransSound[j][i], syncpoint);
 				}
 			}
 
 			FMOD_SOUND_TYPE type;
 			int chan = 0;
 			unsigned int len = 0;
-			combatTransSound[j][i]->getLength(&len, FMOD_TIMEUNIT_PCM);
-			combatTransSound[j][i]->getFormat(&type, nullptr, &chan, nullptr);
+			FMOD_Sound_GetLength(combatTransSound[j][i], &len, FMOD_TIMEUNIT_PCM);
+			FMOD_Sound_GetFormat(combatTransSound[j][i], &type, NULL, &chan, NULL);
 			float freq = 0;
-			combatTransSound[j][i]->getDefaults(&freq, nullptr);
+			FMOD_Sound_GetDefaults(combatTransSound[j][i], &freq, NULL);
 			int beatTime = freq * (60 / 90.f); // beats per sample, 120bpm
 
 			int interval = 2;
@@ -2903,10 +2903,10 @@ void EnsembleSounds_t::setup()
 			}
 			int numBeats = 4;
 			unsigned int beat = interval * beatTime * numBeats;
-			fmod_result = combatTransSound[j][i]->addSyncPoint(3 * beat / 8, FMOD_TIMEUNIT_PCM, nullptr, nullptr);
-			fmod_result = combatTransSound[j][i]->addSyncPoint(beat, FMOD_TIMEUNIT_PCM, nullptr, nullptr);
+			fmod_result = FMOD_Sound_AddSyncPoint(combatTransSound[j][i], 3 * beat / 8, FMOD_TIMEUNIT_PCM, NULL, NULL);
+			fmod_result = FMOD_Sound_AddSyncPoint(combatTransSound[j][i], beat, FMOD_TIMEUNIT_PCM, NULL, NULL);
 			FMODErrorCheck();
-			//result = fmod_system->playSound(combatTransSound[j][i], groupTx[i], true, &channelCombatTrans[j][count]);
+			//result = FMOD_System_PlaySound(fmod_system, combatTransSound[j][i], groupTx[i], true, &channelCombatTrans[j][count]);
 			//FMODErrorCheck();
 		}
 	}
@@ -2923,23 +2923,23 @@ FMOD_RESULT F_CALLBACK ensembleCombatCallback(FMOD_CHANNELCONTROL* channelcontro
 	void* commanddata2)
 {
 	FMOD_RESULT result;
-	if ( callbacktype == FMOD_CHANNELCONTROL_CALLBACK_TYPE::FMOD_CHANNELCONTROL_CALLBACK_SYNCPOINT )
+	if ( callbacktype == FMOD_CHANNELCONTROL_CALLBACK_SYNCPOINT )
 	{
 		int currentSyncPoint = reinterpret_cast<intptr_t>(commanddata1);
-		FMOD::Channel* chan = reinterpret_cast<FMOD::Channel*>(channelcontrol);
-		FMOD::Sound* sound = nullptr;
-		chan->getCurrentSound(&sound);
+		FMOD_CHANNEL* chan = reinterpret_cast<FMOD_CHANNEL*>(channelcontrol);
+		FMOD_SOUND* sound = NULL;
+		FMOD_Channel_GetCurrentSound(chan, &sound);
 		if ( ensembleSounds.songTransitionState == EnsembleSounds_t::TRANSITION_COMBAT_ENDING )
 		{
 			if ( sound == ::ensembleSounds.combatSound[0] )
 			{
 				unsigned int currentPos = 0;
-				chan->getPosition(&currentPos, FMOD_TIMEUNIT_PCM);
+				FMOD_Channel_GetPosition(chan, &currentPos, FMOD_TIMEUNIT_PCM);
 
-				FMOD_SYNCPOINT* syncPoint = nullptr;
-				sound->getSyncPoint(currentSyncPoint, &syncPoint);
+				FMOD_SYNCPOINT* syncPoint = NULL;
+				FMOD_Sound_GetSyncPoint(sound, currentSyncPoint, &syncPoint);
 				unsigned int currentOffset = 0;
-				result = sound->getSyncPointInfo(syncPoint, nullptr, 0, &currentOffset, FMOD_TIMEUNIT_PCM);
+				result = FMOD_Sound_GetSyncPointInfo(sound, syncPoint, NULL, 0, &currentOffset, FMOD_TIMEUNIT_PCM);
 
 				if ( currentPos >= currentOffset // check our callback is within expected sync range
 					&& (currentPos < currentOffset + ensembleSounds.combatSoundSyncPointInterval) )
@@ -2964,24 +2964,24 @@ FMOD_RESULT F_CALLBACK ensembleCombatCallback(FMOD_CHANNELCONTROL* channelcontro
 						syncpointNext = currentSyncPoint + 1;
 					}
 
-					FMOD_SYNCPOINT* syncPoint2 = nullptr;
+					FMOD_SYNCPOINT* syncPoint2 = NULL;
 					int numSyncPoints = 0;
-					sound->getNumSyncPoints(&numSyncPoints);
+					FMOD_Sound_GetNumSyncPoints(sound, &numSyncPoints);
 					while ( syncpointNext >= numSyncPoints )
 					{
 						syncpointNext -= numSyncPoints;
 					}
 
-					sound->getSyncPoint(syncpointNext, &syncPoint2);
+					FMOD_Sound_GetSyncPoint(sound, syncpointNext, &syncPoint2);
 
 					unsigned int soundLength = 0;
-					sound->getLength(&soundLength, FMOD_TIMEUNIT_PCM);
+					FMOD_Sound_GetLength(sound, &soundLength, FMOD_TIMEUNIT_PCM);
 
 					unsigned int soundPos = 0;
-					chan->getPosition(&soundPos, FMOD_TIMEUNIT_PCM);
+					FMOD_Channel_GetPosition(chan, &soundPos, FMOD_TIMEUNIT_PCM);
 
 					unsigned int offset2 = 0;
-					result = sound->getSyncPointInfo(syncPoint2, nullptr, 0, &offset2, FMOD_TIMEUNIT_PCM);
+					result = FMOD_Sound_GetSyncPointInfo(sound, syncPoint2, NULL, 0, &offset2, FMOD_TIMEUNIT_PCM);
 
 					unsigned int delayLength = 0;
 					if ( soundPos > offset2 )
@@ -2996,7 +2996,7 @@ FMOD_RESULT F_CALLBACK ensembleCombatCallback(FMOD_CHANNELCONTROL* channelcontro
 
 					ensembleSounds.songTransitionState = EnsembleSounds_t::TRANSITION_COMBAT_ENDED;
 
-					//chan->addFadePoint(clock_now + (unsigned long long)(rate * 2.0), 0.f);
+					//FMOD_Channel_AddFadePoint(chan, clock_now + (unsigned long long)(rate * 2.0), 0.f);
 					int combatTransition = 0;
 					if ( syncpointNext >= 28 && syncpointNext <= 32 )
 					{
@@ -3008,7 +3008,7 @@ FMOD_RESULT F_CALLBACK ensembleCombatCallback(FMOD_CHANNELCONTROL* channelcontro
 					}
 
 					float volume = 0.f;
-					chan->getVolume(&volume);
+					FMOD_Channel_GetVolume(chan, &volume);
 					/*if ( ensembleSounds.songTransitionMode == EnsembleSounds_t::TRANSITION_MODE_FADE_HALF && volume < 0.5f )
 					{
 						noTransition = true;
@@ -3017,58 +3017,58 @@ FMOD_RESULT F_CALLBACK ensembleCombatCallback(FMOD_CHANNELCONTROL* channelcontro
 					auto mainChannelDelay = delayLength;
 
 					unsigned int buffersize = 0;
-					fmod_system->getDSPBufferSize(&buffersize, nullptr);
+					FMOD_System_GetDSPBufferSize(fmod_system, &buffersize, NULL);
 					int sampleRate = 1;
-					fmod_system->getSoftwareFormat(&sampleRate, nullptr, nullptr);
+					FMOD_System_GetSoftwareFormat(fmod_system, &sampleRate, NULL, NULL);
 					float buffer_ms = (buffersize * 1000.f / (float)sampleRate);
 
 					for ( int i = 0; i < NUMENSEMBLEMUSIC; ++i )
 					{
 						unsigned long long clock_now = 0;
-						result = ensembleSounds.combatChannel[i]->getDSPClock(0, &clock_now);
-						result = ensembleSounds.combatChannel[i]->setDelay(0, clock_now + (unsigned long long)(mainChannelDelay), false);
+						result = FMOD_Channel_GetDSPClock(ensembleSounds.combatChannel[i], 0, &clock_now);
+						result = FMOD_Channel_SetDelay(ensembleSounds.combatChannel[i], 0, clock_now + (unsigned long long)(mainChannelDelay), false);
 
 						if ( ensembleSounds.songTransitionMode == EnsembleSounds_t::TRANSITION_MODE_DEFAULT && noTransition )
 						{
-							result = ensembleSounds.combatChannel[i]->addFadePoint(clock_now, 1.f);
-							result = ensembleSounds.combatChannel[i]->addFadePoint(clock_now + (unsigned long long)(mainChannelDelay), 0.f);
+							result = FMOD_Channel_AddFadePoint(ensembleSounds.combatChannel[i], clock_now, 1.f);
+							result = FMOD_Channel_AddFadePoint(ensembleSounds.combatChannel[i], clock_now + (unsigned long long)(mainChannelDelay), 0.f);
 						}
 						else if ( ensembleSounds.songTransitionMode == EnsembleSounds_t::TRANSITION_MODE_DEFAULT && !noTransition )
 						{
-							result = ensembleSounds.combatChannel[i]->addFadePoint(clock_now + (unsigned long long)(mainChannelDelay) - 500.f * buffer_ms, 1.f);
-							result = ensembleSounds.combatChannel[i]->addFadePoint(clock_now + (unsigned long long)(mainChannelDelay), 0.f);
+							result = FMOD_Channel_AddFadePoint(ensembleSounds.combatChannel[i], clock_now + (unsigned long long)(mainChannelDelay) - 500.f * buffer_ms, 1.f);
+							result = FMOD_Channel_AddFadePoint(ensembleSounds.combatChannel[i], clock_now + (unsigned long long)(mainChannelDelay), 0.f);
 						}
 
 						unsigned int transitionLength = 0;
-						result = ensembleSounds.combatTransSound[combatTransition][i]->getLength(&transitionLength, FMOD_TIMEUNIT_PCM);
-						//result = channelCombatTrans[combatTransition][i]->setPaused(true);
+						result = FMOD_Sound_GetLength(ensembleSounds.combatTransSound[combatTransition][i], &transitionLength, FMOD_TIMEUNIT_PCM);
+						//result = FMOD_Channel_SetPaused(channelCombatTrans[combatTransition][i], true);
 
-						FMOD_SYNCPOINT* syncPoint4 = nullptr;
+						FMOD_SYNCPOINT* syncPoint4 = NULL;
 						unsigned int offset3 = 0;
 						if ( ensembleSounds.songTransitionMode != EnsembleSounds_t::TRANSITION_MODE_FADE && !noTransition )
 						{
-							result = fmod_system->playSound(ensembleSounds.combatTransSound[combatTransition][i], 
+							result = FMOD_System_PlaySound(fmod_system, ensembleSounds.combatTransSound[combatTransition][i], 
 								ensembleSounds.transceiver_group[i], true, &ensembleSounds.combatTransChannel[combatTransition][i]);
-							result = ensembleSounds.combatTransChannel[combatTransition][i]->setMode(FMOD_3D_HEADRELATIVE);
-							result = ensembleSounds.combatTransChannel[combatTransition][i]->set3DAttributes(&ensemble_global_position, nullptr);
+							result = FMOD_Channel_SetMode(ensembleSounds.combatTransChannel[combatTransition][i], FMOD_3D_HEADRELATIVE);
+							result = FMOD_Channel_Set3DAttributes(ensembleSounds.combatTransChannel[combatTransition][i], &ensemble_global_position, NULL);
 
-							FMOD_SYNCPOINT* syncPoint3 = nullptr;
-							result = ensembleSounds.combatTransSound[combatTransition][i]->getSyncPoint(1, &syncPoint3);
-							result = ensembleSounds.combatTransSound[combatTransition][i]->getSyncPointInfo(syncPoint3, nullptr, 
+							FMOD_SYNCPOINT* syncPoint3 = NULL;
+							result = FMOD_Sound_GetSyncPoint(ensembleSounds.combatTransSound[combatTransition][i], 1, &syncPoint3);
+							result = FMOD_Sound_GetSyncPointInfo(ensembleSounds.combatTransSound[combatTransition][i], syncPoint3, NULL, 
 								0, &offset3, FMOD_TIMEUNIT_PCM);
 
 							if ( ensembleSounds.songTransitionMode != EnsembleSounds_t::TRANSITION_MODE_FADE_HALF )
 							{
-								result = ensembleSounds.combatTransChannel[combatTransition][i]->setPosition(0, FMOD_TIMEUNIT_PCM);
+								result = FMOD_Channel_SetPosition(ensembleSounds.combatTransChannel[combatTransition][i], 0, FMOD_TIMEUNIT_PCM);
 							}
 							else if ( ensembleSounds.songTransitionMode == EnsembleSounds_t::TRANSITION_MODE_FADE_HALF )
 							{
-								result = ensembleSounds.combatTransSound[combatTransition][i]->getSyncPoint(0, &syncPoint4);
+								result = FMOD_Sound_GetSyncPoint(ensembleSounds.combatTransSound[combatTransition][i], 0, &syncPoint4);
 								unsigned int offset4 = 0;
-								result = ensembleSounds.combatTransSound[combatTransition][i]->getSyncPointInfo(syncPoint4, nullptr,
+								result = FMOD_Sound_GetSyncPointInfo(ensembleSounds.combatTransSound[combatTransition][i], syncPoint4, NULL,
 									0, &offset4, FMOD_TIMEUNIT_PCM);
 
-								ensembleSounds.combatTransChannel[combatTransition][i]->setPosition(offset4, FMOD_TIMEUNIT_PCM);
+								FMOD_Channel_SetPosition(ensembleSounds.combatTransChannel[combatTransition][i], offset4, FMOD_TIMEUNIT_PCM);
 
 								unsigned int beat = ensembleSounds.combatBeat * 64;
 								offset3 = offset3 - offset4;
@@ -3076,48 +3076,48 @@ FMOD_RESULT F_CALLBACK ensembleCombatCallback(FMOD_CHANNELCONTROL* channelcontro
 								transitionLength -= offset4;
 							}
 
-							result = ensembleSounds.combatTransChannel[combatTransition][i]->setDelay(clock_now + (unsigned long long)(delayLength),
+							result = FMOD_Channel_SetDelay(ensembleSounds.combatTransChannel[combatTransition][i], clock_now + (unsigned long long)(delayLength),
 								clock_now + (unsigned long long)(delayLength) + transitionLength, true);
 							{
 								unsigned long long delay = 0;
-								result = ensembleSounds.combatTransChannel[combatTransition][i]->getDelay(&delay, nullptr);
+								result = FMOD_Channel_GetDelay(ensembleSounds.combatTransChannel[combatTransition][i], &delay, NULL);
 
-								result = ensembleSounds.combatTransChannel[combatTransition][i]->removeFadePoints(0, (unsigned long long)(-1));
-								result = ensembleSounds.combatTransChannel[combatTransition][i]->addFadePoint(delay, 0.f);
+								result = FMOD_Channel_RemoveFadePoints(ensembleSounds.combatTransChannel[combatTransition][i], 0, (unsigned long long)(-1));
+								result = FMOD_Channel_AddFadePoint(ensembleSounds.combatTransChannel[combatTransition][i], delay, 0.f);
 								unsigned long long fade_delay = (10.f / buffer_ms) * buffersize;
-								result = ensembleSounds.combatTransChannel[combatTransition][i]->addFadePoint(delay + fade_delay, 1.f);
+								result = FMOD_Channel_AddFadePoint(ensembleSounds.combatTransChannel[combatTransition][i], delay + fade_delay, 1.f);
 							}
 
-							result = ensembleSounds.combatTransChannel[combatTransition][i]->setPaused(false);
+							result = FMOD_Channel_SetPaused(ensembleSounds.combatTransChannel[combatTransition][i], false);
 						}
 
-						result = ensembleSounds.exploreChannel[i]->setPaused(true);
-						result = ensembleSounds.exploreChannel[i]->setPosition(0, FMOD_TIMEUNIT_PCM);
+						result = FMOD_Channel_SetPaused(ensembleSounds.exploreChannel[i], true);
+						result = FMOD_Channel_SetPosition(ensembleSounds.exploreChannel[i], 0, FMOD_TIMEUNIT_PCM);
 
-						//ensembleSounds.exploreChannel[i]->setVolume(0.f);
-						//ensembleSounds.combatTransChannel[combatTransition][i]->setVolume(0.f);
+						//FMOD_Channel_SetVolume(ensembleSounds.exploreChannel[i], 0.f);
+						//FMOD_Channel_SetVolume(ensembleSounds.combatTransChannel[combatTransition][i], 0.f);
 
 						// code to seek to position if needed, but have pickup notes at 0:00 currently
 						{
 							unsigned int songPos = 0;
-							result = ensembleSounds.exploreSound[i]->getSyncPoint(ensembleSounds.exploreSongSeek, &syncPoint);
-							result = ensembleSounds.exploreSound[i]->getSyncPointInfo(syncPoint, nullptr, 0, &songPos, FMOD_TIMEUNIT_PCM);
-							result = ensembleSounds.exploreChannel[i]->setPosition(songPos, FMOD_TIMEUNIT_PCM);
+							result = FMOD_Sound_GetSyncPoint(ensembleSounds.exploreSound[i], ensembleSounds.exploreSongSeek, &syncPoint);
+							result = FMOD_Sound_GetSyncPointInfo(ensembleSounds.exploreSound[i], syncPoint, NULL, 0, &songPos, FMOD_TIMEUNIT_PCM);
+							result = FMOD_Channel_SetPosition(ensembleSounds.exploreChannel[i], songPos, FMOD_TIMEUNIT_PCM);
 						}
 
-						result = ensembleSounds.exploreChannel[i]->setDelay(clock_now + (unsigned long long)(delayLength + offset3), 0, false);
+						result = FMOD_Channel_SetDelay(ensembleSounds.exploreChannel[i], clock_now + (unsigned long long)(delayLength + offset3), 0, false);
 
 						{
 							unsigned long long delay = 0;
-							result = ensembleSounds.exploreChannel[i]->getDelay(&delay, nullptr);
+							result = FMOD_Channel_GetDelay(ensembleSounds.exploreChannel[i], &delay, NULL);
 
 							unsigned long long fade_delay = (1000.f / buffer_ms) * buffersize;
 
-							result = ensembleSounds.exploreChannel[i]->removeFadePoints(0, (unsigned long long)(-1));
-							result = ensembleSounds.exploreChannel[i]->addFadePoint(delay, 0.f);
-							result = ensembleSounds.exploreChannel[i]->addFadePoint(delay + fade_delay, 1.f);
+							result = FMOD_Channel_RemoveFadePoints(ensembleSounds.exploreChannel[i], 0, (unsigned long long)(-1));
+							result = FMOD_Channel_AddFadePoint(ensembleSounds.exploreChannel[i], delay, 0.f);
+							result = FMOD_Channel_AddFadePoint(ensembleSounds.exploreChannel[i], delay + fade_delay, 1.f);
 						}
-						result = ensembleSounds.exploreChannel[i]->setPaused(false);
+						result = FMOD_Channel_SetPaused(ensembleSounds.exploreChannel[i], false);
 					}
 				}
 			}
@@ -3126,18 +3126,18 @@ FMOD_RESULT F_CALLBACK ensembleCombatCallback(FMOD_CHANNELCONTROL* channelcontro
 		if ( false && currentSyncPoint % 8 == 0 )
 		{
 			unsigned int currentOffset = 0;
-			FMOD_SYNCPOINT* syncPoint = nullptr;
-			result = sound->getSyncPoint(currentSyncPoint, &syncPoint);
-			result = sound->getSyncPointInfo(syncPoint, nullptr, 0, &currentOffset, FMOD_TIMEUNIT_PCM);
+			FMOD_SYNCPOINT* syncPoint = NULL;
+			result = FMOD_Sound_GetSyncPoint(sound, currentSyncPoint, &syncPoint);
+			result = FMOD_Sound_GetSyncPointInfo(sound, syncPoint, NULL, 0, &currentOffset, FMOD_TIMEUNIT_PCM);
 
 			currentSyncPoint = ensembleSounds.combatSongSeek * 8;
 
 			unsigned int offset = 0;
-			result = sound->getSyncPoint(currentSyncPoint, &syncPoint);
-			result = sound->getSyncPointInfo(syncPoint, nullptr, 0, &offset, FMOD_TIMEUNIT_PCM);
+			result = FMOD_Sound_GetSyncPoint(sound, currentSyncPoint, &syncPoint);
+			result = FMOD_Sound_GetSyncPointInfo(sound, syncPoint, NULL, 0, &offset, FMOD_TIMEUNIT_PCM);
 
 			unsigned int currentPos = 0;
-			result = chan->getPosition(&currentPos, FMOD_TIMEUNIT_PCM);
+			result = FMOD_Channel_GetPosition(chan, &currentPos, FMOD_TIMEUNIT_PCM);
 
 			// this goes crazy and calls back every missed sync point, twice for the same setpoint
 			if ( currentPos >= currentOffset // check our callback is within expected sync range
@@ -3146,9 +3146,9 @@ FMOD_RESULT F_CALLBACK ensembleCombatCallback(FMOD_CHANNELCONTROL* channelcontro
 			{
 				//currentPos = currentPos % soundCombatSyncPointInterval; // callback interval
 				currentPos = currentPos - currentOffset;
-				result = chan->setPosition(offset + currentPos, FMOD_TIMEUNIT_PCM);
+				result = FMOD_Channel_SetPosition(chan, offset + currentPos, FMOD_TIMEUNIT_PCM);
 			}
-			//chan->getPosition(&pos, FMOD_TIMEUNIT_MS);
+			//FMOD_Channel_GetPosition(chan, &pos, FMOD_TIMEUNIT_MS);
 		}
 	}
 
@@ -3162,12 +3162,12 @@ FMOD_RESULT F_CALLBACK ensembleExplorationCallback(FMOD_CHANNELCONTROL* channelc
 	void* commanddata2)
 {
 	FMOD_RESULT result = FMOD_OK;
-	if ( callbacktype == FMOD_CHANNELCONTROL_CALLBACK_TYPE::FMOD_CHANNELCONTROL_CALLBACK_SYNCPOINT )
+	if ( callbacktype == FMOD_CHANNELCONTROL_CALLBACK_SYNCPOINT )
 	{
 		int currentSyncPoint = reinterpret_cast<intptr_t>(commanddata1);
-		FMOD::Channel* chan = reinterpret_cast<FMOD::Channel*>(channelcontrol);
-		FMOD::Sound* sound = nullptr;
-		chan->getCurrentSound(&sound);
+		FMOD_CHANNEL* chan = reinterpret_cast<FMOD_CHANNEL*>(channelcontrol);
+		FMOD_SOUND* sound = NULL;
+		FMOD_Channel_GetCurrentSound(chan, &sound);
 
 		if ( sound == ::ensembleSounds.exploreSound[0] ) // should this be [5] ??
 		{
@@ -3178,12 +3178,12 @@ FMOD_RESULT F_CALLBACK ensembleExplorationCallback(FMOD_CHANNELCONTROL* channelc
 			if ( ensembleSounds.songTransitionState == EnsembleSounds_t::TRANSITION_COMBAT_START && currentSyncPoint > 0 )
 			{
 				unsigned int currentPos = 0;
-				chan->getPosition(&currentPos, FMOD_TIMEUNIT_PCM);
+				FMOD_Channel_GetPosition(chan, &currentPos, FMOD_TIMEUNIT_PCM);
 
-				FMOD_SYNCPOINT* syncPoint = nullptr;
-				sound->getSyncPoint(currentSyncPoint, &syncPoint);
+				FMOD_SYNCPOINT* syncPoint = NULL;
+				FMOD_Sound_GetSyncPoint(sound, currentSyncPoint, &syncPoint);
 				unsigned int currentOffset = 0;
-				result = sound->getSyncPointInfo(syncPoint, nullptr, 0, &currentOffset, FMOD_TIMEUNIT_PCM);
+				result = FMOD_Sound_GetSyncPointInfo(sound, syncPoint, NULL, 0, &currentOffset, FMOD_TIMEUNIT_PCM);
 
 				if ( currentPos >= currentOffset // check our callback is within expected sync range
 					&& (currentPos < currentOffset + ensembleSounds.exploreSoundSyncPointInterval) )
@@ -3202,21 +3202,21 @@ FMOD_RESULT F_CALLBACK ensembleExplorationCallback(FMOD_CHANNELCONTROL* channelc
 						syncpointNext = currentSyncPoint + 1;
 					}
 
-					FMOD_SYNCPOINT* syncPoint2 = nullptr;
+					FMOD_SYNCPOINT* syncPoint2 = NULL;
 					int numSyncPoints = 0;
-					sound->getNumSyncPoints(&numSyncPoints);
+					FMOD_Sound_GetNumSyncPoints(sound, &numSyncPoints);
 					while ( syncpointNext >= numSyncPoints )
 					{
 						syncpointNext -= numSyncPoints;
 					}
 
-					sound->getSyncPoint(syncpointNext, &syncPoint2);
+					FMOD_Sound_GetSyncPoint(sound, syncpointNext, &syncPoint2);
 
 					unsigned int soundLength = 0;
-					sound->getLength(&soundLength, FMOD_TIMEUNIT_PCM);
+					FMOD_Sound_GetLength(sound, &soundLength, FMOD_TIMEUNIT_PCM);
 
 					unsigned int offset2 = 0;
-					result = sound->getSyncPointInfo(syncPoint2, nullptr, 0, &offset2, FMOD_TIMEUNIT_PCM);
+					result = FMOD_Sound_GetSyncPointInfo(sound, syncPoint2, NULL, 0, &offset2, FMOD_TIMEUNIT_PCM);
 
 					unsigned int delayLength = 0;
 					if ( currentPos > offset2 )
@@ -3231,7 +3231,7 @@ FMOD_RESULT F_CALLBACK ensembleExplorationCallback(FMOD_CHANNELCONTROL* channelc
 
 					ensembleSounds.songTransitionState = EnsembleSounds_t::TRANSITION_COMBAT;
 
-					//chan->addFadePoint(clock_now + (unsigned long long)(rate * 2.0), 0.f);
+					//FMOD_Channel_AddFadePoint(chan, clock_now + (unsigned long long)(rate * 2.0), 0.f);
 					int explorationTransition = 2;
 					if ( ensembleSounds.songTransitionMode == EnsembleSounds_t::TRANSITION_MODE_DEFAULT )
 					{
@@ -3247,7 +3247,7 @@ FMOD_RESULT F_CALLBACK ensembleExplorationCallback(FMOD_CHANNELCONTROL* channelc
 					}
 
 					float volume = 0.f;
-					chan->getVolume(&volume);
+					FMOD_Channel_GetVolume(chan, &volume);
 					bool noTransition = false;
 					if ( ensembleSounds.songTransitionMode == EnsembleSounds_t::TRANSITION_MODE_FADE_HALF && volume < 0.5f )
 					{
@@ -3261,91 +3261,91 @@ FMOD_RESULT F_CALLBACK ensembleExplorationCallback(FMOD_CHANNELCONTROL* channelc
 					}
 
 					unsigned int buffersize = 0;
-					fmod_system->getDSPBufferSize(&buffersize, nullptr);
+					FMOD_System_GetDSPBufferSize(fmod_system, &buffersize, NULL);
 					int sampleRate = 1;
-					fmod_system->getSoftwareFormat(&sampleRate, nullptr, nullptr);
+					FMOD_System_GetSoftwareFormat(fmod_system, &sampleRate, NULL, NULL);
 					float buffer_ms = (buffersize * 1000.f / (float)sampleRate);
 
 					for ( int i = 0; i < NUMENSEMBLEMUSIC; ++i )
 					{
 						unsigned long long clock_now = 0;
-						result = ensembleSounds.exploreChannel[i]->getDSPClock(0, &clock_now);
-						result = ensembleSounds.exploreChannel[i]->setDelay(0, clock_now + (unsigned long long)(mainChannelDelay), false);
+						result = FMOD_Channel_GetDSPClock(ensembleSounds.exploreChannel[i], 0, &clock_now);
+						result = FMOD_Channel_SetDelay(ensembleSounds.exploreChannel[i], 0, clock_now + (unsigned long long)(mainChannelDelay), false);
 
 						{
-							result = ensembleSounds.exploreChannel[i]->removeFadePoints(0, (unsigned long long)(-1));
-							result = ensembleSounds.exploreChannel[i]->addFadePoint(clock_now, 1.f);
-							result = ensembleSounds.exploreChannel[i]->addFadePoint(clock_now + (unsigned long long)(mainChannelDelay), 0.f);
+							result = FMOD_Channel_RemoveFadePoints(ensembleSounds.exploreChannel[i], 0, (unsigned long long)(-1));
+							result = FMOD_Channel_AddFadePoint(ensembleSounds.exploreChannel[i], clock_now, 1.f);
+							result = FMOD_Channel_AddFadePoint(ensembleSounds.exploreChannel[i], clock_now + (unsigned long long)(mainChannelDelay), 0.f);
 						}
 
 						unsigned int transitionLength = 0;
-						result = ensembleSounds.exploreTransSound[explorationTransition][i]->getLength(&transitionLength, FMOD_TIMEUNIT_PCM);
-						//result = channelTrans[explorationTransition][i]->setPaused(true);
+						result = FMOD_Sound_GetLength(ensembleSounds.exploreTransSound[explorationTransition][i], &transitionLength, FMOD_TIMEUNIT_PCM);
+						//result = FMOD_Channel_SetPaused(channelTrans[explorationTransition][i], true);
 
-						FMOD_SYNCPOINT* syncPoint4 = nullptr;
+						FMOD_SYNCPOINT* syncPoint4 = NULL;
 						unsigned int offset3 = 0;
 						if ( ensembleSounds.songTransitionMode != EnsembleSounds_t::TRANSITION_MODE_FADE && !noTransition )
 						{
 							if ( ensembleSounds.exploreTransChannel[explorationTransition][i] )
 							{
-								ensembleSounds.exploreTransChannel[explorationTransition][i]->stop();
+								FMOD_Channel_Stop(ensembleSounds.exploreTransChannel[explorationTransition][i]);
 							}
-							result = fmod_system->playSound(ensembleSounds.exploreTransSound[explorationTransition][i], 
+							result = FMOD_System_PlaySound(fmod_system, ensembleSounds.exploreTransSound[explorationTransition][i], 
 								ensembleSounds.transceiver_group[i], true, &ensembleSounds.exploreTransChannel[explorationTransition][i]);
-							result = ensembleSounds.exploreTransChannel[explorationTransition][i]->setMode(FMOD_3D_HEADRELATIVE);
-							result = ensembleSounds.exploreTransChannel[explorationTransition][i]->set3DAttributes(&ensemble_global_position, nullptr);
+							result = FMOD_Channel_SetMode(ensembleSounds.exploreTransChannel[explorationTransition][i], FMOD_3D_HEADRELATIVE);
+							result = FMOD_Channel_Set3DAttributes(ensembleSounds.exploreTransChannel[explorationTransition][i], &ensemble_global_position, NULL);
 
-							FMOD_SYNCPOINT* syncPoint3 = nullptr;
-							result = ensembleSounds.exploreTransSound[explorationTransition][i]->getSyncPoint(1, &syncPoint3);
-							result = ensembleSounds.exploreTransSound[explorationTransition][i]->getSyncPointInfo(syncPoint3, nullptr, 
+							FMOD_SYNCPOINT* syncPoint3 = NULL;
+							result = FMOD_Sound_GetSyncPoint(ensembleSounds.exploreTransSound[explorationTransition][i], 1, &syncPoint3);
+							result = FMOD_Sound_GetSyncPointInfo(ensembleSounds.exploreTransSound[explorationTransition][i], syncPoint3, NULL, 
 								0, &offset3, FMOD_TIMEUNIT_PCM);
 
 							if ( ensembleSounds.songTransitionMode != EnsembleSounds_t::TRANSITION_MODE_FADE_HALF )
 							{
-								result = ensembleSounds.exploreTransChannel[explorationTransition][i]->setPosition(0, FMOD_TIMEUNIT_PCM);
+								result = FMOD_Channel_SetPosition(ensembleSounds.exploreTransChannel[explorationTransition][i], 0, FMOD_TIMEUNIT_PCM);
 							}
 							else if ( ensembleSounds.songTransitionMode == EnsembleSounds_t::TRANSITION_MODE_FADE_HALF 
 								|| ensembleSounds.songTransitionMode == EnsembleSounds_t::TRANSITION_MODE_DEFAULT )
 							{
-								result = ensembleSounds.exploreTransSound[explorationTransition][i]->getSyncPoint(0, &syncPoint4);
+								result = FMOD_Sound_GetSyncPoint(ensembleSounds.exploreTransSound[explorationTransition][i], 0, &syncPoint4);
 								unsigned int offset4 = 0;
-								result = ensembleSounds.exploreTransSound[explorationTransition][i]->getSyncPointInfo(syncPoint4, nullptr, 
+								result = FMOD_Sound_GetSyncPointInfo(ensembleSounds.exploreTransSound[explorationTransition][i], syncPoint4, NULL, 
 									0, &offset4, FMOD_TIMEUNIT_PCM);
 
-								ensembleSounds.exploreTransChannel[explorationTransition][i]->setPosition(offset4, FMOD_TIMEUNIT_PCM);
+								FMOD_Channel_SetPosition(ensembleSounds.exploreTransChannel[explorationTransition][i], offset4, FMOD_TIMEUNIT_PCM);
 
 								offset3 = offset3 - offset4;
 								transitionLength -= offset4;
 							}
 
-							result = ensembleSounds.exploreTransChannel[explorationTransition][i]->setDelay(clock_now + (unsigned long long)(delayLength),
+							result = FMOD_Channel_SetDelay(ensembleSounds.exploreTransChannel[explorationTransition][i], clock_now + (unsigned long long)(delayLength),
 								clock_now + (unsigned long long)(delayLength) + transitionLength, true);
 
 							{
 								unsigned long long delay = 0;
-								result = ensembleSounds.exploreTransChannel[explorationTransition][i]->getDelay(&delay, nullptr);
-								result = ensembleSounds.exploreTransChannel[explorationTransition][i]->removeFadePoints(0, (unsigned long long)(-1));
-								result = ensembleSounds.exploreTransChannel[explorationTransition][i]->addFadePoint(delay, 0.f);
+								result = FMOD_Channel_GetDelay(ensembleSounds.exploreTransChannel[explorationTransition][i], &delay, NULL);
+								result = FMOD_Channel_RemoveFadePoints(ensembleSounds.exploreTransChannel[explorationTransition][i], 0, (unsigned long long)(-1));
+								result = FMOD_Channel_AddFadePoint(ensembleSounds.exploreTransChannel[explorationTransition][i], delay, 0.f);
 								unsigned long long fade_delay = (500.f / buffer_ms) * buffersize;
-								result = ensembleSounds.exploreTransChannel[explorationTransition][i]->addFadePoint(delay + fade_delay, 1.f);
+								result = FMOD_Channel_AddFadePoint(ensembleSounds.exploreTransChannel[explorationTransition][i], delay + fade_delay, 1.f);
 							}
 
-							result = ensembleSounds.exploreTransChannel[explorationTransition][i]->setPaused(false);
+							result = FMOD_Channel_SetPaused(ensembleSounds.exploreTransChannel[explorationTransition][i], false);
 						}
 
-						result = ensembleSounds.combatChannel[i]->setPaused(true);
+						result = FMOD_Channel_SetPaused(ensembleSounds.combatChannel[i], true);
 
 						unsigned int songPos = 0;
-						result = ensembleSounds.combatSound[i]->getSyncPoint(ensembleSounds.combatSongSeek * 8, &syncPoint);
-						result = ensembleSounds.combatSound[i]->getSyncPointInfo(syncPoint, nullptr, 0, &songPos, FMOD_TIMEUNIT_PCM);
-						result = ensembleSounds.combatChannel[i]->setPosition(songPos, FMOD_TIMEUNIT_PCM);
+						result = FMOD_Sound_GetSyncPoint(ensembleSounds.combatSound[i], ensembleSounds.combatSongSeek * 8, &syncPoint);
+						result = FMOD_Sound_GetSyncPointInfo(ensembleSounds.combatSound[i], syncPoint, NULL, 0, &songPos, FMOD_TIMEUNIT_PCM);
+						result = FMOD_Channel_SetPosition(ensembleSounds.combatChannel[i], songPos, FMOD_TIMEUNIT_PCM);
 
-						//result = ensembleSounds.combatChannel[i]->setVolume(0.f);
-						//result = ensembleSounds.exploreTransChannel[explorationTransition][i]->setVolume(0.f);
+						//result = FMOD_Channel_SetVolume(ensembleSounds.combatChannel[i], 0.f);
+						//result = FMOD_Channel_SetVolume(ensembleSounds.exploreTransChannel[explorationTransition][i], 0.f);
 
-						result = ensembleSounds.combatChannel[i]->removeFadePoints(0, (unsigned long long)(-1));
-						result = ensembleSounds.combatChannel[i]->setDelay(clock_now + (unsigned long long)(delayLength + offset3), 0, false);
-						result = ensembleSounds.combatChannel[i]->setPaused(false);
+						result = FMOD_Channel_RemoveFadePoints(ensembleSounds.combatChannel[i], 0, (unsigned long long)(-1));
+						result = FMOD_Channel_SetDelay(ensembleSounds.combatChannel[i], clock_now + (unsigned long long)(delayLength + offset3), 0, false);
+						result = FMOD_Channel_SetPaused(ensembleSounds.combatChannel[i], false);
 					}
 				}
 			}
@@ -3354,18 +3354,18 @@ FMOD_RESULT F_CALLBACK ensembleExplorationCallback(FMOD_CHANNELCONTROL* channelc
 		if ( currentSyncPoint == 0 /*currentSyncPoint % 8 == 0*/ )
 		{
 			unsigned int currentOffset = 0;
-			FMOD_SYNCPOINT* syncPoint = nullptr;
-			result = sound->getSyncPoint(currentSyncPoint, &syncPoint);
-			result = sound->getSyncPointInfo(syncPoint, nullptr, 0, &currentOffset, FMOD_TIMEUNIT_PCM);
+			FMOD_SYNCPOINT* syncPoint = NULL;
+			result = FMOD_Sound_GetSyncPoint(sound, currentSyncPoint, &syncPoint);
+			result = FMOD_Sound_GetSyncPointInfo(sound, syncPoint, NULL, 0, &currentOffset, FMOD_TIMEUNIT_PCM);
 
 			currentSyncPoint = ensembleSounds.exploreSongSeek;
 
 			unsigned int offset = 0;
-			result = sound->getSyncPoint(currentSyncPoint, &syncPoint);
-			result = sound->getSyncPointInfo(syncPoint, nullptr, 0, &offset, FMOD_TIMEUNIT_PCM);
+			result = FMOD_Sound_GetSyncPoint(sound, currentSyncPoint, &syncPoint);
+			result = FMOD_Sound_GetSyncPointInfo(sound, syncPoint, NULL, 0, &offset, FMOD_TIMEUNIT_PCM);
 
 			unsigned int currentPos = 0;
-			result = chan->getPosition(&currentPos, FMOD_TIMEUNIT_PCM);
+			result = FMOD_Channel_GetPosition(chan, &currentPos, FMOD_TIMEUNIT_PCM);
 
 			// this goes crazy and calls back every missed sync point, twice for the same setpoint
 			if ( currentPos >= currentOffset // check our callback is within expected sync range
@@ -3374,7 +3374,7 @@ FMOD_RESULT F_CALLBACK ensembleExplorationCallback(FMOD_CHANNELCONTROL* channelc
 			{
 				//currentPos = currentPos % soundSyncPointInterval; // callback interval
 				currentPos = currentPos - currentOffset;
-				result = chan->setPosition(offset + currentPos, FMOD_TIMEUNIT_PCM);
+				result = FMOD_Channel_SetPosition(chan, offset + currentPos, FMOD_TIMEUNIT_PCM);
 			}
 		}
 	}
@@ -3402,13 +3402,13 @@ void EnsembleSounds_t::updatePlayingChannelVolumes()
 	{
 		bool playing = false;
 		float audibility = 0.f;
-		exploreChannel[5]->getAudibility(&audibility);
-		exploreChannel[5]->isPlaying(&playing);
+		FMOD_Channel_GetAudibility(exploreChannel[5], &audibility);
+		FMOD_Channel_IsPlaying(exploreChannel[5], &playing);
 
 		if ( playing && audibility > 0.01 )
 		{
 			unsigned int pos = 0;
-			exploreChannel[5]->getPosition(&pos, FMOD_TIMEUNIT_PCM);
+			FMOD_Channel_GetPosition(exploreChannel[5], &pos, FMOD_TIMEUNIT_PCM);
 			{
 				int lastPoint = -1;
 				int index = -1;
@@ -3455,15 +3455,15 @@ void EnsembleSounds_t::updatePlayingChannelVolumes()
 	{
 		bool playing = false;
 		float audibility = 0.f;
-		combatChannel[5]->getAudibility(&audibility);
-		combatChannel[5]->isPlaying(&playing);
+		FMOD_Channel_GetAudibility(combatChannel[5], &audibility);
+		FMOD_Channel_IsPlaying(combatChannel[5], &playing);
 		bool paused = true;
-		combatChannel[5]->getPaused(&paused);
+		FMOD_Channel_GetPaused(combatChannel[5], &paused);
 
 		if ( playing && !paused && audibility > 0.0001 )
 		{
 			unsigned int pos = 0;
-			combatChannel[5]->getPosition(&pos, FMOD_TIMEUNIT_PCM);
+			FMOD_Channel_GetPosition(combatChannel[5], &pos, FMOD_TIMEUNIT_PCM);
 			{
 				int lastPoint = -1;
 				int index = -1;
@@ -3534,23 +3534,23 @@ void EnsembleSounds_t::updatePlayingChannelVolumes()
 			float audibility = 0.f;
 			if ( exploreChannel[i] )
 			{
-				exploreChannel[i]->getAudibility(&audibility);
-				exploreChannel[i]->isPlaying(&playing);
+				FMOD_Channel_GetAudibility(exploreChannel[i], &audibility);
+				FMOD_Channel_IsPlaying(exploreChannel[i], &playing);
 				if ( playing )
 				{
 					unsigned int ms = 0;
-					exploreChannel[i]->getPosition(&ms, FMOD_TIMEUNIT_MS);
+					FMOD_Channel_GetPosition(exploreChannel[i], &ms, FMOD_TIMEUNIT_MS);
 					if ( ms > 250 /*|| fade_only_mode*/ )
 					{
 						float volume = 0.f;
-						exploreChannel[i]->getVolume(&volume);
+						FMOD_Channel_GetVolume(exploreChannel[i], &volume);
 						volume = std::min(1.f, volume + fadeinspeed);
-						exploreChannel[i]->setVolume(volume);
+						FMOD_Channel_SetVolume(exploreChannel[i], volume);
 					}
 				}
 				else
 				{
-					exploreChannel[i]->setVolume(0.f);
+					FMOD_Channel_SetVolume(exploreChannel[i], 0.f);
 				}
 			}
 
@@ -3558,18 +3558,18 @@ void EnsembleSounds_t::updatePlayingChannelVolumes()
 			audibility = 0.f;
 			if ( combatChannel[i] )
 			{
-				combatChannel[i]->getAudibility(&audibility);
-				combatChannel[i]->isPlaying(&playing);
+				FMOD_Channel_GetAudibility(combatChannel[i], &audibility);
+				FMOD_Channel_IsPlaying(combatChannel[i], &playing);
 				if ( playing )
 				{
 					float volume = 0.f;
-					combatChannel[i]->getVolume(&volume);
+					FMOD_Channel_GetVolume(combatChannel[i], &volume);
 					volume = std::max(0.f, volume - fadeoutspeed);
-					combatChannel[i]->setVolume(volume);
+					FMOD_Channel_SetVolume(combatChannel[i], volume);
 				}
 				else
 				{
-					combatChannel[i]->setVolume(0.f);
+					FMOD_Channel_SetVolume(combatChannel[i], 0.f);
 				}
 			}
 
@@ -3578,18 +3578,18 @@ void EnsembleSounds_t::updatePlayingChannelVolumes()
 				if ( !exploreTransChannel[j][i] ) { continue; }
 				playing = false;
 				audibility = 0.f;
-				exploreTransChannel[j][i]->getAudibility(&audibility);
-				exploreTransChannel[j][i]->isPlaying(&playing);
+				FMOD_Channel_GetAudibility(exploreTransChannel[j][i], &audibility);
+				FMOD_Channel_IsPlaying(exploreTransChannel[j][i], &playing);
 				if ( playing )
 				{
 					float volume = 0.f;
-					exploreTransChannel[j][i]->getVolume(&volume);
+					FMOD_Channel_GetVolume(exploreTransChannel[j][i], &volume);
 					volume = std::max(0.f, volume - fadeoutspeed);
-					exploreTransChannel[j][i]->setVolume(volume);
+					FMOD_Channel_SetVolume(exploreTransChannel[j][i], volume);
 				}
 				else
 				{
-					exploreTransChannel[j][i]->setVolume(0.f);
+					FMOD_Channel_SetVolume(exploreTransChannel[j][i], 0.f);
 				}
 			}
 
@@ -3598,18 +3598,18 @@ void EnsembleSounds_t::updatePlayingChannelVolumes()
 				if ( !combatTransChannel[j][i] ) { continue; }
 				playing = false;
 				audibility = 0.f;
-				combatTransChannel[j][i]->getAudibility(&audibility);
-				combatTransChannel[j][i]->isPlaying(&playing);
+				FMOD_Channel_GetAudibility(combatTransChannel[j][i], &audibility);
+				FMOD_Channel_IsPlaying(combatTransChannel[j][i], &playing);
 				if ( playing )
 				{
 					float volume = 0.f;
-					combatTransChannel[j][i]->getVolume(&volume);
+					FMOD_Channel_GetVolume(combatTransChannel[j][i], &volume);
 					volume = std::min(1.f, volume + fadeinspeed);
-					combatTransChannel[j][i]->setVolume(volume);
+					FMOD_Channel_SetVolume(combatTransChannel[j][i], volume);
 				}
 				else
 				{
-					combatTransChannel[j][i]->setVolume(0.f);
+					FMOD_Channel_SetVolume(combatTransChannel[j][i], 0.f);
 				}
 			}
 		}
@@ -3619,18 +3619,18 @@ void EnsembleSounds_t::updatePlayingChannelVolumes()
 			float audibility = 0.f;
 			if ( exploreChannel[i] )
 			{
-				exploreChannel[i]->getAudibility(&audibility);
-				exploreChannel[i]->isPlaying(&playing);
+				FMOD_Channel_GetAudibility(exploreChannel[i], &audibility);
+				FMOD_Channel_IsPlaying(exploreChannel[i], &playing);
 				if ( playing )
 				{
 					float volume = 0.f;
-					exploreChannel[i]->getVolume(&volume);
+					FMOD_Channel_GetVolume(exploreChannel[i], &volume);
 					volume = std::max(0.f, volume - fadeoutspeed);
-					exploreChannel[i]->setVolume(volume);
+					FMOD_Channel_SetVolume(exploreChannel[i], volume);
 				}
 				else
 				{
-					exploreChannel[i]->setVolume(0.f);
+					FMOD_Channel_SetVolume(exploreChannel[i], 0.f);
 				}
 			}
 
@@ -3638,18 +3638,18 @@ void EnsembleSounds_t::updatePlayingChannelVolumes()
 			audibility = 0.f;
 			if ( combatChannel[i] )
 			{
-				combatChannel[i]->getAudibility(&audibility);
-				combatChannel[i]->isPlaying(&playing);
+				FMOD_Channel_GetAudibility(combatChannel[i], &audibility);
+				FMOD_Channel_IsPlaying(combatChannel[i], &playing);
 				if ( playing )
 				{
 					float volume = 0.f;
-					combatChannel[i]->getVolume(&volume);
+					FMOD_Channel_GetVolume(combatChannel[i], &volume);
 					volume = std::min(1.f, volume + fadeinspeed);
-					combatChannel[i]->setVolume(volume);
+					FMOD_Channel_SetVolume(combatChannel[i], volume);
 				}
 				else
 				{
-					combatChannel[i]->setVolume(0.f);
+					FMOD_Channel_SetVolume(combatChannel[i], 0.f);
 				}
 			}
 
@@ -3658,18 +3658,18 @@ void EnsembleSounds_t::updatePlayingChannelVolumes()
 				if ( !exploreTransChannel[j][i] ) { continue; }
 				playing = false;
 				audibility = 0.f;
-				exploreTransChannel[j][i]->getAudibility(&audibility);
-				exploreTransChannel[j][i]->isPlaying(&playing);
+				FMOD_Channel_GetAudibility(exploreTransChannel[j][i], &audibility);
+				FMOD_Channel_IsPlaying(exploreTransChannel[j][i], &playing);
 				if ( playing )
 				{
 					float volume = 0.f;
-					exploreTransChannel[j][i]->getVolume(&volume);
+					FMOD_Channel_GetVolume(exploreTransChannel[j][i], &volume);
 					volume = std::min(1.f, volume + fadeinspeed);
-					exploreTransChannel[j][i]->setVolume(volume);
+					FMOD_Channel_SetVolume(exploreTransChannel[j][i], volume);
 				}
 				else
 				{
-					exploreTransChannel[j][i]->setVolume(0.f);
+					FMOD_Channel_SetVolume(exploreTransChannel[j][i], 0.f);
 				}
 			}
 
@@ -3678,18 +3678,18 @@ void EnsembleSounds_t::updatePlayingChannelVolumes()
 				if ( !combatTransChannel[j][i] ) { continue; }
 				playing = false;
 				audibility = 0.f;
-				combatTransChannel[j][i]->getAudibility(&audibility);
-				combatTransChannel[j][i]->isPlaying(&playing);
+				FMOD_Channel_GetAudibility(combatTransChannel[j][i], &audibility);
+				FMOD_Channel_IsPlaying(combatTransChannel[j][i], &playing);
 				if ( playing )
 				{
 					float volume = 0.f;
-					combatTransChannel[j][i]->getVolume(&volume);
+					FMOD_Channel_GetVolume(combatTransChannel[j][i], &volume);
 					volume = std::max(0.f, volume - fadeoutspeed);
-					combatTransChannel[j][i]->setVolume(volume);
+					FMOD_Channel_SetVolume(combatTransChannel[j][i], volume);
 				}
 				else
 				{
-					combatTransChannel[j][i]->setVolume(0.f);
+					FMOD_Channel_SetVolume(combatTransChannel[j][i], 0.f);
 				}
 			}
 		}

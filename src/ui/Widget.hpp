@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "../main.hpp"
+#include "../main.h"
 
 class Frame;
 
@@ -213,5 +213,5 @@ protected:
         const std::vector<const Widget*>& searchParents) const;
 };
 
-#include "../interface/consolecommand.hpp"
+#include "../interface/consolecommand.h"
 extern ConsoleVariable<bool> cvar_hideGlyphs;

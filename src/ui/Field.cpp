@@ -1,6 +1,6 @@
 // Field.cpp
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../draw.hpp"
 #include "../player.hpp"
 #include "Frame.hpp"

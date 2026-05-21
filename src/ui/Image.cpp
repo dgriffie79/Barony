@@ -1,6 +1,6 @@
 // Image.cpp
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../draw.hpp"
 #include "Image.hpp"
 #include "Frame.hpp"
@@ -483,7 +483,7 @@ void Image::dumpCache() {
 }
 
 #include "../net.hpp"
-#include "../interface/consolecommand.hpp"
+#include "../interface/consolecommand.h"
 static ConsoleCommand size("/images_cache_size", "measure image cache",
     [](int argc, const char** argv){
     messagePlayer(clientnum, MESSAGE_MISC, "cache size is: %llu bytes (%llu kB)", IMAGE_VOLUME, IMAGE_VOLUME / 1024);

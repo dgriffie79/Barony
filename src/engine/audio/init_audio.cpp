@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../../main.hpp"
+#include "../../main.h"
 #include "../../files.hpp"
 #include "../../ui/LoadingScreen.hpp"
 #include "sound.hpp"
@@ -37,7 +37,7 @@ bool initSoundEngine()
 {
 #ifdef USE_FMOD
 	printlog("[FMOD]: initializing FMOD...\n");
-	fmod_result = FMOD::System_Create(&fmod_system);
+	fmod_result = FMOD_System_Create(&fmod_system);
 	if (FMODErrorCheck())
 	{
 		printlog("[FMOD]: Failed to create FMOD. DISABLING AUDIO.\n");
@@ -48,15 +48,15 @@ bool initSoundEngine()
     int numRawSpeakers{};
     int sampleRate{};
     FMOD_SPEAKERMODE speakerMode{};
-    fmod_system->getSoftwareFormat(&sampleRate, &speakerMode, &numRawSpeakers);
-    fmod_system->setSoftwareFormat(sampleRate, fmod_speakermode, numRawSpeakers);
+    FMOD_System_GetSoftwareFormat(fmod_system, &sampleRate, &speakerMode, &numRawSpeakers);
+    FMOD_System_SetSoftwareFormat(fmod_system, sampleRate, fmod_speakermode, numRawSpeakers);
 	FMOD_ADVANCEDSETTINGS settings{};
 	settings.cbSize = sizeof(FMOD_ADVANCEDSETTINGS);
 	settings.vol0virtualvol = 0.001;
-	fmod_system->setAdvancedSettings(&settings);
+	FMOD_System_SetAdvancedSettings(fmod_system, &settings);
 
 	// default 64
-	fmod_system->setSoftwareChannels(32);
+	FMOD_System_SetSoftwareChannels(fmod_system, 32);
 
 	if (!no_sound)
 	{
@@ -64,7 +64,7 @@ bool initSoundEngine()
 #ifndef NDEBUG
 		flags |= FMOD_INIT_PROFILE_ENABLE | FMOD_INIT_PROFILE_METER_ALL;
 #endif
-		fmod_result = fmod_system->init(fmod_maxchannels, flags, fmod_extraDriverData);
+		fmod_result = FMOD_System_Init(fmod_system, fmod_maxchannels, flags, fmod_extraDriverData);
 		if (FMODErrorCheck())
 		{
 			printlog("[FMOD]: Failed to initialize FMOD. DISABLING AUDIO.\n");
@@ -78,7 +78,7 @@ bool initSoundEngine()
 
 		int selected_driver = 0;
 		int numDrivers = 0;
-		fmod_system->getNumDrivers(&numDrivers);
+		FMOD_System_GetNumDrivers(fmod_system, &numDrivers);
 		for ( int i = 0; i < numDrivers; ++i )
 		{
             constexpr int driverNameLen = 64;
@@ -86,7 +86,7 @@ bool initSoundEngine()
             FMOD_GUID guid;
             int rate{}, channels{};
             FMOD_SPEAKERMODE mode{};
-            fmod_result = fmod_system->getDriverInfo(i, driverName, driverNameLen, &guid, &rate, &mode, &channels);
+            fmod_result = FMOD_System_GetDriverInfo(fmod_system, i, driverName, driverNameLen, &guid, &rate, &mode, &channels);
 			if ( FMODErrorCheck() )
 			{
 				printlog("[FMOD]: Failed to read audio device index: %d", i);
@@ -106,58 +106,58 @@ bool initSoundEngine()
 			}
 		}
 
-		fmod_system->setDriver(selected_driver);
-		fmod_system->getDriver(&selected_driver);
+		FMOD_System_SetDriver(fmod_system, selected_driver);
+		FMOD_System_GetDriver(fmod_system, &selected_driver);
 		printlog("[FMOD]: Current audio device: %d", selected_driver);
 
-		fmod_result = fmod_system->createChannelGroup(nullptr, &sound_group);
+		fmod_result = FMOD_System_CreateChannelGroup(fmod_system, NULL, &sound_group);
 		if (FMODErrorCheck())
 		{
 			printlog("[FMOD]: Failed to create sound channel group. DISABLING AUDIO.\n");
 			no_sound = true;
 			return false;
 		}
-		fmod_result = fmod_system->createChannelGroup(nullptr, &soundAmbient_group);
+		fmod_result = FMOD_System_CreateChannelGroup(fmod_system, NULL, &soundAmbient_group);
 		if ( FMODErrorCheck() )
 		{
 			printlog("F[FMOD]: ailed to create sound ambient channel group.\n");
 			no_sound = true;
 		}
-		fmod_result = fmod_system->createChannelGroup(nullptr, &soundEnvironment_group);
+		fmod_result = FMOD_System_CreateChannelGroup(fmod_system, NULL, &soundEnvironment_group);
 		if ( FMODErrorCheck() )
 		{
 			printlog("[FMOD]: Failed to create sound environment channel group.\n");
 			no_sound = true;
 		}
-		fmod_result = fmod_system->createChannelGroup(nullptr, &music_notification_group);
+		fmod_result = FMOD_System_CreateChannelGroup(fmod_system, NULL, &music_notification_group);
 		if ( FMODErrorCheck() )
 		{
 			printlog("[FMOD]: Failed to create notification channel group.\n");
 			no_sound = true;
 		}
-		fmod_result = fmod_system->createChannelGroup(nullptr, &soundNotification_group);
+		fmod_result = FMOD_System_CreateChannelGroup(fmod_system, NULL, &soundNotification_group);
 		if ( FMODErrorCheck() )
 		{
 			printlog("[FMOD]: Failed to create sound notification channel group.\n");
 			no_sound = true;
 		}
-		fmod_result = fmod_system->createChannelGroup(nullptr, &music_group);
+		fmod_result = FMOD_System_CreateChannelGroup(fmod_system, NULL, &music_group);
 		if (FMODErrorCheck())
 		{
 			printlog("[FMOD]: Failed to create music channel group. DISABLING AUDIO.\n");
 			no_sound = true;
 			return false;
 		}
-		fmod_result = fmod_system->createChannelGroup(nullptr, &music_ensemble_global_send_group);
+		fmod_result = FMOD_System_CreateChannelGroup(fmod_system, NULL, &music_ensemble_global_send_group);
 		if ( FMODErrorCheck() )
 		{
 			printlog("[FMOD]: Failed to create music channel group. DISABLING AUDIO.\n");
 			no_sound = true;
 			return false;
 		}
-		music_ensemble_global_send_group->setVolumeRamp(true);
+		FMOD_ChannelGroup_SetVolumeRamp(music_ensemble_global_send_group, true);
 
-		fmod_result = fmod_system->createChannelGroup(nullptr, &music_ensemble_global_recv_group);
+		fmod_result = FMOD_System_CreateChannelGroup(fmod_system, NULL, &music_ensemble_global_recv_group);
 		if ( FMODErrorCheck() )
 		{
 			printlog("[FMOD]: Failed to create music channel group. DISABLING AUDIO.\n");
@@ -165,7 +165,7 @@ bool initSoundEngine()
 			return false;
 		}
 
-		fmod_result = fmod_system->createChannelGroup(nullptr, &music_ensemble_local_recv_group);
+		fmod_result = FMOD_System_CreateChannelGroup(fmod_system, NULL, &music_ensemble_local_recv_group);
 		if ( FMODErrorCheck() )
 		{
 			printlog("[FMOD]: Failed to create music channel group. DISABLING AUDIO.\n");
@@ -174,50 +174,50 @@ bool initSoundEngine()
 		}
 		for ( int i = 0; i < MAXPLAYERS; ++i )
 		{
-			fmod_result = fmod_system->createChannelGroup(nullptr, &music_ensemble_local_recv_player[i]);
+			fmod_result = FMOD_System_CreateChannelGroup(fmod_system, NULL, &music_ensemble_local_recv_player[i]);
 			if ( FMODErrorCheck() )
 			{
 				printlog("[FMOD]: Failed to create music channel group. DISABLING AUDIO.\n");
 				no_sound = true;
 				return false;
 			}
-			music_ensemble_local_recv_group->addGroup(music_ensemble_local_recv_player[i]);
-			music_ensemble_local_recv_player[i]->setMode(FMOD_3D | FMOD_3D_WORLDRELATIVE);
+			FMOD_ChannelGroup_AddGroup(music_ensemble_local_recv_group, music_ensemble_local_recv_player[i]);
+			FMOD_ChannelGroup_SetMode(music_ensemble_local_recv_player[i], FMOD_3D | FMOD_3D_WORLDRELATIVE);
 		}
 		{
 			// add dsp
 
-			//FMOD::DSP* dspeq = 0;
-			//fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_MULTIBAND_EQ, &dspeq);
+			//FMOD_DSP* dspeq = 0;
+			//fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_MULTIBAND_EQ, &dspeq);
 			//FMODErrorCheck();
 			//
-			//fmod_result = music_ensemble_global_group->addDSP(0, dspeq);
+			//fmod_result = FMOD_Channel_AddDSP(music_ensemble_global_group, 0, dspeq);
 			//FMODErrorCheck();
 			//
-			//dspeq->setParameterInt(FMOD_DSP_MULTIBAND_EQ_A_FILTER, FMOD_DSP_MULTIBAND_EQ_FILTER_NOTCH);
-			//dspeq->setParameterFloat(FMOD_DSP_MULTIBAND_EQ_A_FREQUENCY, 2000);
-			//dspeq->setParameterFloat(FMOD_DSP_MULTIBAND_EQ_A_GAIN, -6);
-			//dspeq->setParameterFloat(FMOD_DSP_MULTIBAND_EQ_A_Q, 1.f);
+			//FMOD_DSP_SetParameterInt(dspeq, FMOD_DSP_MULTIBAND_EQ_A_FILTER, FMOD_DSP_MULTIBAND_EQ_FILTER_NOTCH);
+			//FMOD_DSP_SetParameterFloat(dspeq, FMOD_DSP_MULTIBAND_EQ_A_FREQUENCY, 2000);
+			//FMOD_DSP_SetParameterFloat(dspeq, FMOD_DSP_MULTIBAND_EQ_A_GAIN, -6);
+			//FMOD_DSP_SetParameterFloat(dspeq, FMOD_DSP_MULTIBAND_EQ_A_Q, 1.f);
 
 			// global sends
 			{
 				// send group does not output to master bus
-				FMOD::DSP* fader = nullptr;
-				fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_FADER, &fader);
-				fader->setParameterFloat(FMOD_DSP_FADER_GAIN, -80.f); // inaudible
-				music_ensemble_global_send_group->addDSP(0, fader);
+				FMOD_DSP* fader = NULL;
+				fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_FADER, &fader);
+				FMOD_DSP_SetParameterFloat(fader, FMOD_DSP_FADER_GAIN, -80.f); // inaudible
+				FMOD_ChannelGroup_AddDSP(music_ensemble_global_send_group, 0, fader);
 			}
 
 			// global recv transceivers
 			{
 				for ( int i = 0; i < NUMENSEMBLEMUSIC; ++i )
 				{
-					FMOD::DSP* transceiver = nullptr;
-					fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_TRANSCEIVER, &transceiver);
-					music_ensemble_global_recv_group->addDSP(1, transceiver);
-					transceiver->setParameterInt(FMOD_DSP_TRANSCEIVER_CHANNEL, i + 1); // receive on channel x
-					transceiver->setParameterFloat(FMOD_DSP_TRANSCEIVER_GAIN, -80.f); // inaudible
-					transceiver->setChannelFormat(0, 2, FMOD_SPEAKERMODE_STEREO); // force stereo on empty channel, otherwise defaults to mono
+					FMOD_DSP* transceiver = NULL;
+					fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_TRANSCEIVER, &transceiver);
+					FMOD_ChannelGroup_AddDSP(music_ensemble_global_recv_group, 1, transceiver);
+					FMOD_DSP_SetParameterInt(transceiver, FMOD_DSP_TRANSCEIVER_CHANNEL, i + 1); // receive on channel x
+					FMOD_DSP_SetParameterFloat(transceiver, FMOD_DSP_TRANSCEIVER_GAIN, -80.f); // inaudible
+					FMOD_DSP_SetChannelFormat(transceiver, 0, 2, FMOD_SPEAKERMODE_STEREO); // force stereo on empty channel, otherwise defaults to mono
 				}
 			}
 
@@ -227,83 +227,83 @@ bool initSoundEngine()
 				{
 					for ( int i = 0; i < NUMENSEMBLEMUSIC; ++i )
 					{
-						FMOD::DSP* transceiver = nullptr;
-						fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_TRANSCEIVER, &transceiver);
-						music_ensemble_local_recv_player[c]->addDSP(1, transceiver);
-						transceiver->setParameterInt(FMOD_DSP_TRANSCEIVER_CHANNEL, i + 1); // receive on channel x
-						transceiver->setParameterFloat(FMOD_DSP_TRANSCEIVER_GAIN, -80.f); // inaudible
-						transceiver->setChannelFormat(0, 2, FMOD_SPEAKERMODE_STEREO); // force stereo on empty channel, otherwise defaults to mono
+						FMOD_DSP* transceiver = NULL;
+						fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_TRANSCEIVER, &transceiver);
+						FMOD_ChannelGroup_AddDSP(music_ensemble_local_recv_player[c], 1, transceiver);
+						FMOD_DSP_SetParameterInt(transceiver, FMOD_DSP_TRANSCEIVER_CHANNEL, i + 1); // receive on channel x
+						FMOD_DSP_SetParameterFloat(transceiver, FMOD_DSP_TRANSCEIVER_GAIN, -80.f); // inaudible
+						FMOD_DSP_SetChannelFormat(transceiver, 0, 2, FMOD_SPEAKERMODE_STEREO); // force stereo on empty channel, otherwise defaults to mono
 					}
 				}
 			}
 
 			// global recv reverb
 			{
-				FMOD::DSP* dspreverb = 0;
-				fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_SFXREVERB, &dspreverb);
+				FMOD_DSP* dspreverb = 0;
+				fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_SFXREVERB, &dspreverb);
 				FMODErrorCheck();
 
-				fmod_result = music_ensemble_global_recv_group->addDSP(0, dspreverb);
-				dspreverb->setBypass(true);
+				fmod_result = FMOD_ChannelGroup_AddDSP(music_ensemble_global_recv_group, 0, dspreverb);
+				FMOD_DSP_SetBypass(dspreverb, true);
 				FMODErrorCheck();
 
 				FMOD_REVERB_PROPERTIES props = FMOD_PRESET_OFF;
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_DECAYTIME, props.DecayTime);
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_EARLYDELAY, props.EarlyDelay);
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_LATEDELAY, props.LateDelay);
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_HFREFERENCE, props.HFReference);
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_HFDECAYRATIO, props.HFDecayRatio);
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_DIFFUSION, props.Diffusion);
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_DENSITY, props.Density);
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_LOWSHELFFREQUENCY, props.LowShelfFrequency);
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_LOWSHELFGAIN, props.LowShelfGain);
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_HIGHCUT, props.HighCut);
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_EARLYLATEMIX, props.EarlyLateMix);
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_WETLEVEL, props.WetLevel);
-				dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_DRYLEVEL, 0.f);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_DECAYTIME, props.DecayTime);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_EARLYDELAY, props.EarlyDelay);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_LATEDELAY, props.LateDelay);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_HFREFERENCE, props.HFReference);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_HFDECAYRATIO, props.HFDecayRatio);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_DIFFUSION, props.Diffusion);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_DENSITY, props.Density);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_LOWSHELFFREQUENCY, props.LowShelfFrequency);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_LOWSHELFGAIN, props.LowShelfGain);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_HIGHCUT, props.HighCut);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_EARLYLATEMIX, props.EarlyLateMix);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_WETLEVEL, props.WetLevel);
+				FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_DRYLEVEL, 0.f);
 			}
 		}
 		//{
 		//	// add dsp
 
-		//	//FMOD::DSP* dspeq = 0;
-		//	//fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_MULTIBAND_EQ, &dspeq);
+		//	//FMOD_DSP* dspeq = 0;
+		//	//fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_MULTIBAND_EQ, &dspeq);
 		//	//FMODErrorCheck();
 		//	//
-		//	//fmod_result = music_ensemble_local_group->addDSP(0, dspeq);
+		//	//fmod_result = FMOD_Channel_AddDSP(music_ensemble_local_group, 0, dspeq);
 		//	//FMODErrorCheck();
 		//	//
-		//	//dspeq->setParameterInt(FMOD_DSP_MULTIBAND_EQ_A_FILTER, FMOD_DSP_MULTIBAND_EQ_FILTER_NOTCH);
-		//	//dspeq->setParameterFloat(FMOD_DSP_MULTIBAND_EQ_A_FREQUENCY, 2000);
-		//	//dspeq->setParameterFloat(FMOD_DSP_MULTIBAND_EQ_A_GAIN, -6);
-		//	//dspeq->setParameterFloat(FMOD_DSP_MULTIBAND_EQ_A_Q, 1.f);
+		//	//FMOD_DSP_SetParameterInt(dspeq, FMOD_DSP_MULTIBAND_EQ_A_FILTER, FMOD_DSP_MULTIBAND_EQ_FILTER_NOTCH);
+		//	//FMOD_DSP_SetParameterFloat(dspeq, FMOD_DSP_MULTIBAND_EQ_A_FREQUENCY, 2000);
+		//	//FMOD_DSP_SetParameterFloat(dspeq, FMOD_DSP_MULTIBAND_EQ_A_GAIN, -6);
+		//	//FMOD_DSP_SetParameterFloat(dspeq, FMOD_DSP_MULTIBAND_EQ_A_Q, 1.f);
 
-		//	FMOD::DSP* dspreverb = 0;
-		//	fmod_result = fmod_system->createDSPByType(FMOD_DSP_TYPE_SFXREVERB, &dspreverb);
+		//	FMOD_DSP* dspreverb = 0;
+		//	fmod_result = FMOD_System_CreateDSPByType(fmod_system, FMOD_DSP_TYPE_SFXREVERB, &dspreverb);
 		//	FMODErrorCheck();
 
-		//	fmod_result = music_ensemble_local_group->addDSP(0, dspreverb);
+		//	fmod_result = FMOD_Channel_AddDSP(music_ensemble_local_group, 0, dspreverb);
 		//	FMODErrorCheck();
 
 		//	FMOD_REVERB_PROPERTIES props = FMOD_PRESET_OFF;
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_DECAYTIME, props.DecayTime);
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_EARLYDELAY, props.EarlyDelay);
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_LATEDELAY, props.LateDelay);
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_HFREFERENCE, props.HFReference);
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_HFDECAYRATIO, props.HFDecayRatio);
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_DIFFUSION, props.Diffusion);
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_DENSITY, props.Density);
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_LOWSHELFFREQUENCY, props.LowShelfFrequency);
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_LOWSHELFGAIN, props.LowShelfGain);
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_HIGHCUT, props.HighCut);
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_EARLYLATEMIX, props.EarlyLateMix);
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_WETLEVEL, props.WetLevel);
-		//	dspreverb->setParameterFloat(FMOD_DSP_SFXREVERB_DRYLEVEL, 0.f);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_DECAYTIME, props.DecayTime);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_EARLYDELAY, props.EarlyDelay);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_LATEDELAY, props.LateDelay);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_HFREFERENCE, props.HFReference);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_HFDECAYRATIO, props.HFDecayRatio);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_DIFFUSION, props.Diffusion);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_DENSITY, props.Density);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_LOWSHELFFREQUENCY, props.LowShelfFrequency);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_LOWSHELFGAIN, props.LowShelfGain);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_HIGHCUT, props.HighCut);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_EARLYLATEMIX, props.EarlyLateMix);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_WETLEVEL, props.WetLevel);
+		//	FMOD_DSP_SetParameterFloat(dspreverb, FMOD_DSP_SFXREVERB_DRYLEVEL, 0.f);
 		//}
 
 		int selected_recording_driver = 0;
 		int numRecordingDrivers = 0;
-		fmod_system->getRecordNumDrivers(&numRecordingDrivers, nullptr);
+		FMOD_System_GetRecordNumDrivers(fmod_system, &numRecordingDrivers, NULL);
 		for ( int i = 0; i < numRecordingDrivers; ++i )
 		{
 			constexpr int driverNameLen = 64;
@@ -312,7 +312,7 @@ bool initSoundEngine()
 			int rate{}, channels{};
 			FMOD_SPEAKERMODE mode{};
 			FMOD_DRIVER_STATE state{};
-			fmod_result = fmod_system->getRecordDriverInfo(i, driverName, driverNameLen, &guid, &rate, &mode, &channels, &state);
+			fmod_result = FMOD_System_GetRecordDriverInfo(fmod_system, i, driverName, driverNameLen, &guid, &rate, &mode, &channels, &state);
 			if ( FMODErrorCheck() )
 			{
 				printlog("[FMOD]: Failed to read recording device index: %d", i);
@@ -385,7 +385,7 @@ int loadSoundResources(real_t base_load_percent, real_t top_load_percent)
 		return 10;
 	}
 #ifdef USE_FMOD
-	sounds = (FMOD::Sound**) malloc(sizeof(FMOD::Sound*)*numsounds);
+	sounds = (FMOD_SOUND**) malloc(sizeof(FMOD_SOUND*)*numsounds);
 	fp = openDataFile(soundsDirectory.c_str(), "rb");
 	char full_path[PATH_MAX];
 	for ( c = 0; !fp->eof(); ++c )
@@ -397,7 +397,7 @@ int loadSoundResources(real_t base_load_percent, real_t top_load_percent)
 		{
 			flags |= FMOD_LOOP_NORMAL;
 		}
-		fmod_result = fmod_system->createSound(full_path, flags, nullptr, &sounds[c]);
+		fmod_result = FMOD_System_CreateSound(fmod_system, full_path, flags, NULL, &sounds[c]);
 		if (FMODErrorCheck())
 		{
 			printlog("warning: failed to load '%s' listed at line %d in sounds.txt\n", full_path, c + 1);
@@ -405,7 +405,7 @@ int loadSoundResources(real_t base_load_percent, real_t top_load_percent)
 		updateLoadingScreen(base_load_percent + (top_load_percent * c) / numsounds);
 	}
 	FileIO::close(fp);
-	fmod_system->set3DSettings(1.0, 2.0, 1.0);
+	FMOD_System_Set3DSettings(fmod_system, 1.0, 2.0, 1.0);
 #endif
 
 	return 0;
@@ -417,15 +417,15 @@ void freeSoundResources()
 	// free sounds
 #ifdef USE_FMOD
 	printlog("freeing sounds...\n");
-	if ( sounds != nullptr )
+	if ( sounds != NULL )
 	{
 		for ( c = 0; c < numsounds && !no_sound; c++ )
 		{
-			if (sounds[c] != nullptr)
+			if (sounds[c] != NULL)
 			{
-				if (sounds[c] != nullptr)
+				if (sounds[c] != NULL)
 				{
-					sounds[c]->release(); //Free the sound's FMOD sound.
+					FMOD_Sound_Release(sounds[c]); //Free the sound's FMOD sound.
 				}
 			}
 		}
@@ -442,10 +442,11 @@ void exitSoundEngine()
 // no idea why this causes the game to hang for me.
 // someone else investigate? -skrathbun
 #ifndef LINUX
-		fmod_system->close();
-		fmod_system->release();
+		FMOD_System_Close(fmod_system);
+		FMOD_System_Release(fmod_system);
 #endif
-		fmod_system = nullptr;
+		fmod_system = NULL;
 	}
 #endif
 }
+

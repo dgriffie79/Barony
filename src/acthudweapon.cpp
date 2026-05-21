@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "items.hpp"
@@ -17,11 +17,11 @@
 #include "magic/magic.hpp"
 #include "interface/interface.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "player.hpp"
 #include "scores.hpp"
 #include "ui/MainMenu.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "mod_tools.hpp"
 
 /*-------------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <dirent.h>
-#include "main.hpp"
+#include "main.h"
 
 class Directory {
 public:

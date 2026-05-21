@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -25,10 +25,10 @@
 #include "engine/audio/sound.hpp"
 #include "entity.hpp"
 #include "book.hpp"
-#include "menu.hpp"
+#include "menu.h"
 #include "items.hpp"
 #include "interface/interface.hpp"
-#include "init.hpp"
+#include "init.h"
 #include "mod_tools.hpp"
 #include "ui/LoadingScreen.hpp"
 
@@ -3776,16 +3776,19 @@ int physfsLoadMapFile(int levelToLoad, Uint32 seed, bool useRandSeed, int* check
 			std::size_t minotaurChanceFound = mapName.find(" minotaur%: ");
 			std::size_t disableNormalExitFound = mapName.find(" noexit");
 			std::string parameterStr = "";
-			std::tuple<int, int, int, int> mapParameters = std::make_tuple(-1, -1, -1, 0);
+			int secretChance = -1;
+			int darknessChance = -1;
+			int minotaurChance = -1;
+			int disableNormalExit = 0;
 			if ( secretChanceFound != std::string::npos )
 			{
 				// found a percentage for secret levels to spawn.
 				parameterStr = mapName.substr(secretChanceFound + strlen(" secret%: "));
 				parameterStr = parameterStr.substr(0, parameterStr.find_first_of(" \0"));
-				std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) = std::stoi(parameterStr);
-				if ( std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) < 0 || std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) > 100 )
+				secretChance = std::stoi(parameterStr);
+				if ( secretChance < 0 || secretChance > 100 )
 				{
-					std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) = -1;
+					secretChance = -1;
 				}
 			}
 			if ( darkmapChanceFound != std::string::npos )
@@ -3793,10 +3796,10 @@ int physfsLoadMapFile(int levelToLoad, Uint32 seed, bool useRandSeed, int* check
 				// found a percentage for secret levels to spawn.
 				parameterStr = mapName.substr(darkmapChanceFound + strlen(" darkmap%: "));
 				parameterStr = parameterStr.substr(0, parameterStr.find_first_of(" \0"));
-				std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) = std::stoi(parameterStr);
-				if ( std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) < 0 || std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) > 100 )
+				darknessChance = std::stoi(parameterStr);
+				if ( darknessChance < 0 || darknessChance > 100 )
 				{
-					std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) = -1;
+					darknessChance = -1;
 				}
 			}
 			if ( minotaurChanceFound != std::string::npos )
@@ -3804,15 +3807,15 @@ int physfsLoadMapFile(int levelToLoad, Uint32 seed, bool useRandSeed, int* check
 				// found a percentage for secret levels to spawn.
 				parameterStr = mapName.substr(minotaurChanceFound + strlen(" minotaur%: "));
 				parameterStr = parameterStr.substr(0, parameterStr.find_first_of(" \0"));
-				std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) = std::stoi(parameterStr);
-				if ( std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) < 0 || std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) > 100 )
+				minotaurChance = std::stoi(parameterStr);
+				if ( minotaurChance < 0 || minotaurChance > 100 )
 				{
-					std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) = -1;
+					minotaurChance = -1;
 				}
 			}
 			if ( disableNormalExitFound != std::string::npos )
 			{
-				std::get<LEVELPARAM_DISABLE_NORMAL_EXIT>(mapParameters) = 1;
+				disableNormalExit = 1;
 			}
 			mapName = mapName.substr(0, mapName.find_first_of(" \0"));
 
@@ -3820,11 +3823,11 @@ int physfsLoadMapFile(int levelToLoad, Uint32 seed, bool useRandSeed, int* check
 			tempstr[mapName.length()] = '\0';
 			if ( useRandSeed )
 			{
-				return generateDungeon(tempstr, local_rng.rand(), mapParameters);
+				return generateDungeon(tempstr, local_rng.rand(), secretChance, darknessChance, minotaurChance, disableNormalExit);
 			}
 			else
 			{
-				return generateDungeon(tempstr, seed, mapParameters);
+				return generateDungeon(tempstr, seed, secretChance, darknessChance, minotaurChance, disableNormalExit);
 			}
 		}
 		//printlog("%s", mapName.c_str());
@@ -4030,7 +4033,7 @@ void saveModelCache() {
 	}
 }
 
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 static ConsoleCommand ccmd_writeModelCache("/write_model_cache", "",
 	[](int argc, const char** argv){
 	saveModelCache();

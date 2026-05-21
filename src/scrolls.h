@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
-	File: scrolls.hpp
+	File: scrolls.h
 	Desc: contains label declarations for scrolls
 
 	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.

@@ -1,6 +1,6 @@
 // Widget.cpp
 
-#include "../main.hpp"
+#include "../main.h"
 #include "Widget.hpp"
 #include "Frame.hpp"
 #include "Image.hpp"

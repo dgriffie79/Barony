@@ -9,8 +9,8 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
-#include "light.hpp"
+#include "main.h"
+#include "light.h"
 #include "draw.hpp"
 
 /*-------------------------------------------------------------------------------
@@ -269,7 +269,7 @@ bool loadLights(bool forceLoadBaseDirectory) {
     return true;
 }
 
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 static ConsoleCommand ccmd_reloadLights("/reloadlights", "reload light json",
     [](int argc, const char* argv[]){
     loadLights();

@@ -4,10 +4,10 @@
 #include "Field.hpp"
 #include "Button.hpp"
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../game.hpp"
 #include "../draw.hpp"
-#include "../prng.hpp"
+#include "../prng.h"
 #include "../mod_tools.hpp"
 
 #include <mutex>

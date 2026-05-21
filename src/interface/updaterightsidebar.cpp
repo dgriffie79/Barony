@@ -11,7 +11,7 @@
 
 // note: as of some prealpha version I've since forgotten, this module is totally deprecated
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../draw.hpp"
 #include "../game.hpp"
 #include "../stat.hpp"

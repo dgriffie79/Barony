@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #pragma once
 #include "interface/interface.hpp"
 #include "magic/magic.hpp"

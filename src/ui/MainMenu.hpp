@@ -2,11 +2,11 @@
 
 #include <unordered_map>
 #include <string>
-#include "../main.hpp"
+#include "../main.h"
 #include "../game.hpp"
-#include "../json.hpp"
+#include "../json.h"
 #include "../ui/Frame.hpp"
-#include "../interface/consolecommand.hpp"
+#include "../interface/consolecommand.h"
 
 #define MAX_SPLITSCREEN 4
 

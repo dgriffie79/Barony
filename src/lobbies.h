@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 BARONY
-File: lobbies.hpp
+File: lobbies.h
 Desc: header for lobbies.cpp (matchmaking handlers)
 
 Copyright 2013-2020 (c) Turning Wheel LLC, all rights reserved.
@@ -10,6 +10,8 @@ See LICENSE for details.
 -------------------------------------------------------------------------------*/
 
 #pragma once
+
+#ifdef __cplusplus
 
 #include <string>
 
@@ -115,3 +117,5 @@ public:
 	};
 };
 extern LobbyHandler_t LobbyHandler;
+
+#endif

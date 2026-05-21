@@ -11,8 +11,8 @@ See LICENSE for details.
 #define MOD_TOOLS_CPP
 #include "items.hpp"
 #include "mod_tools.hpp"
-#include "menu.hpp"
-#include "classdescriptions.hpp"
+#include "menu.h"
+#include "classdescriptions.h"
 #include "draw.hpp"
 #include "player.hpp"
 #include "scores.hpp"
@@ -22,7 +22,7 @@ See LICENSE for details.
 #include "shops.hpp"
 #include "interface/ui.hpp"
 #include "ui/GameUI.hpp"
-#include "init.hpp"
+#include "init.h"
 #include "ui/LoadingScreen.hpp"
 #include <thread>
 #include <future>

@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -18,7 +18,7 @@
 #include "player.hpp"
 #include "scores.hpp"
 #include "mod_tools.hpp"
-#include "collision.hpp"
+#include "collision.h"
 
 //Circuits do not overlap. They connect to all their neighbors, allowing for circuits to interfere with eachother.
 static ConsoleVariable<bool> cvar_wire_debug("/wire_debug", false);

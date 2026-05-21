@@ -9,7 +9,7 @@ See LICENSE for details.
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -17,11 +17,11 @@ See LICENSE for details.
 #include "engine/audio/sound.hpp"
 #include "items.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "player.hpp"
 #include "magic/magic.hpp"
-#include "paths.hpp"
-#include "prng.hpp"
+#include "paths.h"
+#include "prng.h"
 #include "scores.hpp"
 
 static const int LICH_BODY = 0;

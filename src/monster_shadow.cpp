@@ -10,7 +10,7 @@ See LICENSE for details.
 -------------------------------------------------------------------------------*/
 
 #include <string>
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -18,11 +18,11 @@ See LICENSE for details.
 #include "monster.hpp"
 #include "engine/audio/sound.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "player.hpp"
 #include "magic/magic.hpp"
-#include "prng.hpp"
-#include "interface/consolecommand.hpp"
+#include "prng.h"
+#include "interface/consolecommand.h"
 #include "scores.hpp"
 
 static ConsoleVariable<bool> cvar_spawnArtemisia("/spawn_artemisia", false);

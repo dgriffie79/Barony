@@ -10,7 +10,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "draw.hpp"
 #include "messages.hpp"
 #include "player.hpp"

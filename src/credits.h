@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
-	File: credits.hpp
+	File: credits.h
 	Desc: string defines for credits sequence
 
 	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.

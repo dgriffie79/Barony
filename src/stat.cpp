@@ -10,7 +10,7 @@
 -------------------------------------------------------------------------------*/
 
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -18,9 +18,9 @@
 #include "magic/magic.hpp"
 #include "net.hpp"
 #include "player.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "mod_tools.hpp"
-#include "collision.hpp"
+#include "collision.h"
 
 Stat* stats[MAXPLAYERS];
 

@@ -5,13 +5,10 @@
  * http://www.libpng.org/pub/png/src/libpng-LICENSE.txt
  */
 
-#include "main.hpp"
-#include "Config.hpp"
-#include <SDL.h>
-#include <stdlib.h>
+#include "defs.h"
 #include <png.h>
 
-#include "savepng.hpp"
+#include "savepng.h"
 
 #ifdef ERROR
 #undef ERROR

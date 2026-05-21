@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../draw.hpp"
 #include "../player.hpp"
 #include "Button.hpp"
@@ -11,7 +11,7 @@
 #include "Field.hpp"
 #include "Slider.hpp"
 #include "Text.hpp"
-#include "../interface/consolecommand.hpp"
+#include "../interface/consolecommand.h"
 #include <queue>
 #include "GameUI.hpp"
 #include "MainMenu.hpp"

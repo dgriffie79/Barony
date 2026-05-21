@@ -9,18 +9,18 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "items.hpp"
 #include "engine/audio/sound.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "interface/interface.hpp"
 #include "player.hpp"
 #include "scores.hpp"
-#include "paths.hpp"
-#include "prng.hpp"
+#include "paths.h"
+#include "prng.h"
 #include "mod_tools.hpp"
 
 /*-------------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "../main.hpp"
+#include "../main.h"
 
 //! Contains some text that was rendered to a texture with a ttf font.
 class Text {

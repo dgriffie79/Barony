@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "messages.hpp"
@@ -18,18 +18,18 @@
 #include "engine/audio/sound.hpp"
 #include "items.hpp"
 #include "magic/magic.hpp"
-#include "menu.hpp"
+#include "menu.h"
 #include "scores.hpp"
 #include "monster.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "player.hpp"
 #include "colors.hpp"
 #include "draw.hpp"
 #include "mod_tools.hpp"
-#include "classdescriptions.hpp"
+#include "classdescriptions.h"
 #include "ui/MainMenu.hpp"
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 
 
 bool settings_smoothmouse = false;

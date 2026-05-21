@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -17,10 +17,10 @@
 #include "engine/audio/sound.hpp"
 #include "items.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "player.hpp"
 #include "scores.hpp"
-#include "prng.hpp"
+#include "prng.h"
 
 void initLich(Entity* my, Stat* myStats)
 {

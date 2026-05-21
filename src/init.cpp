@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 
 #include <memory>
 #include <ctime>
@@ -19,13 +19,13 @@
 #include "draw.hpp"
 #include "files.hpp"
 #include "engine/audio/sound.hpp"
-#include "prng.hpp"
-#include "hash.hpp"
-#include "init.hpp"
+#include "prng.h"
+#include "hash.h"
+#include "init.h"
 #include "cJSON.h"
-#include "light.hpp"
+#include "light.h"
 #include "net.hpp"
-#include "menu.hpp"
+#include "menu.h"
 #include "player.hpp"
 #include "items.hpp"
 #include "cppfuncs.hpp"
@@ -37,7 +37,7 @@
 #include "ui/LoadingScreen.hpp"
 #include "mod_tools.hpp"
 #include "ui/MainMenu.hpp"
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 static ConsoleVariable<bool> cvar_sdl_disablejoystickrawinput("/sdl_joystick_rawinput_disable", false, "disable SDL rawinput for gamepads (helps SDL_HapticOpen())");
 
 #include <thread>

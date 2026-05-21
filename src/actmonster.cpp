@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "messages.hpp"
@@ -21,14 +21,14 @@
 #include "interface/interface.hpp"
 #include "magic/magic.hpp"
 #include "net.hpp"
-#include "paths.hpp"
-#include "collision.hpp"
+#include "paths.h"
+#include "collision.h"
 #include "player.hpp"
 #include "colors.hpp"
 #include "scores.hpp"
 #include "mod_tools.hpp"
 #include "ui/MainMenu.hpp"
-#include "menu.hpp"
+#include "menu.h"
 #include "cJSON.h"
 
 float limbs[NUMMONSTERS][30][3];

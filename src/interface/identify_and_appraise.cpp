@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../draw.hpp"
 #include "../game.hpp"
 #include "../stat.hpp"

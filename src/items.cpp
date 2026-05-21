@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "items.hpp"
@@ -18,9 +18,9 @@
 #include "magic/magic.hpp"
 #include "engine/audio/sound.hpp"
 #include "book.hpp"
-#include "scrolls.hpp"
+#include "scrolls.h"
 #include "shops.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "scores.hpp"
 #include "net.hpp"
 #include "player.hpp"

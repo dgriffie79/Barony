@@ -9,10 +9,10 @@ See LICENSE for details.
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
-#include "menu.hpp"
+#include "main.h"
+#include "menu.h"
 #include "game.hpp"
-#include "lobbies.hpp"
+#include "lobbies.h"
 #include "draw.hpp"
 #include "player.hpp"
 #include "scores.hpp"

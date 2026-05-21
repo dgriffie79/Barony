@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../draw.hpp"
 #include "Text.hpp"
 #include "Font.hpp"
@@ -426,7 +426,7 @@ void Text::dumpCacheInMainLoop()
 }
 
 #include "../net.hpp"
-#include "../interface/consolecommand.hpp"
+#include "../interface/consolecommand.h"
 static ConsoleCommand size("/text_cache_size", "measure text cache",
     [](int argc, const char** argv){
     messagePlayer(clientnum, MESSAGE_MISC, "cache size is: %llu bytes (%llu kB)", TEXT_VOLUME, TEXT_VOLUME / 1024);

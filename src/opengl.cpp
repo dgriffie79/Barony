@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "draw.hpp"
 #include "entity.hpp"
 #include "files.hpp"
@@ -17,11 +17,11 @@
 #include "ui/Text.hpp"
 #include "ui/GameUI.hpp"
 #include "interface/interface.hpp"
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 #include "mod_tools.hpp"
 #include "player.hpp"
 #include "ui/MainMenu.hpp"
-#include "init.hpp"
+#include "init.h"
 #include "ui/Image.hpp"
 
 static real_t getLightAtModifier = 1.0;

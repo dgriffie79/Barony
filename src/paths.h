@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
-	File: paths.hpp
+	File: paths.h
 	Desc: paths.cpp header file
 
 	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
@@ -16,12 +16,21 @@ extern int* pathMapGrounded;
 extern int pathMapZone;
 
 // pathnode struct
+#ifdef __cplusplus
 typedef struct pathnode
 {
 	Sint32 x = 0, y = 0;     // location
 	Uint32 g = 0, h = 0;     // heuristic info
 	Sint32 px = -1, py = -1; // parent location
 } pathnode_t;
+#else
+typedef struct pathnode
+{
+	Sint32 x, y;     // location
+	Uint32 g, h;     // heuristic info
+	Sint32 px, py; // parent location
+} pathnode_t;
+#endif
 
 // function prototypes
 Uint32 heuristic(int x1, int y1, int x2, int y2);
@@ -44,9 +53,17 @@ enum GeneratePathTypes
 	GENERATE_PATH_ACHIEVEMENT
 };
 extern int lastGeneratePathTries;
+#ifdef __cplusplus
 list_t* generatePath(int x1, int y1, int x2, int y2, Entity* my, Entity* target, GeneratePathTypes pathingType, bool lavaIsPassable = false);
+#else
+list_t* generatePath(int x1, int y1, int x2, int y2, Entity* my, Entity* target, GeneratePathTypes pathingType, bool lavaIsPassable);
+#endif
 void generatePathMaps();
 // return true if an entity is blocks pathing
 bool isPathObstacle(Entity* entity);
 int pathCheckObstacle(int x, int y, Entity* my, Entity* target);
+#ifdef __cplusplus
 void updateGatePath(Entity& entity);
+#else
+void updateGatePath(Entity* entity);
+#endif

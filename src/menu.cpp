@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include <list>
 #include "draw.hpp"
 #include "game.hpp"
@@ -17,23 +17,23 @@
 #include "messages.hpp"
 #include "entity.hpp"
 #include "files.hpp"
-#include "menu.hpp"
-#include "classdescriptions.hpp"
+#include "menu.h"
+#include "classdescriptions.h"
 #include "interface/interface.hpp"
 #include "magic/magic.hpp"
 #include "engine/audio/sound.hpp"
 #include "items.hpp"
-#include "init.hpp"
+#include "init.h"
 #include "shops.hpp"
 #include "monster.hpp"
 #include "scores.hpp"
-#include "menu.hpp"
+#include "menu.h"
 #include "net.hpp"
 
-#include "prng.hpp"
-#include "credits.hpp"
-#include "paths.hpp"
-#include "collision.hpp"
+#include "prng.h"
+#include "credits.h"
+#include "paths.h"
+#include "collision.h"
 #include "player.hpp"
 #include "cppfuncs.hpp"
 #include "colors.hpp"
@@ -41,7 +41,7 @@
 #include "sys/stat.h"
 #include "mod_tools.hpp"
 #include "interface/ui.hpp"
-#include "lobbies.hpp"
+#include "lobbies.h"
 #include <sstream>
 
 #include "ui/Text.hpp"
@@ -7109,7 +7109,7 @@ void doNewGame(bool makeHighscore) {
 			}
 			else
 			{
-				generateDungeon(maptoload, mapseed);
+				generateDungeon(maptoload, mapseed, -1, -1, -1, 0);
 			}
 		}
 		assignActions(&map);
@@ -7499,7 +7499,7 @@ void doNewGame(bool makeHighscore) {
 			}
 			else
 			{
-				generateDungeon(maptoload, local_rng.rand());
+				generateDungeon(maptoload, local_rng.rand(), -1, -1, -1, 0);
 			}
 		}
 		assignActions(&map);

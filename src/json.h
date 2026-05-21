@@ -19,6 +19,8 @@
 
 #pragma once
 
+#ifdef __cplusplus
+
 #include <functional>
 #include <string>
 
@@ -199,3 +201,5 @@ private:
 	static bool writeObjectInternal(const char * filename, EFileFormat format, const SerializationFunc& serialize);
 	static bool readObjectInternal(const char * filename, const SerializationFunc& serialize);
 };
+
+#endif

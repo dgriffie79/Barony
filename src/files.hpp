@@ -17,7 +17,7 @@
 #include <cstdio>
 #include <dirent.h>
 
-#include "main.hpp"
+#include "main.h"
 
 //This class provides a common platform-independent interface for file accesses. Deriving classes must provide an implementation for all of these methods, but may make use of any common routines or common portions of routines.
 //Don't create a FileBase or derivative class directly, use FileIO::open to get one...
@@ -270,11 +270,11 @@ extern const char* holidayThemeDirs[HolidayTheme::THEME_MAX];
 HolidayTheme getCurrentHoliday(bool force = false);
 bool isCurrentHoliday(bool force = false);
 
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 extern ConsoleVariable<int> cvar_forceHoliday;
 extern ConsoleVariable<bool> cvar_disableHoliday;
 
-extern char datadir[PATH_MAX]; //PATH_MAX as defined in main.hpp -- maybe define in Config.hpp?
+extern char datadir[PATH_MAX]; //PATH_MAX as defined in main.h -- maybe define in Config.hpp?
 extern char outputdir[PATH_MAX];
 void glLoadTexture(SDL_Surface* image, int texnum);
 SDL_Surface* loadImage(char const * const filename);

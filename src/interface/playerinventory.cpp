@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../draw.hpp"
 #include "../game.hpp"
 #include "../stat.hpp"
@@ -18,10 +18,10 @@
 #include "../engine/audio/sound.hpp"
 #include "../net.hpp"
 #include "../magic/magic.hpp"
-#include "../menu.hpp"
+#include "../menu.h"
 #include "../player.hpp"
 #include "interface.hpp"
-#include "consolecommand.hpp"
+#include "consolecommand.h"
 #include "../ui/GameUI.hpp"
 #include "../ui/Frame.hpp"
 #include "../ui/Image.hpp"

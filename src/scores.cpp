@@ -9,11 +9,11 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "files.hpp"
 #include "game.hpp"
 #include "stat.hpp"
-#include "menu.hpp"
+#include "menu.h"
 #include "monster.hpp"
 #include "scores.hpp"
 #include "items.hpp"
@@ -22,10 +22,10 @@
 #include "net.hpp"
 #include "player.hpp"
 #include "sys/stat.h"
-#include "paths.hpp"
-#include "collision.hpp"
+#include "paths.h"
+#include "collision.h"
 #include "mod_tools.hpp"
-#include "lobbies.hpp"
+#include "lobbies.h"
 #include "shops.hpp"
 #include "cJSON.h"
 

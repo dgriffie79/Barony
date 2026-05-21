@@ -10,7 +10,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "draw.hpp"
 #include "files.hpp"
 #include "game.hpp"
@@ -25,8 +25,8 @@
 #include "monster.hpp"
 #include "net.hpp"
 
-#include "menu.hpp"
-#include "paths.hpp"
+#include "menu.h"
+#include "paths.h"
 #include "player.hpp"
 #include "cppfuncs.hpp"
 #include "Directory.hpp"

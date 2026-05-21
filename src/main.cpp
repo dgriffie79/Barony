@@ -9,10 +9,10 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
-#include "hash.hpp"
+#include "main.h"
+#include "hash.h"
 #include "entity.hpp"
-#include "prng.hpp"
+#include "prng.h"
 
 #ifdef WINDOWS
 extern "C"
@@ -187,7 +187,7 @@ char* stringStr(char* str1, const char* str2, size_t str1_size, size_t str2_size
     return nullptr;
 }
 
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 static ConsoleVariable<bool> cvar_enableDebugKeys("/enabledebugkeys", false, "if true, certain special keys can be used for debugging");
 
 // main definitions
@@ -656,7 +656,7 @@ void finishStackTraceUnique() {
 #endif
 }
 
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 static ConsoleCommand purgeStackTraces("/purge_stack_traces", "purge stack traces",
     [](int argc, const char* argv[]){
     finishStackTraceUnique();

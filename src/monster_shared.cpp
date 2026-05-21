@@ -9,12 +9,12 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "player.hpp"
 #include "entity.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "monster.hpp"
 #include "shops.hpp"
 #include "net.hpp"

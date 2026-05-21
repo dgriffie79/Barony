@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "draw.hpp"
 #include "game.hpp"
 #include "stat.hpp"
@@ -23,15 +23,15 @@
 #include "engine/audio/sound.hpp"
 #include "items.hpp"
 #include "shops.hpp"
-#include "menu.hpp"
+#include "menu.h"
 #include "scores.hpp"
-#include "collision.hpp"
-#include "paths.hpp"
+#include "collision.h"
+#include "paths.h"
 #include "player.hpp"
 #include "scores.hpp"
 #include "colors.hpp"
 #include "mod_tools.hpp"
-#include "lobbies.hpp"
+#include "lobbies.h"
 #include "ui/MainMenu.hpp"
 #include "cJSON.h"
 #include "ui/LoadingScreen.hpp"

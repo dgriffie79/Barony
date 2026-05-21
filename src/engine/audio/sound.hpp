@@ -15,11 +15,11 @@
 
 #include <stdio.h>
 #ifdef USE_FMOD
-#include <fmod.hpp>
+#include <fmod.h>
 #endif
 #include <mutex>
 #include <queue>
-#include "../../interface/consolecommand.hpp"
+#include "../../interface/consolecommand.h"
 
 extern Uint32 numsounds;
 bool initSoundEngine(); //If it fails to initialize the sound engine, it'll just disable audio.
@@ -41,7 +41,7 @@ extern FMOD_SPEAKERMODE fmod_speakermode;
 
 extern const char* fmod_speakermode_strings[FMOD_SPEAKERMODE_MAX]; 
 
-extern FMOD::System* fmod_system;
+extern FMOD_SYSTEM* fmod_system;
 
 extern FMOD_RESULT fmod_result;
 
@@ -57,49 +57,49 @@ extern bool herxmusicplaying;
 extern bool devilmusicplaying;
 extern bool olddarkmap;
 
-extern FMOD::Sound** sounds;
-extern FMOD::Sound** minesmusic;
+extern FMOD_SOUND** sounds;
+extern FMOD_SOUND** minesmusic;
 #define NUMMINESMUSIC 5
-extern FMOD::Sound** swampmusic;
+extern FMOD_SOUND** swampmusic;
 #define NUMSWAMPMUSIC 4
-extern FMOD::Sound** labyrinthmusic;
+extern FMOD_SOUND** labyrinthmusic;
 #define NUMLABYRINTHMUSIC 3
-extern FMOD::Sound** ruinsmusic;
+extern FMOD_SOUND** ruinsmusic;
 #define NUMRUINSMUSIC 3
-extern FMOD::Sound** underworldmusic;
+extern FMOD_SOUND** underworldmusic;
 #define NUMUNDERWORLDMUSIC 3
-extern FMOD::Sound** hellmusic;
+extern FMOD_SOUND** hellmusic;
 #define NUMHELLMUSIC 3
-extern FMOD::Sound** intromusic, *intermissionmusic, *minetownmusic, *splashmusic, *librarymusic, *shopmusic, *storymusic;
-extern FMOD::Sound** minotaurmusic, *herxmusic, *templemusic;
-extern FMOD::Sound* endgamemusic, *escapemusic, *devilmusic, *sanctummusic, *tutorialmusic, *introstorymusic, *gameovermusic;
-extern FMOD::Sound* introductionmusic;
+extern FMOD_SOUND** intromusic, *intermissionmusic, *minetownmusic, *splashmusic, *librarymusic, *shopmusic, *storymusic;
+extern FMOD_SOUND** minotaurmusic, *herxmusic, *templemusic;
+extern FMOD_SOUND* endgamemusic, *escapemusic, *devilmusic, *sanctummusic, *tutorialmusic, *introstorymusic, *gameovermusic;
+extern FMOD_SOUND* introductionmusic;
 #define NUMMINOTAURMUSIC 2
-extern FMOD::Sound** cavesmusic;
-extern FMOD::Sound** citadelmusic;
-extern FMOD::Sound* gnomishminesmusic;
-extern FMOD::Sound* greatcastlemusic;
-extern FMOD::Sound* sokobanmusic;
-extern FMOD::Sound* caveslairmusic;
-extern FMOD::Sound* bramscastlemusic;
-extern FMOD::Sound* hamletmusic;
-extern FMOD::Sound** fortressmusic;
+extern FMOD_SOUND** cavesmusic;
+extern FMOD_SOUND** citadelmusic;
+extern FMOD_SOUND* gnomishminesmusic;
+extern FMOD_SOUND* greatcastlemusic;
+extern FMOD_SOUND* sokobanmusic;
+extern FMOD_SOUND* caveslairmusic;
+extern FMOD_SOUND* bramscastlemusic;
+extern FMOD_SOUND* hamletmusic;
+extern FMOD_SOUND** fortressmusic;
 #define NUMCAVESMUSIC 3
 #define NUMCITADELMUSIC 3
 #define NUMINTROMUSIC 3
 #define NUMFORTRESSMUSIC 2
 //TODO: Automatically scan the music folder for a mines subdirectory and use all the music for the mines or something like that. I'd prefer something neat like for that loading music for a level, anyway. And I can just reuse the code I had for ORR.
 
-extern FMOD::Channel* music_channel, *music_channel2, *music_resume; //TODO: List of music, play first one, fade out all the others? Eh, maybe some other day. //music_resume is the music to resume after, say, combat or shops. //TODO: Clear music_resume every biome change. Or otherwise validate it for that level set.
+extern FMOD_CHANNEL* music_channel, *music_channel2, *music_resume; //TODO: List of music, play first one, fade out all the others? Eh, maybe some other day. //music_resume is the music to resume after, say, combat or shops. //TODO: Clear music_resume every biome change. Or otherwise validate it for that level set.
 
-extern FMOD::ChannelGroup* sound_group, *music_group;
-extern FMOD::ChannelGroup* soundAmbient_group, *soundEnvironment_group, *music_notification_group, *soundNotification_group;
+extern FMOD_CHANNELGROUP* sound_group, *music_group;
+extern FMOD_CHANNELGROUP* soundAmbient_group, *soundEnvironment_group, *music_notification_group, *soundNotification_group;
 
 #define NUMENSEMBLEMUSIC 8
-extern FMOD::ChannelGroup* music_ensemble_global_send_group;
-extern FMOD::ChannelGroup* music_ensemble_global_recv_group;
-extern FMOD::ChannelGroup* music_ensemble_local_recv_player[MAXPLAYERS];
-extern FMOD::ChannelGroup* music_ensemble_local_recv_group;
+extern FMOD_CHANNELGROUP* music_ensemble_global_send_group;
+extern FMOD_CHANNELGROUP* music_ensemble_global_recv_group;
+extern FMOD_CHANNELGROUP* music_ensemble_local_recv_player[MAXPLAYERS];
+extern FMOD_CHANNELGROUP* music_ensemble_local_recv_group;
 extern ConsoleVariable<float> cvar_ensemble_vol_bg;
 extern ConsoleVariable<int> cvar_ensemble_explore_seek;
 extern ConsoleVariable<int> cvar_ensemble_combat_seek;
@@ -109,19 +109,19 @@ struct EnsembleSounds_t
     float ensemble_recv_player_volume = 0.f;
     static const int NUM_EXPLORE_TRANS = 4;
     static const int NUM_COMBAT_TRANS = 4;
-    FMOD::Sound* exploreSound[NUMENSEMBLEMUSIC] = { nullptr };
-    FMOD::Channel* exploreChannel[NUMENSEMBLEMUSIC] = { nullptr };
+    FMOD_SOUND* exploreSound[NUMENSEMBLEMUSIC] = { NULL };
+    FMOD_CHANNEL* exploreChannel[NUMENSEMBLEMUSIC] = { NULL };
 
-    FMOD::Sound* combatSound[NUMENSEMBLEMUSIC] = { nullptr };
-    FMOD::Channel* combatChannel[NUMENSEMBLEMUSIC] = { nullptr };
+    FMOD_SOUND* combatSound[NUMENSEMBLEMUSIC] = { NULL };
+    FMOD_CHANNEL* combatChannel[NUMENSEMBLEMUSIC] = { NULL };
 
-    FMOD::Sound* exploreTransSound[NUM_EXPLORE_TRANS][NUMENSEMBLEMUSIC] = { nullptr };
-    FMOD::Channel* exploreTransChannel[NUM_EXPLORE_TRANS][NUMENSEMBLEMUSIC] = { nullptr };
+    FMOD_SOUND* exploreTransSound[NUM_EXPLORE_TRANS][NUMENSEMBLEMUSIC] = { NULL };
+    FMOD_CHANNEL* exploreTransChannel[NUM_EXPLORE_TRANS][NUMENSEMBLEMUSIC] = { NULL };
 
-    FMOD::Sound* combatTransSound[NUM_COMBAT_TRANS][NUMENSEMBLEMUSIC] = { nullptr };
-    FMOD::Channel* combatTransChannel[NUM_COMBAT_TRANS][NUMENSEMBLEMUSIC] = { nullptr };
+    FMOD_SOUND* combatTransSound[NUM_COMBAT_TRANS][NUMENSEMBLEMUSIC] = { NULL };
+    FMOD_CHANNEL* combatTransChannel[NUM_COMBAT_TRANS][NUMENSEMBLEMUSIC] = { NULL };
 
-    FMOD::ChannelGroup* transceiver_group[NUMENSEMBLEMUSIC] = { nullptr };
+    FMOD_CHANNELGROUP* transceiver_group[NUMENSEMBLEMUSIC] = { NULL };
 
     enum SongTransitionState
     {
@@ -171,18 +171,18 @@ bool FMODErrorCheck();
 
 void sound_update(int player, int index, int numplayers);
 
-FMOD::Channel* playSoundPlayer(int player, Uint16 snd, Uint8 vol);
-FMOD::Channel* playSoundNotificationPlayer(int player, Uint16 snd, Uint8 vol);
-FMOD::Channel* playSoundPos(real_t x, real_t y, Uint16 snd, Uint8 vol);
-FMOD::Channel* playSoundPosLocal(real_t x, real_t y, Uint16 snd, Uint8 vol);
-FMOD::Channel* playSoundEntity(Entity* entity, Uint16 snd, Uint8 vol);
-FMOD::Channel* playSoundEntityLocal(Entity* entity, Uint16 snd, Uint8 vol);
-FMOD::Channel* playSound(Uint16 snd, Uint8 vol);
-FMOD::Channel* playSoundNotification(Uint16 snd, Uint8 vol);
-FMOD::Channel* playSoundVelocity();
+FMOD_CHANNEL* playSoundPlayer(int player, Uint16 snd, Uint8 vol);
+FMOD_CHANNEL* playSoundNotificationPlayer(int player, Uint16 snd, Uint8 vol);
+FMOD_CHANNEL* playSoundPos(real_t x, real_t y, Uint16 snd, Uint8 vol);
+FMOD_CHANNEL* playSoundPosLocal(real_t x, real_t y, Uint16 snd, Uint8 vol);
+FMOD_CHANNEL* playSoundEntity(Entity* entity, Uint16 snd, Uint8 vol);
+FMOD_CHANNEL* playSoundEntityLocal(Entity* entity, Uint16 snd, Uint8 vol);
+FMOD_CHANNEL* playSound(Uint16 snd, Uint8 vol);
+FMOD_CHANNEL* playSoundNotification(Uint16 snd, Uint8 vol);
+FMOD_CHANNEL* playSoundVelocity();
 
 void stopMusic();
-void playMusic(FMOD::Sound* sound, bool loop, bool crossfade, bool resume); //Automatically crossfades. NOTE: Resets fadein and fadeout increments to the defaults every time it is called. You'll have to change the fadein and fadeout increments AFTER calling this function.
+void playMusic(FMOD_SOUND* sound, bool loop, bool crossfade, bool resume); //Automatically crossfades. NOTE: Resets fadein and fadeout increments to the defaults every time it is called. You'll have to change the fadein and fadeout increments AFTER calling this function.
 
 void handleLevelMusic(); //Manages and updates the level music.
 
@@ -197,8 +197,8 @@ class VoiceChat_t
 	bool bInit = false;
 	int nativeRate = 0;
 	int nativeChannels = 1;
-	FMOD::Sound* recordingSound = nullptr;
-	FMOD::Channel* recordingChannel = nullptr;
+	FMOD_SOUND* recordingSound = NULL;
+	FMOD_CHANNEL* recordingChannel = NULL;
 	unsigned int recordingSoundLength = 0;
 	unsigned int recordingSamples = 0;
 	unsigned int recordingAdjustedLatency = 0;
@@ -208,7 +208,7 @@ class VoiceChat_t
 	bool bIsRecording = false;
 	std::vector<std::vector<char>> recordingDatagrams;
 	Uint32 datagramSequence = 0;
-	UDPpacket* loopbackPacket = nullptr;
+	UDPpacket* loopbackPacket = NULL;
 public:
     enum DSPOrder : int;
     bool mainMenuAudioTabOpen();
@@ -255,7 +255,7 @@ public:
     void updateOnMapChange3DRolloff();
 	bool using_encoding = false;
 	bool voiceToggleTalk = false;
-	FMOD::ChannelGroup* outChannelGroup = nullptr;
+	FMOD_CHANNELGROUP* outChannelGroup = NULL;
 	class PlayerChannels_t
 	{
 	public:
@@ -280,8 +280,8 @@ public:
 		int totalSamplesRead = 0;
 		int totalSamplesWritten = 0;
 		void updateLatency();
-		FMOD::Sound* outputSound = nullptr;
-		FMOD::Channel* outputChannel = nullptr;
+		FMOD_SOUND* outputSound = NULL;
+		FMOD_CHANNEL* outputChannel = NULL;
 		unsigned int desiredLatency = 0;
 		unsigned int adjustedLatency = 0;
 		int actualLatency = 0;
@@ -374,3 +374,4 @@ void* playSoundPlayer(int, Uint16, Uint8);
 void* playSoundNotification(Uint16, Uint8);
 void* playSoundNotificationPlayer(int, Uint16, Uint8);
 #endif
+

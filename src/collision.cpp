@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "messages.hpp"
@@ -19,16 +19,16 @@
 #include "interface/interface.hpp"
 #include "magic/magic.hpp"
 #include "net.hpp"
-#include "paths.hpp"
-#include "collision.hpp"
-#include "prng.hpp"
+#include "paths.h"
+#include "collision.h"
+#include "prng.h"
 #include "player.hpp"
 #include "mod_tools.hpp"
 #ifdef __ARM_NEON__
 #include <arm_neon.h>
 #endif
 #include "ui/MainMenu.hpp"
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 #include "ui/GameUI.hpp"
 
 /*-------------------------------------------------------------------------------

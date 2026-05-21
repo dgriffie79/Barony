@@ -10,7 +10,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "items.hpp"
@@ -22,11 +22,11 @@
 #include "net.hpp"
 #include "monster.hpp"
 #include "player.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "scores.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "mod_tools.hpp"
-#include "scrolls.hpp"
+#include "scrolls.h"
 
 bool potionUseAbundanceEffect(Item* item, Entity* entity, Entity* usedBy)
 {

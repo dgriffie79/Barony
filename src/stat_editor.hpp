@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "main.hpp"
+#include "main.h"
 
 #ifdef USE_FMOD
 #include <fmod.hpp>

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "../main.hpp"
+#include "../main.h"
 
 class Font {
 private:

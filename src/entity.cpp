@@ -9,7 +9,7 @@ See LICENSE for details.
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -19,14 +19,14 @@ See LICENSE for details.
 #include "magic/magic.hpp"
 #include "interface/interface.hpp"
 #include "net.hpp"
-#include "collision.hpp"
-#include "paths.hpp"
+#include "collision.h"
+#include "paths.h"
 #include "book.hpp"
 #include "shops.hpp"
 
 #include "player.hpp"
 #include "scores.hpp"
-#include "menu.hpp"
+#include "menu.h"
 #include "mod_tools.hpp"
 #include "interface/ui.hpp"
 #ifdef __ARM_NEON__

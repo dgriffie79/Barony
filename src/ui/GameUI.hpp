@@ -5,7 +5,7 @@
 #include "Frame.hpp"
 #include "../stat.hpp"
 #include "../game.hpp"
-#include "../interface/consolecommand.hpp"
+#include "../interface/consolecommand.h"
 #include <deque>
 
 Frame::result_t doFrames();

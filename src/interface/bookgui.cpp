@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../draw.hpp"
 #include "../game.hpp"
 #include "../stat.hpp"
@@ -23,7 +23,7 @@
 #include "../ui/Text.hpp"
 #include "../ui/Image.hpp"
 #include "../ui/GameUI.hpp"
-#include "../prng.hpp"
+#include "../prng.h"
 #include "../mod_tools.hpp"
 #include "../ui/MainMenu.hpp"
 

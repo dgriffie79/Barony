@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include <new>
 #include "entity.hpp"
 #include "messages.hpp"

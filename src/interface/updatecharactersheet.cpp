@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "../main.hpp"
+#include "../main.h"
 #include "../draw.hpp"
 #include "../game.hpp"
 #include "../stat.hpp"
@@ -19,11 +19,11 @@
 #include "interface.hpp"
 #include "../engine/audio/sound.hpp"
 #include "../magic/magic.hpp"
-#include "../menu.hpp"
+#include "../menu.h"
 #include "../net.hpp"
 #include "../scores.hpp"
 #include "../ui/GameUI.hpp"
-#include "../prng.hpp"
+#include "../prng.h"
 
 Sint32 displayAttackPower(const int player, AttackHoverText_t& output)
 {

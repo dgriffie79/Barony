@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -17,8 +17,8 @@
 #include "engine/audio/sound.hpp"
 #include "items.hpp"
 #include "net.hpp"
-#include "collision.hpp"
-#include "prng.hpp"
+#include "collision.h"
+#include "prng.h"
 #include "scores.hpp"
 
 void initRat(Entity* my, Stat* myStats)

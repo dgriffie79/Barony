@@ -14,7 +14,7 @@
 
 //#include "SDL.h"
 
-#include "main.hpp"
+#include "main.h"
 #include "interface/interface.hpp"
 
 /*

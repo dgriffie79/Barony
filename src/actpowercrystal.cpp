@@ -9,7 +9,7 @@ See LICENSE for details.
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -17,9 +17,9 @@ See LICENSE for details.
 #include "engine/audio/sound.hpp"
 #include "items.hpp"
 #include "net.hpp"
-#include "collision.hpp"
+#include "collision.h"
 #include "player.hpp"
-#include "prng.hpp"
+#include "prng.h"
 
 /*-------------------------------------------------------------------------------
 

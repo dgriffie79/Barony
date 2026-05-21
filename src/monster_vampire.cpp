@@ -9,7 +9,7 @@ See LICENSE for details.
 
 -------------------------------------------------------------------------------*/
 
-#include "main.hpp"
+#include "main.h"
 #include "game.hpp"
 #include "stat.hpp"
 #include "entity.hpp"
@@ -17,11 +17,11 @@ See LICENSE for details.
 #include "monster.hpp"
 #include "engine/audio/sound.hpp"
 #include "net.hpp"
-#include "collision.hpp"
-#include "classdescriptions.hpp"
+#include "collision.h"
+#include "classdescriptions.h"
 #include "player.hpp"
 #include "magic/magic.hpp"
-#include "prng.hpp"
+#include "prng.h"
 #include "mod_tools.hpp"
 
 void initVampire(Entity* my, Stat* myStats)

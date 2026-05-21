@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "shader.hpp"
+#include "shader.h"
 
 struct Vector4 {
     float x;
@@ -191,7 +191,7 @@ private:
     unsigned int numVertices = 0; // number of vertices
 };
 
-#include "shader.hpp"
+#include "shader.h"
 
 struct framebuffer {
     unsigned int fbo = 0;
@@ -435,7 +435,7 @@ unsigned int GO_GetPixelU32(int x, int y, view_t& camera);
 
 extern bool hdrEnabled;
 
-#include "interface/consolecommand.hpp"
+#include "interface/consolecommand.h"
 extern ConsoleVariable<Vector4> cvar_hdrBrightness;
 extern ConsoleVariable<float> cvar_fogDistance;
 extern ConsoleVariable<Vector4> cvar_fogColor;

@@ -11,7 +11,7 @@
 
 #pragma once
 #include "monster.hpp"
-#include "json.hpp"
+#include "json.h"
 #include "player.hpp"
 
 #define SCORESFILE "savegames/scores.json"
