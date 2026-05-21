@@ -40,7 +40,6 @@ GameModeManager_t gameModeManager;
 ItemTooltips_t ItemTooltips;
 GlyphRenderer_t GlyphHelper;
 ScriptTextParser_t ScriptTextParser;
-IRCHandler_t IRCHandler;
 StatueManager_t StatueManager;
 DebugTimers_t DebugTimers;
 

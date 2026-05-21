@@ -3855,34 +3855,6 @@ namespace ConsoleCommands {
 		}
 		});
 
-	static ConsoleCommand ccmd_ircconnect("/ircconnect", "", []CCMD{
-		if (IRCHandler.connect())
-		{
-			messagePlayer(clientnum, MESSAGE_MISC, "[IRC]: Connected.");
-		}
-		else
-		{
-			IRCHandler.disconnect();
-			messagePlayer(clientnum, MESSAGE_MISC, "[IRC]: Error connecting.");
-		}
-		});
-
-	static ConsoleCommand ccmd_ircdisconnect("/ircdisconnect", "", []CCMD{
-		IRCHandler.disconnect();
-		messagePlayer(clientnum, MESSAGE_MISC, "[IRC]: Disconnected.");
-		});
-
-	static ConsoleCommand ccmd_irc("/irc", "", []CCMD{
-		if (argc < 2)
-		{
-			return;
-		}
-		std::string message = argv[1];
-		message.append("\r\n");
-		IRCHandler.packetSend(message);
-		messagePlayer(clientnum, MESSAGE_MISC, "[IRC]: Sent message.");
-		});
-
 	static ConsoleCommand ccmd_loadtooltips("/loadtooltips", "", []CCMD{
 		ItemTooltips.readTooltipsFromFile();
 		messagePlayer(clientnum, MESSAGE_MISC, "Reloaded item_tooltips.json");

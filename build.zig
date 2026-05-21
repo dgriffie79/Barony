@@ -82,7 +82,7 @@ pub fn build(b: *std.Build) void {
         "src/mod_tools_tooltips.cpp", "src/mod_tools_compendium.cpp",
         "src/mod_tools_gamemode.cpp", "src/mod_tools_misc.cpp",
         "src/mod_tools_config.cpp", "src/mod_tools_mods.cpp",
-        "src/mod_tools_equip.cpp", "src/mod_tools_irc.cpp",
+        "src/mod_tools_equip.cpp", 
         "src/mod_tools_editor.cpp", "src/json.cpp",
         "src/mod_tools.cpp",
         "src/lobbies.cpp", "src/shader.cpp",
