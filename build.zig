@@ -57,11 +57,7 @@ pub fn build(b: *std.Build) void {
         "src/cursors.c",
         "src/engine/audio/defines.c",
         "src/prng.c",
-        "src/objects.c",
-        "src/scores.c",
         "src/entity_shared.c",
-        "src/mechanisms.c",
-        "src/item_tool.c",
 
     };
 
