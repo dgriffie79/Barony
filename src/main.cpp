@@ -509,31 +509,6 @@ hit_t hit;
 
 /*-------------------------------------------------------------------------------
 
-	longestline
-
-	returns the longest line of characters in a string (stopping for
-	newlines)
-
--------------------------------------------------------------------------------*/
-
-int longestline(char const * const str)
-{
-	int c, x = 0, result = 0;
-	for ( c = 0; c < strlen(str); c++ )
-	{
-		if ( str[c] == 10 )
-		{
-			x = 0;
-			continue;
-		}
-		x++;
-		result = std::max(x, result);
-	}
-	return result;
-}
-
-/*-------------------------------------------------------------------------------
-
 	concatedStringLength
 
 	returns the length of all the given strings combined together
@@ -562,19 +537,6 @@ int concatedStringLength(char* str, ...)
 	returns the sign of the given double (positive or negative);
 
 -------------------------------------------------------------------------------*/
-
-/*-------------------------------------------------------------------------------
-
-	numdigits
-
-	return the number of digits of the given int (includes the sign if negative)
-
--------------------------------------------------------------------------------*/
-
-int numdigits_sint16(Sint16 x)
-{
-	return snprintf(nullptr, 0, "%d", x);
-}
 
 /*-------------------------------------------------------------------------------
 

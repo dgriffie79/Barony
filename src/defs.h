@@ -608,11 +608,11 @@ const char* gl_error_string(GLenum err);
 extern "C" {
 #endif
 int sgn(real_t x);
+int numdigits_sint16(Sint16 x);
+int longestline(char const * const str);
 #ifdef __cplusplus
 }
 #endif
-int numdigits_sint16(Sint16 x);
-int longestline(char const * const str);
 int concatedStringLength(char* str, ...);
 
 void list_FreeAll(list_t* list);
