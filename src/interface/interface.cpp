@@ -1631,6 +1631,7 @@ Uint32 followerBannerTextColor = 0xFFFFFFFF;
 Uint32 followerBannerTextHighlightColor = 0xFFFFFFFF;
 void FollowerRadialMenu::loadFollowerJSON()
 {
+	printlog("[JSON]: Loading follower...");
 	if ( !PHYSFS_getRealDir("/data/follower_wheel.json") )
 	{
 		printlog("[JSON]: Error: Could not find file: data/follower_wheel.json");
@@ -27314,6 +27315,7 @@ void GenericGUIMenu::ItemEffectGUI_t::createItemEffectMenu()
 
 void CalloutRadialMenu::loadCalloutJSON()
 {
+	printlog("[JSON]: Loading callout...");
 	if ( !PHYSFS_getRealDir("/data/callout_wheel.json") )
 	{
 		printlog("[JSON]: Error: Could not find file: data/callout_wheel.json");

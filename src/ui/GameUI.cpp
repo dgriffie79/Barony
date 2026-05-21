@@ -5812,6 +5812,7 @@ void StatusEffectQueueEntry_t::animate()
 
 void StatusEffectQueue_t::loadStatusEffectsJSON()
 {
+	printlog("[JSON]: Loading status effects...");
 	if ( !PHYSFS_getRealDir("/data/status_effects.json") )
 	{
 		printlog("[JSON]: Error: Could not find file: data/status_effects.json");
@@ -14328,6 +14329,7 @@ std::string Player::CharacterSheet_t::defaultString = "";
 std::map<std::string, std::string> Player::CharacterSheet_t::hoverTextStrings;
 void Player::CharacterSheet_t::loadCharacterSheetJSON()
 {
+	printlog("[JSON]: Loading character sheet...");
 	if ( !PHYSFS_getRealDir("/data/charsheet.json") )
 	{
 		printlog("[JSON]: Error: Could not find file: data/charsheet.json");
@@ -25548,6 +25550,7 @@ void drawCharacterPreview(const int player, SDL_Rect pos, int fov, real_t offset
 Player::SkillSheet_t::SkillSheetData_t Player::SkillSheet_t::skillSheetData;
 void Player::SkillSheet_t::loadSkillSheetJSON()
 {
+	printlog("[JSON]: Loading skill sheet...");
 	if ( !PHYSFS_getRealDir("/data/skillsheet_entries.json") )
 	{
 		printlog("[JSON]: Error: Could not find file: data/skillsheet_entries.json");
@@ -25979,6 +25982,7 @@ void Player::SkillSheet_t::loadSkillSheetJSON()
 
 void loadHUDSettingsJSON()
 {
+	printlog("[JSON]: Loading HUD settings...");
 	if ( !PHYSFS_getRealDir("/data/HUD_settings.json") )
 	{
 		printlog("[JSON]: Error: Could not find file: data/HUD_settings.json");
