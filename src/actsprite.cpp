@@ -12,13 +12,13 @@
 #include "main.h"
 #include "game.h"
 #include "engine/audio/sound.hpp"
-#include "net.hpp"
+#include "net.h"
 #include "collision.h"
 #include "entity.h"
 #include "interface/interface.hpp"
-#include "draw.hpp"
+#include "draw.h"
 #include "items.h"
-#include "player.hpp"
+#include "player.h"
 #include "prng.h"
 
 /*-------------------------------------------------------------------------------

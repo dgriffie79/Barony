@@ -11,7 +11,7 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "draw.hpp"
+#include "draw.h"
 #include "files.h"
 #include "game.h"
 #include "stat.h"
@@ -22,12 +22,12 @@
 #include "shops.hpp"
 #include "scores.hpp"
 #include "magic/magic.hpp"
-#include "monster.hpp"
-#include "net.hpp"
+#include "monster.h"
+#include "net.h"
 
 #include "menu.h"
 #include "paths.h"
-#include "player.hpp"
+#include "player.h"
 #include "cppfuncs.hpp"
 #include "Directory.hpp"
 #include "mod_tools.hpp"

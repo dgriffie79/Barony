@@ -10,15 +10,15 @@
 -------------------------------------------------------------------------------*/
 
 #include "../main.h"
-#include "../draw.hpp"
+#include "../draw.h"
 #include "../game.h"
 #include "../stat.h"
 #include "../items.h"
 #include "../magic/magic.hpp"
 #include "../engine/audio/sound.hpp"
-#include "../net.hpp"
+#include "../net.h"
 #include "../menu.h"
-#include "../player.hpp"
+#include "../player.h"
 #include "interface.hpp"
 #include "../colors.hpp"
 #include "../mod_tools.hpp"

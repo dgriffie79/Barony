@@ -10,11 +10,11 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "draw.hpp"
+#include "draw.h"
 #include "files.h"
 #include "hash.h"
 #include "entity.h"
-#include "player.hpp"
+#include "player.h"
 #include "ui/Frame.hpp"
 #include "items.h"
 #include "ui/Image.hpp"
@@ -1724,7 +1724,7 @@ void drawClearBuffers()
 
 #include <future>
 
-#include "net.hpp"
+#include "net.h"
 
 void raycast(const view_t& camera, Sint8 (*minimap)[MINIMAP_MAX_DIMENSION], bool fillWithColor)
 {

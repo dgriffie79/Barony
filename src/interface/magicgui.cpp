@@ -10,13 +10,13 @@
 -------------------------------------------------------------------------------*/
 
 #include "../main.h"
-#include "../draw.hpp"
+#include "../draw.h"
 #include "../game.h"
 #include "../stat.h"
 #include "interface.hpp"
 #include "../items.h"
 #include "../magic/magic.hpp"
-#include "../player.hpp"
+#include "../player.h"
 #include "../colors.hpp"
 
 /*-------------------------------------------------------------------------------

@@ -10,9 +10,9 @@
 -------------------------------------------------------------------------------*/
 
 #pragma once
-#include "monster.hpp"
+#include "monster.h"
 #include "json.h"
-#include "player.hpp"
+#include "player.h"
 
 #define SCORESFILE "savegames/scores.json"
 #define SCORESFILE_MULTIPLAYER "savegames/scores_multiplayer.json"

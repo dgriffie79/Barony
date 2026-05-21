@@ -1,6 +1,6 @@
 #include "main.h"
 #include "input.hpp"
-#include "player.hpp"
+#include "player.h"
 #include "mod_tools.hpp"
 #include "ui/MainMenu.hpp"
 

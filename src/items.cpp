@@ -22,8 +22,8 @@
 #include "shops.hpp"
 #include "prng.h"
 #include "scores.hpp"
-#include "net.hpp"
-#include "player.hpp"
+#include "net.h"
+#include "player.h"
 #include "mod_tools.hpp"
 
 #include <assert.h>

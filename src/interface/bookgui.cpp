@@ -10,14 +10,14 @@
 -------------------------------------------------------------------------------*/
 
 #include "../main.h"
-#include "../draw.hpp"
+#include "../draw.h"
 #include "../game.h"
 #include "../stat.h"
 #include "../items.h"
 #include "../book.hpp"
 #include "../engine/audio/sound.hpp"
 #include "../scores.hpp"
-#include "../player.hpp"
+#include "../player.h"
 #include "interface.hpp"
 #include "../ui/Field.hpp"
 #include "../ui/Text.hpp"

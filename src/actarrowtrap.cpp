@@ -16,7 +16,7 @@
 #include "engine/audio/sound.hpp"
 #include "collision.h"
 #include "items.h"
-#include "net.hpp"
+#include "net.h"
 #include "prng.h"
 #include "mod_tools.hpp"
 

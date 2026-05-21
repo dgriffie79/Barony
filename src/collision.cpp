@@ -18,11 +18,11 @@
 #include "items.h"
 #include "interface/interface.hpp"
 #include "magic/magic.hpp"
-#include "net.hpp"
+#include "net.h"
 #include "paths.h"
 #include "collision.h"
 #include "prng.h"
-#include "player.hpp"
+#include "player.h"
 #include "mod_tools.hpp"
 #ifdef __ARM_NEON__
 #include <arm_neon.h>

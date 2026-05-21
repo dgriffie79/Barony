@@ -10,7 +10,7 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "draw.hpp"
+#include "draw.h"
 #include "game.h"
 #include "stat.h"
 #include "messages.hpp"
@@ -25,15 +25,15 @@
 #include "items.h"
 #include "init.h"
 #include "shops.hpp"
-#include "monster.hpp"
+#include "monster.h"
 #include "scores.hpp"
 #include "menu.h"
-#include "net.hpp"
+#include "net.h"
 
 #include "prng.h"
 #include "collision.h"
 #include "paths.h"
-#include "player.hpp"
+#include "player.h"
 #include "mod_tools.hpp"
 #include "lobbies.h"
 #include "interface/ui.hpp"
@@ -606,12 +606,12 @@ void TimerExperiments::updateClocks()
 		for ( auto& entity : entitiesToInterpolate )
 		{
 			entity->lerpPreviousState = entity->lerpCurrentState;
-			integrate(entity->lerpCurrentState.x, timepoint, dt);
-			integrate(entity->lerpCurrentState.y, timepoint, dt);
-			integrate(entity->lerpCurrentState.z, timepoint, dt);
-			integrate(entity->lerpCurrentState.yaw, timepoint, dt);
-			integrate(entity->lerpCurrentState.pitch, timepoint, dt);
-			integrate(entity->lerpCurrentState.roll, timepoint, dt);
+			integrate(reinterpret_cast<TimerExperiments::State&>(entity->lerpCurrentState.x), timepoint, dt);
+			integrate(reinterpret_cast<TimerExperiments::State&>(entity->lerpCurrentState.y), timepoint, dt);
+			integrate(reinterpret_cast<TimerExperiments::State&>(entity->lerpCurrentState.z), timepoint, dt);
+			integrate(reinterpret_cast<TimerExperiments::State&>(entity->lerpCurrentState.yaw), timepoint, dt);
+			integrate(reinterpret_cast<TimerExperiments::State&>(entity->lerpCurrentState.pitch), timepoint, dt);
+			integrate(reinterpret_cast<TimerExperiments::State&>(entity->lerpCurrentState.roll), timepoint, dt);
 		}
 		timepoint += dt;
 		accumulator -= dt;

@@ -11,6 +11,12 @@
 
 #pragma once
 
+#include "main.h"
+#include "item_types.h"
+
+// Include items.h early to ensure ItemType is defined
+#include "items.h"
+
 #ifdef __cplusplus
 
 // ===================== EXISTING C++ CONTENT =====================

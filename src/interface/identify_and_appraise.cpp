@@ -10,12 +10,12 @@
 -------------------------------------------------------------------------------*/
 
 #include "../main.h"
-#include "../draw.hpp"
+#include "../draw.h"
 #include "../game.h"
 #include "../stat.h"
 #include "../items.h"
-#include "../net.hpp"
-#include "../player.hpp"
+#include "../net.h"
+#include "../player.h"
 #include "interface.hpp"
 #include "../scores.hpp"
 #include "../mod_tools.hpp"

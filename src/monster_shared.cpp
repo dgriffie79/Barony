@@ -12,12 +12,12 @@
 #include "main.h"
 #include "game.h"
 #include "collision.h"
-#include "player.hpp"
+#include "player.h"
 #include "entity.h"
 #include "prng.h"
-#include "monster.hpp"
+#include "monster.h"
 #include "shops.hpp"
-#include "net.hpp"
+#include "net.h"
 
 #include <cassert>
 

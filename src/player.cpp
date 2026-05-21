@@ -9,7 +9,7 @@
 
 -------------------------------------------------------------------------------*/
 
-#include "player.hpp"
+#include "player.h"
 #include "game.h"
 #include "main.h"
 #include "interface/interface.hpp"
@@ -18,7 +18,7 @@
 #include "menu.h"
 #include "collision.h"
 #include "mod_tools.hpp"
-#include "draw.hpp"
+#include "draw.h"
 #include "colors.hpp"
 #include "ui/GameUI.hpp"
 #include "ui/Frame.hpp"

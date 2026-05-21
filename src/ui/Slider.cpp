@@ -1,8 +1,8 @@
 // Slider.cpp
 
 #include "../main.h"
-#include "../draw.hpp"
-#include "../player.hpp"
+#include "../draw.h"
+#include "../player.h"
 #include "Slider.hpp"
 #include "Frame.hpp"
 #include "Button.hpp"

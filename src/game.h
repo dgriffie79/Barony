@@ -18,6 +18,10 @@
 // ORIGINAL C++ CONTENT — preserved verbatim for C++ compilation
 // ============================================================================
 
+// Forward declarations to break circular dependency: draw.h includes game.h,
+// and draw.h defines view_t which game.h and entity.h use.
+struct view_t;
+
 #include <vector>
 #include <chrono>
 
@@ -561,7 +565,7 @@ extern ConsoleVariable<bool> cvar_map_sequence_rng;
 extern DebugStatsClass DebugStats;
 //extern ConsoleVariable<bool> cvar_useTimerInterpolation;
 
-#include "draw.hpp"
+#include "draw.h"
 
 class TimerExperiments
 {
@@ -665,6 +669,10 @@ real_t getFPSScale(real_t baseFPS);
 // ============================================================================
 
 #include "ccontainers.h"
+
+// Forward declarations
+typedef struct view_t view_t;
+typedef struct TimerExperiments TimerExperiments;
 
 // REMEMBER TO CHANGE THIS WITH EVERY NEW OFFICIAL VERSION!!!
 static const char VERSION[] = "v5.0.2";

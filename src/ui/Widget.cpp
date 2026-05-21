@@ -4,7 +4,7 @@
 #include "Widget.hpp"
 #include "Frame.hpp"
 #include "Image.hpp"
-#include "../player.hpp"
+#include "../player.h"
 #include "../input.hpp"
 #include "../engine/audio/sound.hpp"
 #include "../mod_tools.hpp"

@@ -11,9 +11,9 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "draw.hpp"
+#include "draw.h"
 #include "messages.hpp"
-#include "player.hpp"
+#include "player.h"
 #include <regex>
 
 const int MESSAGE_LIST_SIZE_CAP = 400;

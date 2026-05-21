@@ -16,9 +16,9 @@
 #include "magic/magic.hpp"
 #include "items.h"
 #include "book.hpp"
-#include "net.hpp"
+#include "net.h"
 #include "charclass.hpp"
-#include "player.hpp"
+#include "player.h"
 #include "mod_tools.hpp"
 
 /*-------------------------------------------------------------------------------

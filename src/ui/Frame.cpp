@@ -3,8 +3,8 @@
 #include <assert.h>
 
 #include "../main.h"
-#include "../draw.hpp"
-#include "../player.hpp"
+#include "../draw.h"
+#include "../player.h"
 #include "Button.hpp"
 #include "Frame.hpp"
 #include "Image.hpp"
@@ -38,7 +38,7 @@ static int getMouseOwnerPauseMenu() {
     return clientnum;
 }
 
-#include "../net.hpp"
+#include "../net.h"
 ConsoleCommand myCmd("/resizegui", "change gui size",
     [](int argc, const char** argv){
     if (argc < 3) {

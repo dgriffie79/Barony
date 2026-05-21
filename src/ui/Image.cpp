@@ -1,7 +1,7 @@
 // Image.cpp
 
 #include "../main.h"
-#include "../draw.hpp"
+#include "../draw.h"
 #include "Image.hpp"
 #include "Frame.hpp"
 
@@ -482,7 +482,7 @@ void Image::dumpCache() {
     shader.destroy();
 }
 
-#include "../net.hpp"
+#include "../net.h"
 #include "../interface/consolecommand.h"
 static ConsoleCommand size("/images_cache_size", "measure image cache",
     [](int argc, const char** argv){

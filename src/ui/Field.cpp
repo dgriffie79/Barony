@@ -1,8 +1,8 @@
 // Field.cpp
 
 #include "../main.h"
-#include "../draw.hpp"
-#include "../player.hpp"
+#include "../draw.h"
+#include "../player.h"
 #include "Frame.hpp"
 #include "Field.hpp"
 #include "Button.hpp"

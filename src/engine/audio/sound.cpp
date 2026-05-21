@@ -13,7 +13,7 @@
 #include "../../files.h"
 #include "../../game.h"
 #include "sound.hpp"
-#include "../../player.hpp"
+#include "../../player.h"
 
 #ifdef USE_FMOD
 #include "fmod_errors.h"

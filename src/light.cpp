@@ -11,7 +11,7 @@
 
 #include "main.h"
 #include "light.h"
-#include "draw.hpp"
+#include "draw.h"
 
 /*-------------------------------------------------------------------------------
 

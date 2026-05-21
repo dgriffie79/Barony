@@ -11,7 +11,7 @@
 
 #include "main.h"
 #include <list>
-#include "draw.hpp"
+#include "draw.h"
 #include "game.h"
 #include "stat.h"
 #include "messages.hpp"
@@ -25,16 +25,16 @@
 #include "items.h"
 #include "init.h"
 #include "shops.hpp"
-#include "monster.hpp"
+#include "monster.h"
 #include "scores.hpp"
 #include "menu.h"
-#include "net.hpp"
+#include "net.h"
 
 #include "prng.h"
 #include "credits.h"
 #include "paths.h"
 #include "collision.h"
-#include "player.hpp"
+#include "player.h"
 #include "cppfuncs.hpp"
 #include "colors.hpp"
 #include <ctime>

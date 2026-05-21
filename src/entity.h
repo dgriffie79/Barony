@@ -12,6 +12,8 @@
 #pragma once
 
 #include "main.h"
+#include "item_types.h"
+#include "items.h"
 
 #ifdef __cplusplus
 // ========================================================================
@@ -29,14 +31,14 @@
 
 -------------------------------------------------------------------------------*/
 
-#pragma once
-
 #include "main.h"
-#include "game.h"
+#include "item_types.h"
+#include "items.h"
 #include "stat.h"
 #include "light.h"
-#include "monster.hpp"
+#include "monster.h"
 #include "interface/consolecommand.h"
+#include "items.h"
 
 // entity flags
 #define BRIGHT 1
@@ -64,6 +66,42 @@ static const int NUMENTITYSKILLS = 60;
 static const int NUMENTITYFSKILLS = 30;
 extern ConsoleVariable<int> cvar_entity_bodypart_sync_tick;
 struct spell_t;
+
+// Mirror of TimerExperiments::EntityStates for Entity struct
+// (Avoids circular include dependency with game.h)
+struct EntityLerpState {
+    struct State {
+        double acceleration, velocity, position;
+    void resetMovement() { acceleration = 0; velocity = 0; }
+    void resetPosition() { position = 0; }
+    void normalize(real_t min, real_t max) {
+        double range = max - min;
+        if (range <= 0) return;
+        while (position < min) position += range;
+        while (position >= max) position -= range;
+    }
+    } x, y, z, yaw, pitch, roll;
+    void resetMovement() { x.resetMovement(); y.resetMovement(); z.resetMovement(); yaw.resetMovement(); pitch.resetMovement(); roll.resetMovement(); }
+    void resetPosition() { x.resetPosition(); y.resetPosition(); z.resetPosition(); yaw.resetPosition(); pitch.resetPosition(); roll.resetPosition(); }
+};
+inline EntityLerpState::State operator+(EntityLerpState::State x, EntityLerpState::State y) {
+    return { x.acceleration + y.acceleration, x.velocity + y.velocity, x.position + y.position };
+}
+inline EntityLerpState::State operator*(EntityLerpState::State x, double y) {
+    return { x.acceleration * y, x.velocity * y, x.position * y };
+}
+inline EntityLerpState operator+(EntityLerpState lhs, EntityLerpState rhs) {
+    EntityLerpState r;
+    r.x = lhs.x + rhs.x; r.y = lhs.y + rhs.y; r.z = lhs.z + rhs.z;
+    r.yaw = lhs.yaw + rhs.yaw; r.pitch = lhs.pitch + rhs.pitch; r.roll = lhs.roll + rhs.roll;
+    return r;
+}
+inline EntityLerpState operator*(EntityLerpState lhs, double rhs) {
+    EntityLerpState r;
+    r.x = lhs.x * rhs; r.y = lhs.y * rhs; r.z = lhs.z * rhs;
+    r.yaw = lhs.yaw * rhs; r.pitch = lhs.pitch * rhs; r.roll = lhs.roll * rhs;
+    return r;
+}
 
 // entity class
 class Entity
@@ -196,9 +234,9 @@ public:
 	list_t children;   // every entity has a list of child objects
 	Uint32 parent;     // id of the entity's "parent" entity
 
-	TimerExperiments::EntityStates lerpPreviousState;
-	TimerExperiments::EntityStates lerpCurrentState;
-	TimerExperiments::EntityStates lerpRenderState;
+	EntityLerpState lerpPreviousState;
+	EntityLerpState lerpCurrentState;
+	EntityLerpState lerpRenderState;
 	real_t lerp_ox;
 	real_t lerp_oy;
 	bool bNeedsRenderPositionInit = true;

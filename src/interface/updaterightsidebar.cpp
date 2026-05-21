@@ -12,12 +12,12 @@
 // note: as of some prealpha version I've since forgotten, this module is totally deprecated
 
 #include "../main.h"
-#include "../draw.hpp"
+#include "../draw.h"
 #include "../game.h"
 #include "../stat.h"
 #include "interface.hpp"
 #include "../magic/magic.hpp"
-#include "../player.hpp"
+#include "../player.h"
 #include "../entity.h"
 
 void updateRightSidebar()

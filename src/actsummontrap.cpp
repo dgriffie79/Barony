@@ -14,12 +14,12 @@ See LICENSE for details.
 #include "stat.h"
 #include "entity.h"
 #include "items.h"
-#include "monster.hpp"
-#include "net.hpp"
+#include "monster.h"
+#include "net.h"
 #include "collision.h"
 #include "magic/magic.hpp"
 #include "engine/audio/sound.hpp"
-#include "player.hpp"
+#include "player.h"
 #include "mod_tools.hpp"
 
 #define SUMMONTRAP_MONSTER my->skill[0]

@@ -14,11 +14,11 @@
 #include "stat.h"
 #include "entity.h"
 #include "items.h"
-#include "monster.hpp"
+#include "monster.h"
 #include "engine/audio/sound.hpp"
-#include "net.hpp"
+#include "net.h"
 #include "collision.h"
-#include "player.hpp"
+#include "player.h"
 #include "prng.h"
 
 void initImp(Entity* my, Stat* myStats)

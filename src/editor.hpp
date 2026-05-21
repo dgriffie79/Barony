@@ -14,7 +14,7 @@
 #include <vector>
 #include <string>
 
-#include "draw.hpp"
+#include "draw.h"
 
 static const unsigned int MAXWIDTH = 2000;
 static const unsigned int MAXHEIGHT = 2000;

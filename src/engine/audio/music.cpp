@@ -13,7 +13,7 @@
 #include "../../game.h"
 #include "sound.hpp"
 #include "../../entity.h"
-#include "../../player.hpp"
+#include "../../player.h"
 #include "../../prng.h"
 #include "../../files.h"
  #include "music_pc.h"

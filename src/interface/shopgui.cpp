@@ -10,12 +10,12 @@
 -------------------------------------------------------------------------------*/
 
 #include "../main.h"
-#include "../draw.hpp"
+#include "../draw.h"
 #include "../game.h"
 #include "../stat.h"
 #include "../items.h"
 #include "../shops.hpp"
-#include "../player.hpp"
+#include "../player.h"
 #include "interface.hpp"
 #include "../colors.hpp"
 #include "../ui/Field.hpp"

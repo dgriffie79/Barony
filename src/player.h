@@ -1,6 +1,29 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
+	File: player.h (dual C/C++ header, migrated from player.hpp)
+	Desc: contains various declarations for player code.
+
+	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
+	See LICENSE for details.
+
+-------------------------------------------------------------------------------*/
+
+#pragma once
+
+#include "game.h"
+#include "entity.h"
+#include "files.h"
+#include "stat.h"
+
+#ifdef __cplusplus
+// ============================================================================
+// ORIGINAL C++ CONTENT ? preserved verbatim for C++ compilation
+// ============================================================================
+
+/*-------------------------------------------------------------------------------
+
+	BARONY
 	File: player.hpp
 	Desc: contains various declarations for player code.
 
@@ -2477,3 +2500,774 @@ extern Player* players[MAXPLAYERS];
 //TODO: PLAYERSWAP
 //and fix and verify that the information is correct.
 //Then, once all have been fixed and verified, uncomment this declaration, and the accompanying definition in player.cpp; uncomment all of the TODO: PLAYERSWAP code segments, and attempt compilation and running.
+
+#else
+// ============================================================================
+// C-COMPATIBLE CONTENT
+// ============================================================================
+
+#include "defs.h"
+#include "ccontainers.h"
+
+// ---------------------------------------------------------------------------
+// Forward declarations for types defined in other C headers or opaque C++ types
+// ---------------------------------------------------------------------------
+struct Entity;
+struct Stat;
+struct Item;
+struct view_t;
+struct spell_t;
+struct Frame;
+struct Field;
+struct Message;
+struct hotbar_slot_t;
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+static const unsigned NUM_HOTBAR_SLOTS = 10;
+static const unsigned NUM_HOTBAR_ALTERNATES = 5;
+static const int MAX_GAME_CONTROLLERS = 16;
+static const unsigned NUM_JOY_STATUS = 21;
+static const unsigned NUM_JOY_AXIS_STATUS = 6;
+
+// ---------------------------------------------------------------------------
+// PlayerSettings_t
+// ---------------------------------------------------------------------------
+typedef struct PlayerSettings_t
+{
+	int player;
+	int shootmodeCrosshair;
+	int shootmodeCrosshairOpacity;
+	real_t mousespeed;
+	bool mkb_world_tooltips_enabled;
+	bool gamepad_facehotbar;
+	bool hotbar_numkey_quick_add;
+	bool hotbar_numkey_change_slot;
+	bool reversemouse;
+	bool smoothmouse;
+	real_t gamepad_rightx_sensitivity;
+	real_t gamepad_righty_sensitivity;
+	bool gamepad_rightx_invert;
+	bool gamepad_righty_invert;
+	float quick_turn_speed;
+	float quick_turn_speed_mkb;
+	int mouse_event_limit_mkb;
+	bool spell_quickcast_mkb;
+	bool spell_quickcast_controller;
+	Sint32 leftStickDeadzone;
+	Sint32 rightStickDeadzone;
+} PlayerSettings_t;
+
+extern PlayerSettings_t playerSettings[MAXPLAYERS];
+
+void playerSettings_init(PlayerSettings_t* ps, int _player);
+
+// ---------------------------------------------------------------------------
+// GameController_Haptic_t
+// ---------------------------------------------------------------------------
+enum GameController_RumblePattern
+{
+	GCR_RUMBLE_NORMAL,
+	GCR_BOULDER,
+	GCR_BOULDER_BOUNCE,
+	GCR_BOULDER_ROLLING,
+	GCR_DEATH,
+	GCR_TMP,
+	GCR_SPELL
+};
+
+typedef struct GameController_HapticEffect
+{
+	Uint16 type;
+	Uint32 length;
+	Uint16 large_magnitude;
+	Uint16 small_magnitude;
+	Sint32 leftRightBalance;
+} GameController_HapticEffect;
+
+typedef struct GameController_Rumble
+{
+	Uint32 startTick;
+	Uint16 smallMagnitude;
+	Uint16 largeMagnitude;
+	Uint32 startTime;
+	Uint32 length;
+	real_t customEffect;
+	int pattern;
+	Uint32 entityUid;
+	bool isPlaying;
+} GameController_Rumble;
+
+typedef struct GameController_Haptic_t
+{
+	int hapticEffectId;
+	GameController_HapticEffect hapticEffect;
+	Uint32 hapticTick;
+	Uint32 oscillatorTick;
+	void* activeRumbles;
+	bool vibrationEnabled;
+} GameController_Haptic_t;
+
+// ---------------------------------------------------------------------------
+// GameController_Binding_t
+// ---------------------------------------------------------------------------
+enum GameController_Bindtype_t
+{
+	GCBT_INVALID,
+	GCBT_KEYBOARD,
+	GCBT_CONTROLLER_AXIS,
+	GCBT_CONTROLLER_BUTTON,
+	GCBT_MOUSE_BUTTON,
+	GCBT_JOYSTICK_AXIS,
+	GCBT_JOYSTICK_BUTTON,
+	GCBT_JOYSTICK_HAT,
+	GCBT_VIRTUAL_DPAD,
+	GCBT_RADIAL_SELECTION,
+	GCBT_NUM
+};
+
+enum GameController_DpadDirection
+{
+	GCDD_INVALID = -2,
+	GCDD_CENTERED = -1,
+	GCDD_DOWN,
+	GCDD_DOWNLEFT,
+	GCDD_LEFT,
+	GCDD_UPLEFT,
+	GCDD_UP,
+	GCDD_UPRIGHT,
+	GCDD_RIGHT,
+	GCDD_DOWNRIGHT
+};
+
+enum GameController_RadialSelection
+{
+	GCRS_RADIAL_INVALID = -2,
+	GCRS_RADIAL_CENTERED = -1,
+	GCRS_RADIAL_MAX = 16
+};
+
+typedef struct GameController_Binding_t
+{
+	float analog;
+	float deadzone;
+	bool binary;
+	bool consumed;
+	Uint32 buttonHeldTicks;
+	bool buttonHeld;
+	bool binaryRelease;
+	bool binaryReleaseConsumed;
+	int type;
+	int padAxis;
+	int padButton;
+	int padVirtualDpad;
+	int padRadialSelection;
+	bool padAxisNegative;
+} GameController_Binding_t;
+
+enum GameController_DeadZoneType
+{
+	GCDZ_PER_AXIS,
+	GCDZ_MAGNITUDE_LINEAR,
+	GCDZ_MAGNITUDE_HALFPIPE
+};
+
+// ---------------------------------------------------------------------------
+// GameController
+// ---------------------------------------------------------------------------
+typedef struct GameController
+{
+	void* sdl_device;
+	void* sdl_haptic;
+	int id;
+	String name;
+	GameController_Haptic_t haptics;
+	GameController_Binding_t buttons[NUM_JOY_STATUS];
+	GameController_Binding_t axis[NUM_JOY_AXIS_STATUS];
+	GameController_Binding_t virtualDpad;
+	GameController_Binding_t radialSelection;
+	int leftStickDeadzoneType;
+	int rightStickDeadzoneType;
+	real_t oldFloatRightX;
+	real_t oldFloatRightY;
+	int oldAxisRightX;
+	int oldAxisRightY;
+	float x_forceMaxForwardThreshold;
+	float x_forceMaxBackwardThreshold;
+	float y_forceMaxStrafeThreshold;
+} GameController;
+
+extern GameController game_controllers[MAX_GAME_CONTROLLERS];
+
+void GC_updateButtons(GameController* gc);
+void GC_updateButtonsReleased(GameController* gc);
+void GC_updateAxis(GameController* gc);
+int  GC_getSDLButtonFromImpulse(unsigned controllerImpulse);
+int  GC_getSDLTriggerFromImpulse(unsigned controllerImpulse);
+bool GC_binary(const GameController* gc, int binding);
+bool GC_binaryToggle(const GameController* gc, int binding);
+bool GC_binaryReleaseToggle(const GameController* gc, int binding);
+void GC_consumeBinaryToggle(GameController* gc, int binding);
+void GC_consumeBinaryReleaseToggle(GameController* gc, int binding);
+bool GC_buttonHeldToggle(const GameController* gc, int binding);
+float GC_analog(const GameController* gc, int binding);
+int  GC_dpadDir(const GameController* gc);
+int  GC_dpadDirToggle(const GameController* gc);
+void GC_consumeDpadDirToggle(GameController* gc);
+bool GC_binaryOf(GameController* gc, GameController_Binding_t* binding);
+float GC_analogOf(GameController* gc, GameController_Binding_t* binding);
+void GC_close(GameController* gc);
+bool GC_open(GameController* gc, int sdl_which, int index);
+void GC_initBindings(GameController* gc);
+int  GC_getID(GameController* gc);
+void* GC_getControllerDevice(GameController* gc);
+void* GC_getHaptic(GameController* gc);
+bool GC_isActive(GameController* gc);
+void GC_addRumble(GameController* gc, int pattern, Uint16 smallMagnitude, Uint16 largeMagnitude, Uint32 length, Uint32 srcEntityUid);
+GameController_HapticEffect* GC_doRumble(GameController* gc, GameController_Rumble* r);
+GameController_HapticEffect* GC_handleRumble(GameController* gc);
+void GC_stopRumble(GameController* gc);
+void GC_reinitHaptic(GameController* gc);
+void GC_handleAnalog(GameController* gc, int player);
+int  GC_getRightXMove(GameController* gc, int player);
+int  GC_getRightYMove(GameController* gc, int player);
+int  GC_getLeftTrigger(GameController* gc);
+int  GC_getRightTrigger(GameController* gc);
+int  GC_getRawLeftXMove(GameController* gc, int player);
+int  GC_getRawLeftYMove(GameController* gc, int player);
+int  GC_getRawRightXMove(GameController* gc, int player);
+int  GC_getRawRightYMove(GameController* gc, int player);
+int  GC_getRawLeftTrigger(GameController* gc);
+int  GC_getRawRightTrigger(GameController* gc);
+float GC_getLeftXPercent(GameController* gc, int player);
+float GC_getLeftYPercent(GameController* gc, int player);
+float GC_getRightXPercent(GameController* gc, int player);
+float GC_getRightYPercent(GameController* gc, int player);
+float GC_getLeftXPercentForPlayerMovement(GameController* gc, int player);
+float GC_getLeftYPercentForPlayerMovement(GameController* gc, int player);
+float GC_getLeftTriggerPercent(GameController* gc);
+float GC_getRightTriggerPercent(GameController* gc);
+int  GC_maxLeftXMove(GameController* gc, int player);
+int  GC_maxLeftYMove(GameController* gc, int player);
+int  GC_maxRightXMove(GameController* gc, int player);
+int  GC_maxRightYMove(GameController* gc, int player);
+int  GC_maxLeftTrigger(GameController* gc);
+int  GC_maxRightTrigger(GameController* gc);
+
+// ---------------------------------------------------------------------------
+// Inputs_VirtualMouse
+// ---------------------------------------------------------------------------
+typedef struct Inputs_VirtualMouse
+{
+	Sint32 xrel;
+	Sint32 yrel;
+	Sint32 ox;
+	Sint32 oy;
+	Sint32 x;
+	Sint32 y;
+	real_t floatxrel;
+	real_t floatyrel;
+	real_t floatx;
+	real_t floaty;
+	real_t floatox;
+	real_t floatoy;
+	Uint32 mouseLeftHeldTicks;
+	bool mouseLeftHeld;
+	Uint32 mouseRightHeldTicks;
+	bool mouseRightHeld;
+	bool draw_cursor;
+	bool moved;
+	bool lastMovementFromController;
+	real_t mouseAnimationPercent;
+} Inputs_VirtualMouse;
+
+void IVM_warpMouseInCamera(Inputs_VirtualMouse* vm, const view_t* camera, Sint32 newx, Sint32 newy);
+void IVM_warpMouseInScreen(Inputs_VirtualMouse* vm, void* window, Sint32 newx, Sint32 newy);
+
+// ---------------------------------------------------------------------------
+// Inputs_UIStatus
+// ---------------------------------------------------------------------------
+typedef struct Inputs_UIStatus
+{
+	int selectedItemFromHotbar;
+	Uint32 selectedItemFromChest;
+	Item* selectedItem;
+	bool toggleclick;
+	bool itemMenuOpen;
+	bool itemMenuFromHotbar;
+	int itemMenuOffsetDetectionY;
+	int itemMenuX;
+	int itemMenuY;
+	int itemMenuSelected;
+	Uint32 itemMenuItem;
+} Inputs_UIStatus;
+
+// ---------------------------------------------------------------------------
+// Inputs
+// ---------------------------------------------------------------------------
+enum Inputs_MouseInputs
+{
+	IMO_OX,
+	IMO_OY,
+	IMO_X,
+	IMO_Y,
+	IMO_XREL,
+	IMO_YREL,
+	IMO_ANALOGUE_OX,
+	IMO_ANALOGUE_OY,
+	IMO_ANALOGUE_X,
+	IMO_ANALOGUE_Y,
+	IMO_ANALOGUE_XREL,
+	IMO_ANALOGUE_YREL
+};
+
+enum Inputs_MouseWarpFlags
+{
+	IMWF_UNSET_RELATIVE_MOUSE = 1,
+	IMWF_SET_RELATIVE_MOUSE = 2,
+	IMWF_SET_MOUSE = 4,
+	IMWF_SET_CONTROLLER = 8
+};
+
+extern const Uint32 HAPTIC_SFX_BOULDER_BOUNCE_VOL;
+extern const Uint32 HAPTIC_SFX_BOULDER_ROLL_LOW_VOL;
+extern const Uint32 HAPTIC_SFX_BOULDER_ROLL_HIGH_VOL;
+extern const Uint32 HAPTIC_SFX_BOULDER_LAUNCH_VOL;
+
+typedef struct Inputs
+{
+	int playerControllerIds[MAXPLAYERS];
+	int playerUsingKeyboardControl;
+	Inputs_VirtualMouse vmouse[MAXPLAYERS];
+	Inputs_UIStatus uiStatus[MAXPLAYERS];
+} Inputs;
+
+extern Inputs inputs;
+
+void    inputs_setPlayerIDAllowedKeyboard(Inputs* in, int player);
+int     inputs_getPlayerIDAllowedKeyboard(Inputs* in);
+bool    inputs_bPlayerUsingKeyboardControl(const Inputs* in, int player);
+void    inputs_controllerHandleMouse(Inputs* in, int player);
+bool    inputs_bControllerInputPressed(const Inputs* in, int player, unsigned controllerImpulse);
+bool    inputs_bControllerInputHeld(Inputs* in, int player, unsigned controllerImpulse);
+bool    inputs_bControllerRawInputPressed(const Inputs* in, int player, unsigned button);
+bool    inputs_bControllerRawInputReleased(const Inputs* in, int player, unsigned button);
+void    inputs_controllerClearInput(Inputs* in, int player, unsigned controllerImpulse);
+void    inputs_controllerClearRawInput(Inputs* in, int player, unsigned button);
+void    inputs_controllerClearRawInputRelease(Inputs* in, int player, unsigned button);
+bool    inputs_bMouseLeft(const Inputs* in, int player);
+bool    inputs_bMouseHeldLeft(const Inputs* in, int player);
+bool    inputs_bMouseRight(const Inputs* in, int player);
+bool    inputs_bMouseHeldRight(const Inputs* in, int player);
+void    inputs_mouseClearLeft(Inputs* in, int player);
+void    inputs_mouseClearRight(Inputs* in, int player);
+void    inputs_removeControllerWithDeviceID(Inputs* in, int id);
+Inputs_VirtualMouse* inputs_getVirtualMouse(Inputs* in, int player);
+Inputs_UIStatus*     inputs_getUIInteraction(Inputs* in, int player);
+Sint32 inputs_getMouse(const Inputs* in, int player, int input);
+real_t inputs_getMouseFloat(const Inputs* in, int player, int input);
+void   inputs_setMouse(Inputs* in, int player, int input, Sint32 value);
+void   inputs_hideMouseCursors(Inputs* in);
+void   inputs_warpMouse(Inputs* in, int player, Sint32 x, Sint32 y, Uint32 flags);
+int    inputs_getControllerID(const Inputs* in, int player);
+struct GameController* inputs_getController(const Inputs* in, int player);
+bool   inputs_hasController(const Inputs* in, int player);
+void   inputs_setControllerID(Inputs* in, int player, int id);
+bool   inputs_bPlayerIsControllable(const Inputs* in, int player);
+void   inputs_updateAllMouse(Inputs* in);
+void   inputs_updateAllOMouse(Inputs* in);
+void   inputs_updateAllRelMouse(Inputs* in);
+void   inputs_rumble(Inputs* in, int player, int pattern, Uint16 smallMagnitude, Uint16 largeMagnitude, Uint32 length, Uint32 srcEntityUid);
+void   inputs_rumbleStop(Inputs* in, int player);
+void   inputs_addRumbleForPlayerHPLoss(Inputs* in, int player, Sint32 damageAmount);
+void   inputs_addRumbleForHapticType(Inputs* in, int player, Uint32 hapticType, Uint32 uid);
+void   inputs_addRumbleRemotePlayer(Inputs* in, int player, Uint32 hapticType, Uint32 uid);
+SDL_Rect inputs_getGlyphRectForInput(const Inputs* in, int player, bool pressed, unsigned keyboardImpulse, unsigned controllerImpulse);
+
+void initGameControllers(void);
+
+// ---------------------------------------------------------------------------
+// Player enums
+// ---------------------------------------------------------------------------
+enum Player_SplitScreenTypes
+{
+	PST_SPLITSCREEN_DEFAULT,
+	PST_SPLITSCREEN_VERTICAL
+};
+
+enum Player_PanelJustify_t
+{
+	PPJ_LEFT,
+	PPJ_RIGHT
+};
+
+enum Player_GUIModules
+{
+	PGM_MODULE_NONE,
+	PGM_MODULE_INVENTORY,
+	PGM_MODULE_SHOP,
+	PGM_MODULE_CHEST,
+	PGM_MODULE_REMOVECURSE,
+	PGM_MODULE_IDENTIFY,
+	PGM_MODULE_TINKERING,
+	PGM_MODULE_ALCHEMY,
+	PGM_MODULE_FEATHER,
+	PGM_MODULE_FOLLOWERMENU,
+	PGM_MODULE_CHARACTERSHEET,
+	PGM_MODULE_SKILLS_LIST,
+	PGM_MODULE_BOOK_VIEW,
+	PGM_MODULE_HOTBAR,
+	PGM_MODULE_SPELLS,
+	PGM_MODULE_STATUS_EFFECTS,
+	PGM_MODULE_LOG,
+	PGM_MODULE_MAP,
+	PGM_MODULE_SIGN_VIEW,
+	PGM_MODULE_ITEMEFFECTGUI,
+	PGM_MODULE_PORTRAIT,
+	PGM_MODULE_ASSISTSHRINE,
+	PGM_MODULE_MAILBOX
+};
+
+enum Player_GamepadDropdownTypes
+{
+	PGDT_GAMEPAD_DROPDOWN_DISABLE,
+	PGDT_GAMEPAD_DROPDOWN_FULL,
+	PGDT_GAMEPAD_DROPDOWN_COMPACT
+};
+
+// ---------------------------------------------------------------------------
+// Player opaque struct and free functions
+// ---------------------------------------------------------------------------
+typedef struct Player Player;
+
+Player* player_new(int playernum, bool local_host);
+void    player_free(Player* p);
+void    player_init(Player* p);
+void    player_cleanUpOnEntityRemoval(Player* p);
+const char* player_getAccountName(const Player* p);
+view_t* player_camera(const Player* p);
+int     player_camera_x1(const Player* p);
+int     player_camera_x2(const Player* p);
+int     player_camera_y1(const Player* p);
+int     player_camera_y2(const Player* p);
+int     player_camera_width(const Player* p);
+int     player_camera_height(const Player* p);
+int     player_camera_virtualx1(const Player* p);
+int     player_camera_virtualx2(const Player* p);
+int     player_camera_virtualy1(const Player* p);
+int     player_camera_virtualy2(const Player* p);
+int     player_camera_virtualWidth(const Player* p);
+int     player_camera_virtualHeight(const Player* p);
+int     player_camera_midx(const Player* p);
+int     player_camera_midy(const Player* p);
+bool    player_isLocalPlayer(const Player* p);
+bool    player_isLocalPlayerAlive(const Player* p);
+bool    player_bUseCompactGUIWidth(const Player* p);
+bool    player_bUseCompactGUIHeight(const Player* p);
+bool    player_bAlignGUINextToInventoryCompact(const Player* p);
+bool    player_usingCommand(const Player* p);
+void    player_clearGUIPointers(Player* p);
+Entity* player_getPlayerInteractEntity(int playernum);
+void    player_openStatusScreen(Player* p, int whichGUIMode, int whichInventoryMode, int whichModule);
+void    player_closeAllGUIs(Player* p, int shootmodeAction, int whatToClose);
+
+/* Magic */
+void    player_magic_flashNoMana(Player* p);
+void    player_magic_clearSelectedSpells(Player* p);
+void    player_magic_equipSpell(Player* p, spell_t* spell);
+void    player_magic_setQuickCastSpellFromInventory(Player* p, Item* item);
+void    player_magic_setQuickCastTomeFromInventory(Player* p, Item* item);
+bool    player_magic_doQuickCastSpell(Player* p);
+void    player_magic_resetQuickCastSpell(Player* p);
+void    player_magic_resetQuickCastTome(Player* p);
+Uint32  player_magic_quickCastTome(Player* p);
+bool    player_magic_doQuickCastTome(Player* p);
+spell_t* player_magic_selectedSpell(const Player* p);
+spell_t* player_magic_quickCastSpell(const Player* p);
+
+/* Movement */
+bool    player_movement_handleQuickTurn(Player* p, bool useRefreshRateDelta);
+void    player_movement_startQuickTurn(Player* p);
+bool    player_movement_isPlayerSwimming(Player* p);
+void    player_movement_handlePlayerCameraUpdate(Player* p, bool useRefreshRateDelta);
+void    player_movement_handlePlayerCameraBobbing(Player* p, bool useRefreshRateDelta);
+void    player_movement_handlePlayerMovement(Player* p, bool useRefreshRateDelta);
+real_t  player_movement_getMaximumSpeed(Player* p);
+real_t  player_movement_getWeightRatio(Player* p, int weight, Sint32 STR);
+int     player_movement_getCharacterWeight(Player* p);
+int     player_movement_getCharacterEquippedWeight(Player* p);
+int     player_movement_getCharacterModifiedWeight(Player* p, int* customWeight);
+real_t  player_movement_getSpeedFactor(Player* p, real_t weightratio, Sint32 DEX);
+real_t  player_movement_getCurrentMovementSpeed(Player* p);
+void    player_movement_handlePlayerCameraPosition(Player* p, bool useRefreshRateDelta);
+void    player_movement_reset(Player* p);
+
+/* Ghost */
+bool    player_ghost_handleQuickTurn(Player* p, bool useRefreshRateDelta);
+void    player_ghost_startQuickTurn(Player* p);
+void    player_ghost_handleGhostCameraUpdate(Player* p, bool useRefreshRateDelta);
+void    player_ghost_handleGhostCameraBobbing(Player* p, bool useRefreshRateDelta);
+void    player_ghost_handleGhostMovement(Player* p, bool useRefreshRateDelta);
+void    player_ghost_handleActions(Player* p);
+void    player_ghost_handleAttack(Player* p);
+bool    player_ghost_isSpiritGhost(Player* p);
+bool    player_ghost_isActive(Player* p);
+void    player_ghost_setActive(Player* p, bool active);
+void    player_ghost_initTeleportLocations(Player* p, int x, int y);
+void    player_ghost_initStartRoomLocation(Player* p, int x, int y);
+bool    player_ghost_isControllable(Player* p);
+Entity* player_ghost_spawnGhost(Player* p);
+Entity* player_ghost_respawn(Player* p);
+void    player_ghost_pauseMenuSpectate(int player);
+void    player_ghost_pauseMenuSpawnGhost(int player);
+bool    player_ghost_gameoverOnDismiss(int player);
+bool    player_ghost_gamemodeAllowsGhosts(void);
+void    player_ghost_reset(Player* p);
+bool    player_ghost_allowedInteractEntity(Player* p, Entity* entity);
+int     player_ghost_getSpriteForPlayer(int player);
+void    player_ghost_createBounceAnimate(Player* p);
+
+/* MessageZone */
+#define PLAYER_MESSAGE_PREFADE_TIME 3600
+#define PLAYER_MESSAGE_FADE_RATE 10
+#define PLAYER_ADD_MESSAGE_BUFFER_LENGTH 256
+
+void    player_messageZone_startMessages(void);
+void    player_messageZone_addMessage(Player* p, Uint32 color, const char* content);
+void    player_messageZone_updateMessages(Player* p);
+void    player_messageZone_drawMessages(Player* p);
+void    player_messageZone_deleteAllNotificationMessages(Player* p);
+int     player_messageZone_getMaxTotalLines(Player* p);
+void    player_messageZone_createChatbox(Player* p);
+void    player_messageZone_processChatbox(Player* p);
+void    player_messageZone_processLogFrame(Player* p);
+int     player_messageZone_fontSize(Player* p);
+
+/* WorldUI */
+void    player_worldUI_reset(Player* p);
+void    player_worldUI_setTooltipActive(Player* p, Entity* tooltip);
+void    player_worldUI_setTooltipDisabled(Player* p, Entity* tooltip);
+bool    player_worldUI_bTooltipActiveForPlayer(Player* p, Entity* tooltip);
+void    player_worldUI_enable(Player* p);
+void    player_worldUI_disable(Player* p);
+bool    player_worldUI_isEnabled(const Player* p);
+void    player_worldUI_handleTooltips(void);
+real_t  player_worldUI_tooltipInRange(Player* p, Entity* tooltip);
+void    player_worldUI_cycleToNextTooltip(Player* p);
+void    player_worldUI_cycleToPreviousTooltip(Player* p);
+
+/* PaperDoll */
+void    player_paperDoll_initSlots(Player* p);
+void    player_paperDoll_clear(Player* p);
+void    player_paperDoll_drawSlots(Player* p);
+void    player_paperDoll_updateSlots(Player* p);
+int     player_paperDoll_getSlotForItem(const Player* p, const Item* item);
+bool    player_paperDoll_isItemOnDoll(const Player* p, const Item* item);
+int     player_paperDoll_paperDollSlotFromCoordinates(Player* p, int x, int y);
+void    player_paperDoll_getCoordinatesFromSlotType(Player* p, int slot, int* outx, int* outy);
+void    player_paperDoll_selectPaperDollCoordinatesFromSlotType(Player* p, int slot);
+void    player_paperDoll_warpMouseToMostRecentReturnedInventoryItem(Player* p);
+void    player_paperDoll_resetPortrait(Player* p);
+
+/* Hotbar */
+void    player_hotbar_clear(Player* p);
+void    player_hotbar_selectHotbarSlot(Player* p, int slot);
+void    player_hotbar_initFaceButtonHotbar(Player* p);
+int     player_hotbar_getFaceMenuGroupForSlot(Player* p, int hotbarSlot);
+void    player_hotbar_processHotbar(Player* p);
+void    player_hotbar_updateHotbar(Player* p);
+Frame*  player_hotbar_getHotbarSlotFrame(Player* p, int hotbarSlot);
+bool    player_hotbar_warpMouseToHotbar(Player* p, int hotbarSlot, Uint32 flags);
+void    player_hotbar_updateSelectedSlotAnimation(Player* p, int destx, int desty, int width, int height, bool usingMouse);
+void    player_hotbar_updateCursor(Player* p);
+
+/* Minimap */
+void    player_minimap_processMapFrame(Player* p);
+
+/* Compendium */
+void    player_compendiumProgress_updateFloorEvents(Player* p);
+
+/* Mechanics */
+bool    player_mechanics_itemDegradeRoll(Player* p, Item* item, int skillID, int* checkInterval);
+void    player_mechanics_onItemDegrade(Player* p, Item* item);
+bool    player_mechanics_sustainedSpellLevelChance(Player* p, int skillID);
+int     player_mechanics_baseSpellLevelChance(Player* p, int skillID);
+int     player_mechanics_baseSpellMPSpent(Player* p, int skillID);
+void    player_mechanics_sustainedSpellIncrementMP(Player* p, int mpChange, int skillID);
+void    player_mechanics_baseSpellIncrementMP(Player* p, int mpChange, int skillID);
+void    player_mechanics_sustainedSpellClearMP(Player* p, int skillID);
+void    player_mechanics_baseSpellClearMP(Player* p, int skillID);
+bool    player_mechanics_updateSustainedSpellEvent(Player* p, int spellID, real_t value, real_t scaleValue, Entity* hitEntity);
+bool    player_mechanics_rollRngProc(Player* p, int rngType, int chance, int spellID);
+bool    player_mechanics_allowedRaiseBlockingAgainstEntity(Player* p, Entity* attacker);
+bool    player_mechanics_allowedRaiseStealthAgainstEntity(Player* p, Entity* attacker);
+int     player_mechanics_getWealthTier(Player* p);
+void    player_mechanics_ensembleMusicUpdateServer(void);
+void    player_mechanics_ensembleMusicUpdate(void);
+void    player_mechanics_incrementBreakableCounter(Player* p, int eventType, Entity* entity);
+int     player_mechanics_getBreakableCounterTier(Player* p);
+void    player_mechanics_updateBreakableCounterServer(Player* p);
+void    player_mechanics_updateBreakableCounterClient(Player* p, int eventType);
+
+/* Sound */
+void    player_soundMovement(void);
+void    player_soundActivate(void);
+void    player_soundCancel(void);
+void    player_soundModuleNavigation(void);
+void    player_soundStatusOpen(void);
+void    player_soundStatusClose(void);
+void    player_soundHotbarShootmodeMovement(void);
+
+/* HUD */
+void    player_hud_closeStatusFxWindow(Player* p);
+void    player_hud_reset(Player* p);
+int     player_hud_getActionIconForPlayer(const Player* p, int prompt, String* promptString);
+void    player_hud_processHUD(Player* p);
+void    player_hud_updateGameTimer(Player* p);
+void    player_hud_updateMinimapPrompts(Player* p);
+void    player_hud_updateXPBar(Player* p);
+void    player_hud_updateHPBar(Player* p);
+void    player_hud_updateMPBar(Player* p);
+void    player_hud_updateEnemyBar(Player* p, Frame* whichFrame);
+void    player_hud_updateEnemyBar2(Player* p, Frame* whichFrame, void* enemyHPDetails);
+void    player_hud_resetBars(Player* p);
+void    player_hud_updateFrameTooltip(Player* p, Item* item, int x, int y, int justify, Frame* parentFrame);
+void    player_hud_finalizeFrameTooltip(Player* p, Item* item, int x, int y, int justify, Frame* parentFrame);
+void    player_hud_updateStatusEffectTooltip(Player* p);
+void    player_hud_updateCursor(Player* p);
+void    player_hud_updateActionPrompts(Player* p);
+void    player_hud_updateWorldTooltipPrompts(Player* p);
+void    player_hud_updateUINavigation(Player* p);
+void    player_hud_updateMinotaurWarning(Player* p);
+void    player_hud_updateStatusEffectFocusedWindow(Player* p);
+void    player_hud_updateCursorAnimation(Player* p, int destx, int desty, int width, int height, bool usingMouse);
+void    player_hud_setCursorDisabled(Player* p, bool disabled);
+const char* player_hud_getCrosshairPath(Player* p);
+
+/* GUI */
+void    player_gui_activateModule(Player* p, int module);
+bool    player_gui_warpControllerToModule(Player* p, bool moveCursorInstantly);
+bool    player_gui_bActiveModuleUsesInventory(Player* p);
+bool    player_gui_bActiveModuleHasNoCursor(Player* p);
+void    player_gui_setHoveringOverModuleButton(Player* p, int moduleOfButton);
+void    player_gui_clearHoveringOverModuleButton(Player* p);
+int     player_gui_hoveringOverModuleButton(Player* p);
+bool    player_gui_handleCharacterSheetMovement(Player* p);
+bool    player_gui_handleInventoryMovement(Player* p);
+int     player_gui_handleModuleNavigation(Player* p, bool checkDestinationOnly, bool checkLeftNavigation);
+bool    player_gui_bModuleAccessibleWithMouse(Player* p, int moduleToAccess);
+bool    player_gui_isGameoverActive(Player* p);
+bool    player_gui_returnToPreviousActiveModule(Player* p);
+void    player_gui_closeDropdowns(Player* p);
+bool    player_gui_isDropdownActive(Player* p);
+
+/* Inventory */
+void    player_inventory_openInventory(Player* p);
+void    player_inventory_closeInventory(Player* p);
+void    player_inventory_setCompactView(Player* p, bool bCompact);
+void    player_inventory_resizeAndPositionInventoryElements(Player* p);
+bool    player_inventory_paperDollContextMenuActive(Player* p);
+void    player_inventory_updateInventoryMiscTooltip(Player* p);
+void    player_inventory_selectChestSlot(Player* p, int x, int y);
+bool    player_inventory_isItemFromChest(const Player* p, Item* item);
+bool    player_inventory_warpMouseToSelectedItem(Player* p, Item* snapToItem, Uint32 flags);
+bool    player_inventory_warpMouseToSelectedSpell(Player* p, Item* snapToItem, Uint32 flags);
+bool    player_inventory_warpMouseToSelectedChestSlot(Player* p, Item* snapToItem, Uint32 flags);
+bool    player_inventory_guiAllowDropItems(const Player* p, Item* itemToDrop);
+bool    player_inventory_guiAllowDefaultRightClick(const Player* p);
+Item*   player_inventory_hasKeyForWallLock(Player* p, Entity* entity);
+int     player_inventory_getKeyAmountForWallLock(Player* p, Entity* entity);
+void    player_inventory_processInventory(Player* p);
+void    player_inventory_updateInventory(Player* p);
+void    player_inventory_updateCursor(Player* p);
+void    player_inventory_updateItemContextMenuClickFrame(Player* p);
+void    player_inventory_updateInventoryItemTooltip(Player* p, Frame* parentFrame);
+void    player_inventory_updateSelectedItemAnimation(Player* p);
+void    player_inventory_updateItemContextMenu(Player* p);
+void    player_inventory_cycleInventoryTab(Player* p);
+void    player_inventory_activateItemContextMenuOption(Player* p, Item* item, int prompt);
+bool    player_inventory_moveItemToFreeInventorySlot(Player* p, Item* item);
+void    player_inventory_resetInventory(Player* p);
+void    player_inventory_updateSelectedSlotAnimation(Player* p, int destx, int desty, int width, int height, bool usingMouse);
+Frame*  player_inventory_getInventorySlotFrame(const Player* p, int x, int y);
+Frame*  player_inventory_getSpellSlotFrame(const Player* p, int x, int y);
+Frame*  player_inventory_getItemSlotFrame(const Player* p, Item* item, int x, int y);
+Frame*  player_inventory_getChestSlotFrame(const Player* p, int x, int y);
+int     player_inventory_getTotalSize(const Player* p);
+int     player_inventory_getSizeX(const Player* p);
+int     player_inventory_getSizeY(const Player* p);
+int     player_inventory_getSlotSize(const Player* p);
+int     player_inventory_getItemSpriteSize(const Player* p);
+void    player_inventory_setSizeY(Player* p, int size);
+void    player_inventory_selectSlot(Player* p, int x, int y);
+int     player_inventory_getSelectedSlotX(const Player* p);
+int     player_inventory_getSelectedSlotY(const Player* p);
+void    player_inventory_selectSpell(Player* p, int x, int y);
+int     player_inventory_getSelectedSpellX(const Player* p);
+int     player_inventory_getSelectedSpellY(const Player* p);
+int     player_inventory_getSelectedChestX(const Player* p);
+int     player_inventory_getSelectedChestY(const Player* p);
+bool    player_inventory_selectedSlotInPaperDoll(const Player* p);
+int     player_inventory_freeVisibleInventorySlots(const Player* p);
+bool    player_inventory_bItemInventoryHasFreeSlot(const Player* p);
+int     player_inventory_getPlayerItemInventoryX(const Player* p);
+int     player_inventory_getPlayerItemInventoryY(const Player* p);
+int     player_inventory_getPlayerBackpackBonusSizeY(const Player* p);
+
+/* Shop */
+void    player_shop_openShop(Player* p);
+void    player_shop_closeShop(Player* p);
+void    player_shop_updateShop(Player* p);
+bool    player_shop_isShopSelected(Player* p);
+void    player_shop_selectShopSlot(Player* p, int x, int y);
+int     player_shop_getSelectedShopX(const Player* p);
+int     player_shop_getSelectedShopY(const Player* p);
+Frame*  player_shop_getShopSlotFrame(Player* p, int x, int y);
+bool    player_shop_isItemFromShop(const Player* p, Item* item);
+void    player_shop_setItemDisplayNameAndPrice(Player* p, Item* item);
+bool    player_shop_isItemSelectedFromShop(const Player* p, Item* item);
+bool    player_shop_isItemSelectedToSellToShop(const Player* p, Item* item);
+bool    player_shop_warpMouseToSelectedShopItem(Player* p, Item* snapToItem, Uint32 flags);
+void    player_shop_clearItemDisplayed(Player* p);
+
+/* Book */
+void    player_book_updateBookGUI(Player* p);
+void    player_book_closeBookGUI(Player* p);
+void    player_book_createBookGUI(Player* p);
+void    player_book_openBook(Player* p, int index, Item* item);
+
+/* Sign */
+void    player_sign_updateSignGUI(Player* p);
+void    player_sign_closeSignGUI(Player* p);
+void    player_sign_createSignGUI(Player* p);
+void    player_sign_openSign(Player* p, const char* name, Uint32 uid);
+
+/* CharacterSheet */
+bool    player_charSheet_isSheetElementAllowedToNavigateTo(Player* p, int element);
+void    player_charSheet_selectElement(Player* p, int element, bool usingMouse, bool moveCursor);
+void    player_charSheet_createCharacterSheet(Player* p);
+void    player_charSheet_processCharacterSheet(Player* p);
+void    player_charSheet_updateGameTimer(Player* p);
+void    player_charSheet_updateStats(Player* p);
+void    player_charSheet_updateAttributes(Player* p);
+void    player_charSheet_updateCharacterInfo(Player* p);
+void    player_charSheet_loadCharacterSheetJSON(void);
+const char* player_charSheet_getHoverTextString(const char* key);
+void    player_charSheet_updateCharacterSheetTooltip(Player* p, int element, SDL_Rect pos, int tooltipJustify);
+
+/* SkillSheet */
+void    player_skillSheet_selectSkill(Player* p, int skill);
+void    player_skillSheet_createSkillSheet(Player* p);
+void    player_skillSheet_processSkillSheet(Player* p);
+void    player_skillSheet_closeSkillSheet(Player* p);
+void    player_skillSheet_openSkillSheet(Player* p);
+void    player_skillSheet_resetSkillDisplay(Player* p);
+void    player_skillSheet_loadSkillSheetJSON(void);
+const char* player_skillSheet_getSkillNameFromID(int skillID, bool shortName);
+
+/* Extern */
+extern Player* players[MAXPLAYERS];
+
+#endif /* __cplusplus */
+

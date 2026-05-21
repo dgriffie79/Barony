@@ -3,7 +3,7 @@
 #include <assert.h>
 
 #include "../main.h"
-#include "../draw.hpp"
+#include "../draw.h"
 #include "Text.hpp"
 #include "Font.hpp"
 #include "Frame.hpp"
@@ -425,7 +425,7 @@ void Text::dumpCacheInMainLoop()
 	}
 }
 
-#include "../net.hpp"
+#include "../net.h"
 #include "../interface/consolecommand.h"
 static ConsoleCommand size("/text_cache_size", "measure text cache",
     [](int argc, const char** argv){

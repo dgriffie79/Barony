@@ -17,7 +17,7 @@ See LICENSE for details.
 #include "prng.h"
 #include "items.h"
 #include "cJSON.h"
-#include "net.hpp"
+#include "net.h"
 #include "scores.hpp"
 #include "entity.h"
 #include "ui/Widget.hpp"

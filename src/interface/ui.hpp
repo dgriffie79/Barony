@@ -14,7 +14,7 @@
 #include "../main.h"
 #include "../game.h"
 #include "../files.h"
-#include "../draw.hpp"
+#include "../draw.h"
 #include "interface.hpp"
 #include "../colors.hpp"
 #include "../ui/Frame.hpp"

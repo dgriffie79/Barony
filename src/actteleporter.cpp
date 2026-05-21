@@ -15,9 +15,9 @@
 #include "engine/audio/sound.hpp"
 #include "entity.h"
 #include "scores.hpp"
-#include "net.hpp"
+#include "net.h"
 #include "collision.h"
-#include "player.hpp"
+#include "player.h"
 
 /*-------------------------------------------------------------------------------
 

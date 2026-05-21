@@ -15,7 +15,7 @@
 #include "interface/interface.hpp"
 #include "book.hpp"
 #include "cJSON.h"
-#include "player.hpp"
+#include "player.h"
 #include "ui/Text.hpp"
 #include "ui/Field.hpp"
 #include "mod_tools.hpp"

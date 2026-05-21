@@ -14,7 +14,7 @@ BaronyRNG map_sequence_rng;
 
 #ifdef __cplusplus
 #include "interface/consolecommand.h"
-#include "net.hpp"
+#include "net.h"
 static BaronyRNG test_rng;
 
 static ConsoleCommand test_rng_seed(

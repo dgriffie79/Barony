@@ -6,7 +6,7 @@
 
 #include "../main.h"
 #include "../game.h"
-#include "../draw.hpp"
+#include "../draw.h"
 #include "../prng.h"
 #include "../mod_tools.hpp"
 

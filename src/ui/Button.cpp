@@ -1,8 +1,8 @@
 // Button.cpp
 
 #include "../main.h"
-#include "../draw.hpp"
-#include "../player.hpp"
+#include "../draw.h"
+#include "../player.h"
 #include "Frame.hpp"
 #include "Button.hpp"
 #include "Image.hpp"

@@ -913,7 +913,7 @@ void sizeWindowDecorations(Frame& frame, SDL_Rect r) {
 }
 
 #include "consolecommand.h"
-#include "../net.hpp"
+#include "../net.h"
 
 static ConsoleCommand ccmd_toastTestAchievement("/toast_test_achievement", "",
 	[](int argc, const char** argv){

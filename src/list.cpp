@@ -13,7 +13,7 @@
 #include "entity.h"
 #include "items.h"
 #include "interface/interface.hpp"
-#include "player.hpp"
+#include "player.h"
 /*-------------------------------------------------------------------------------
 
 	list_FreeAll

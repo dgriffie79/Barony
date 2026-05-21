@@ -13,12 +13,12 @@ See LICENSE for details.
 #include "menu.h"
 #include "game.h"
 #include "lobbies.h"
-#include "draw.hpp"
-#include "player.hpp"
+#include "draw.h"
+#include "player.h"
 #include "scores.hpp"
 #include "interface/interface.hpp"
 #include "colors.hpp"
-#include "net.hpp"
+#include "net.h"
 
 LobbyHandler_t LobbyHandler;
 

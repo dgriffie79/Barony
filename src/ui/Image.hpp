@@ -3,7 +3,7 @@
 #pragma once
 
 #include "../main.h"
-#include "../draw.hpp"
+#include "../draw.h"
 #include "../shader.h"
 
 //! An Image is a type of asset that contains all the raw data for a unique 2D image

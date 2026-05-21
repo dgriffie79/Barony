@@ -13,11 +13,11 @@
 #include "game.h"
 #include "stat.h"
 #include "entity.h"
-#include "monster.hpp"
+#include "monster.h"
 #include "collision.h"
 #include "paths.h"
 #include "items.h"
-#include "net.hpp"
+#include "net.h"
 #include "magic/magic.hpp"
 #include "mod_tools.hpp"
 

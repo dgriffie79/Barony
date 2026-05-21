@@ -16,7 +16,7 @@
 #include <sys/stat.h>
 #include <sstream>
 
-#include "draw.hpp"
+#include "draw.h"
 #include "files.h"
 #include "engine/audio/sound.hpp"
 #include "prng.h"
@@ -24,9 +24,9 @@
 #include "init.h"
 #include "cJSON.h"
 #include "light.h"
-#include "net.hpp"
+#include "net.h"
 #include "menu.h"
-#include "player.hpp"
+#include "player.h"
 #include "items.h"
 #include "cppfuncs.hpp"
 #include "ui/Text.hpp"

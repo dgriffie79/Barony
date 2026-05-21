@@ -16,8 +16,8 @@
 #include "interface/interface.hpp"
 #include "items.h"
 #include "engine/audio/sound.hpp"
-#include "net.hpp"
-#include "player.hpp"
+#include "net.h"
+#include "player.h"
 #include "prng.h"
 #include "mod_tools.hpp"
 

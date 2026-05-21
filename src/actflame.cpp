@@ -14,7 +14,7 @@
 #include "collision.h"
 #include "entity.h"
 #include "prng.h"
-#include "player.hpp"
+#include "player.h"
 
 /*-------------------------------------------------------------------------------
 

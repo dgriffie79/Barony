@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "draw.hpp"
+#include "draw.h"
 
 /*
  * SDL_Color colors.

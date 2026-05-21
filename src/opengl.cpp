@@ -10,7 +10,7 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.h"
-#include "draw.hpp"
+#include "draw.h"
 #include "entity.h"
 #include "files.h"
 #include "items.h"
@@ -19,7 +19,7 @@
 #include "interface/interface.hpp"
 #include "interface/consolecommand.h"
 #include "mod_tools.hpp"
-#include "player.hpp"
+#include "player.h"
 #include "ui/MainMenu.hpp"
 #include "init.h"
 #include "ui/Image.hpp"

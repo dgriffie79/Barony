@@ -13,7 +13,7 @@
 #include "light.h"
 
 #ifdef __cplusplus
-#include "draw.hpp"
+#include "draw.h"
 
 /*-------------------------------------------------------------------------------
 

@@ -106,7 +106,7 @@ void Font::dumpCache() {
 	hashed_fonts.clear();
 }
 
-#include "../net.hpp"
+#include "../net.h"
 #include "../interface/consolecommand.h"
 static ConsoleCommand size("/fonts_cache_size", "measure font cache",
     [](int argc, const char** argv){

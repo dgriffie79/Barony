@@ -10,13 +10,13 @@
 -------------------------------------------------------------------------------*/
 
 #include "../main.h"
-#include "../draw.hpp"
+#include "../draw.h"
 #include "../game.h"
 #include "../stat.h"
 #include "../items.h"
 #include "../engine/audio/sound.hpp"
 #include "../menu.h"
-#include "../player.hpp"
+#include "../player.h"
 #include "interface.hpp"
 #include "../collision.h"
 #include "../mod_tools.hpp"
