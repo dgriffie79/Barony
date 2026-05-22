@@ -321,7 +321,7 @@ void initGoblin(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// right leg
 	const int rleg_sprite = my->sprite == 1035 ? 1037 :
@@ -342,7 +342,7 @@ void initGoblin(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// left leg
 	const int lleg_sprite = my->sprite == 1035 ? 1036 :
@@ -363,7 +363,7 @@ void initGoblin(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// right arm
 	entity = newEntity(my->sprite == 1035 ? 1033 : 178, 1, map.entities, nullptr); //Limb entity.
@@ -382,7 +382,7 @@ void initGoblin(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// left arm
 	entity = newEntity(my->sprite == 1035 ? 1031 : 176, 1, map.entities, nullptr); //Limb entity.
@@ -401,7 +401,7 @@ void initGoblin(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// world weapon
 	entity = newEntity(-1, 1, map.entities, nullptr); //Limb entity.
@@ -422,7 +422,7 @@ void initGoblin(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// shield
 	entity = newEntity(-1, 1, map.entities, nullptr); //Limb entity.
@@ -442,7 +442,7 @@ void initGoblin(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// cloak
 	entity = newEntity(-1, 1, map.entities, nullptr); //Limb entity.
@@ -462,7 +462,7 @@ void initGoblin(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// helmet
 	entity = newEntity(-1, 1, map.entities, nullptr); //Limb entity.
@@ -485,7 +485,7 @@ void initGoblin(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// mask
 	entity = newEntity(-1, 1, map.entities, nullptr); //Limb entity.
@@ -505,7 +505,7 @@ void initGoblin(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	if ( multiplayer == CLIENT || MONSTER_INIT )
 	{

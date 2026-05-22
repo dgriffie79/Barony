@@ -14732,9 +14732,9 @@ bool Entity::isUntargetableBat(real_t* outDist) const
 {
 	if ( behavior == &actMonster && getMonsterTypeFromSprite() == BAT_SMALL )
 	{
-		if ( bodyparts.size() >= 1 )
+		if ( getBodyparts().size() >= 1 )
 		{
-			auto& body = bodyparts[0];
+			auto& body = getBodyparts()[0];
 			if ( body->z < -7.5 )
 			{
 				if ( outDist )

@@ -3833,7 +3833,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 								}
 								else
 								{
-									my->collisionIgnoreTargets.insert(hit.entity->getUID());
+									my->getCollisionTargets().insert(hit.entity->getUID());
 								}
 							}
 							else if ( !(my->actmagicIsOrbiting == 2) )
@@ -3853,7 +3853,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 
 							if ( spell->ID == SPELL_SCEPTER_BLAST || spell->ID == SPELL_BLOOD_WAVES || spell->ID == SPELL_HOLY_BEAM )
 							{
-								my->collisionIgnoreTargets.insert(hit.entity->getUID());
+								my->getCollisionTargets().insert(hit.entity->getUID());
 								particleTimerEmitterHitEntities[my->getUID()][my->getUID()].hits++;
 								if ( particleTimerEmitterHitEntities[my->getUID()][my->getUID()].hits == 2 )
 								{
@@ -3970,7 +3970,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 								}
 								else
 								{
-									my->collisionIgnoreTargets.insert(hit.entity->getUID());
+									my->getCollisionTargets().insert(hit.entity->getUID());
 								}
 							}
 							else if ( !(my->actmagicIsOrbiting == 2) )
@@ -4002,7 +4002,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 								}
 								else
 								{
-									my->collisionIgnoreTargets.insert(hit.entity->getUID());
+									my->getCollisionTargets().insert(hit.entity->getUID());
 								}
 							}
 							else if ( !(my->actmagicIsOrbiting == 2) )
@@ -4034,7 +4034,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 								}
 								else
 								{
-									my->collisionIgnoreTargets.insert(hit.entity->getUID());
+									my->getCollisionTargets().insert(hit.entity->getUID());
 								}
 							}
 							else if ( !(my->actmagicIsOrbiting == 2) )
@@ -4066,7 +4066,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 								}
 								else
 								{
-									my->collisionIgnoreTargets.insert(hit.entity->getUID());
+									my->getCollisionTargets().insert(hit.entity->getUID());
 								}
 							}
 							else if ( !(my->actmagicIsOrbiting == 2) )

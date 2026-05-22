@@ -637,7 +637,7 @@ bool Entity::collisionProjectileMiss(Entity* parent, Entity* projectile)
 	}
 	if ( !(projectile->behavior == &actMonster || projectile->behavior == &actPlayer) )
 	{
-		if ( projectile->collisionIgnoreTargets.find(getUID()) != projectile->collisionIgnoreTargets.end() )
+		if ( projectile->getCollisionTargets().find(getUID()) != projectile->getCollisionTargets().end() )
 		{
 			return true;
 		}
@@ -723,7 +723,7 @@ bool Entity::collisionProjectileMiss(Entity* parent, Entity* projectile)
 				{
 					if ( parent->checkFriend(this) && parent->friendlyFireProtection(this) )
 					{
-						projectile->collisionIgnoreTargets.insert(getUID());
+						projectile->getCollisionTargets().insert(getUID());
 						return true;
 					}
 				}
@@ -755,9 +755,9 @@ bool Entity::collisionProjectileMiss(Entity* parent, Entity* projectile)
 					steamStatisticUpdateClient(this->skill[2], STEAM_STAT_DOESNT_COUNT, STEAM_STAT_INT, 1);
 				}
 
-				if ( projectile->collisionIgnoreTargets.find(getUID()) == projectile->collisionIgnoreTargets.end() )
+				if ( projectile->getCollisionTargets().find(getUID()) == projectile->getCollisionTargets().end() )
 				{
-					projectile->collisionIgnoreTargets.insert(getUID());
+					projectile->getCollisionTargets().insert(getUID());
 					if ( (parent && parent->behavior == &actPlayer) || (parent && parent->behavior == &actMonster && parent->monsterAllyGetPlayerLeader())
 						|| this->behavior == &actPlayer || this->monsterAllyGetPlayerLeader()
 						|| achievementObserver.checkUidIsFromPlayer(myStats->leader_uid) >= 0 )
@@ -833,7 +833,7 @@ bool Entity::collisionProjectileMiss(Entity* parent, Entity* projectile)
 				bool miss = false;
 				if ( !monsterIsTargetable(true) )
 				{
-					projectile->collisionIgnoreTargets.insert(getUID());
+					projectile->getCollisionTargets().insert(getUID());
 					return true;
 				}
 				if ( myStats->type == BAT_SMALL && monsterSpecialState == BAT_REST )
@@ -938,9 +938,9 @@ bool Entity::collisionProjectileMiss(Entity* parent, Entity* projectile)
 
 				if ( miss )
 				{
-					if ( projectile->collisionIgnoreTargets.find(getUID()) == projectile->collisionIgnoreTargets.end() )
+					if ( projectile->getCollisionTargets().find(getUID()) == projectile->getCollisionTargets().end() )
 					{
-						projectile->collisionIgnoreTargets.insert(getUID());
+						projectile->getCollisionTargets().insert(getUID());
 						if ( (parent && parent->behavior == &actPlayer) 
 							|| (parent && parent->behavior == &actMonster && parent->monsterAllyGetPlayerLeader())
 							|| (behavior == &actPlayer)
@@ -1357,7 +1357,7 @@ int barony_clear(real_t tx, real_t ty, Entity* my)
 			if ( projectileAttack && my->behavior == &actMagicMissile 
 				&& (my->sprite == 2191 || my->sprite == 2364 || my->sprite == 2407) ) // scepter blast/blood waves/holy beam phases entities
 			{
-				if ( my->collisionIgnoreTargets.find(entity->getUID()) != my->collisionIgnoreTargets.end() )
+				if ( my->getCollisionTargets().find(entity->getUID()) != my->getCollisionTargets().end() )
 				{
 					continue;
 				}
@@ -1459,9 +1459,9 @@ int barony_clear(real_t tx, real_t ty, Entity* my)
 			}
 			else if ( multiplayer != CLIENT )
 			{
-				if ( entityDodgeChance || (projectileAttack && my->collisionIgnoreTargets.size()) )
+				if ( entityDodgeChance || (projectileAttack && my->getCollisionTargets().size()) )
 				{
-					if ( my->collisionIgnoreTargets.find(entity->getUID()) != my->collisionIgnoreTargets.end() )
+					if ( my->getCollisionTargets().find(entity->getUID()) != my->getCollisionTargets().end() )
 					{
 						continue;
 					}

@@ -123,7 +123,7 @@ void initImp(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// right leg
 	entity = newEntity(292, 1, map.entities, nullptr); //Limb entity.
@@ -142,7 +142,7 @@ void initImp(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// left leg
 	entity = newEntity(291, 1, map.entities, nullptr); //Limb entity.
@@ -161,7 +161,7 @@ void initImp(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// right arm
 	entity = newEntity(294, 1, map.entities, nullptr); //Limb entity.
@@ -180,7 +180,7 @@ void initImp(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// left arm
 	entity = newEntity(293, 1, map.entities, nullptr); //Limb entity.
@@ -199,7 +199,7 @@ void initImp(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// right wing
 	entity = newEntity(310, 1, map.entities, nullptr); //Limb entity.
@@ -218,7 +218,7 @@ void initImp(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// left wing
 	entity = newEntity(309, 1, map.entities, nullptr); //Limb entity.
@@ -237,7 +237,7 @@ void initImp(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 }
 
 void actImpLimb(Entity* my)

@@ -135,6 +135,16 @@ Entity::~Entity()
 		delete static_cast<std::unordered_map<view_t*, Entity::Dither>*>(dithering);
 		dithering = nullptr;
 	}
+	if ( bodyparts )
+	{
+		delete static_cast<std::vector<Entity*>*>(bodyparts);
+		bodyparts = nullptr;
+	}
+	if ( collisionIgnoreTargets )
+	{
+		delete static_cast<std::set<Uint32>*>(collisionIgnoreTargets);
+		collisionIgnoreTargets = nullptr;
+	}
 	node_t* node;
 	//node_t *node2;
 	int i;
@@ -17213,7 +17223,7 @@ bool Entity::teleport(int tele_x, int tele_y)
     const float poofy = y + sinf(yaw) * 4.f;
     spawnPoof(poofx, poofy, 0, 1.0, true);
     bNeedsRenderPositionInit = true;
-    for (auto part : bodyparts) {
+    for (auto part : getBodyparts()) {
         part->bNeedsRenderPositionInit = true;
     }
     for (auto node = map.entities->first; node != nullptr; node = node->next) {
@@ -17543,13 +17553,13 @@ bool Entity::teleportAroundEntity(Entity* target, int dist, int effectType)
 							if ( effectType == SPELL_JUMP && (this == target) )
 							{
 								Entity* ohit = hit.entity;
-								if ( this->bodyparts.size() )
+								if ( this->getBodyparts().size() )
 								{
 									// check LOS
 									TileEntityList.updateEntity(*this); // important - lineTrace needs the TileEntityListUpdated.
 
 									Entity* tmpTarget = nullptr;
-									for ( auto limb : bodyparts )
+									for ( auto limb : getBodyparts() )
 									{
 										if ( limb->behavior == &actPlayerLimb )
 										{
@@ -31578,12 +31588,12 @@ void Entity::alertAlliesOnBeingHit(Entity* attacker, std::unordered_set<Entity*>
 						}
 
 						real_t tangent = atan2(entity->y - this->y, entity->x - this->x);
-						if ( buddystats->type == BAT_SMALL && entity->isUntargetableBat() && entity->bodyparts.size() > 0 && entity->monsterSpecialState == BAT_REST )
+						if ( buddystats->type == BAT_SMALL && entity->isUntargetableBat() && entity->getBodyparts().size() > 0 && entity->monsterSpecialState == BAT_REST )
 						{
-							real_t oldZ = entity->bodyparts[0]->z;
-							entity->bodyparts[0]->z = 0.0; // hack to make it linetraceable
+							real_t oldZ = entity->getBodyparts()[0]->z;
+							entity->getBodyparts()[0]->z = 0.0; // hack to make it linetraceable
 							lineTrace(this, this->x, this->y, tangent, 64.0, 0, false);
-							entity->bodyparts[0]->z = oldZ;
+							entity->getBodyparts()[0]->z = oldZ;
 						}
 						else
 						{

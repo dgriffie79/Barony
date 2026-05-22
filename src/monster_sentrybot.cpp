@@ -111,7 +111,7 @@ void initSentryBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// gear 1 left head
 	entity = newEntity(874, 1, map.entities, nullptr); //Limb entity.
@@ -132,7 +132,7 @@ void initSentryBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// gear 1 right head
 	entity = newEntity(874, 1, map.entities, nullptr); //Limb entity.
@@ -153,7 +153,7 @@ void initSentryBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// gear 1 left body
 	entity = newEntity(874, 1, map.entities, nullptr); //Limb entity.
@@ -173,7 +173,7 @@ void initSentryBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// gear 1 right body
 	entity = newEntity(874, 1, map.entities, nullptr); //Limb entity.
@@ -193,7 +193,7 @@ void initSentryBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// gear 2 middle
 	entity = newEntity(875, 1, map.entities, nullptr); //Limb entity.
@@ -216,7 +216,7 @@ void initSentryBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// loader
 	entity = newEntity(876, 1, map.entities, nullptr); //Limb entity.
@@ -237,7 +237,7 @@ void initSentryBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// world weapon
 	entity = newEntity(167, 1, map.entities, nullptr); //Limb entity.
@@ -261,7 +261,7 @@ void initSentryBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	if ( multiplayer == CLIENT || MONSTER_INIT )
 	{
@@ -338,7 +338,7 @@ void initGyroBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// rotor small
 	entity = newEntity(888, 1, map.entities, nullptr); //Limb entity.
@@ -358,7 +358,7 @@ void initGyroBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// bomb
 	entity = newEntity(-1, 1, map.entities, nullptr); //Limb entity.
@@ -379,7 +379,7 @@ void initGyroBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	if ( multiplayer == CLIENT || MONSTER_INIT )
 	{
@@ -1660,7 +1660,7 @@ void initDummyBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// body
 	entity = newEntity(890, 1, map.entities, nullptr); //Limb entity.
@@ -1680,7 +1680,7 @@ void initDummyBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// shield
 	entity = newEntity(891, 1, map.entities, nullptr); //Limb entity.
@@ -1700,7 +1700,7 @@ void initDummyBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// box
 	entity = newEntity(892, 1, map.entities, nullptr); //Limb entity.
@@ -1721,7 +1721,7 @@ void initDummyBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// lid
 	entity = newEntity(893, 1, map.entities, nullptr); //Limb entity.
@@ -1745,7 +1745,7 @@ void initDummyBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// crank
 	entity = newEntity(895, 1, map.entities, nullptr); //Limb entity.
@@ -1766,7 +1766,7 @@ void initDummyBot(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	if ( multiplayer == CLIENT || MONSTER_INIT )
 	{

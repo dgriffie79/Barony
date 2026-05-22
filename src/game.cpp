@@ -407,7 +407,7 @@ void TimerExperiments::renderCameras(view_t& camera, int player)
 	//	// adjust bodyparts for this interpolation too, ignore static HUD elements
 	//	playerBodypartOffsets[player].limb_newx = players[player]->entity->x - playerBodypartOffsets[player].entity_ox;
 	//	playerBodypartOffsets[player].limb_newy = players[player]->entity->y - playerBodypartOffsets[player].entity_oy;
-	//	for ( Entity *bodypart : players[player]->entity->bodyparts )
+	//	for ( Entity *bodypart : players[player]->entity->getBodyparts() )
 	//	{
 	//		if ( players[player]->isLocalPlayer() )
 	//		{
@@ -442,7 +442,7 @@ void TimerExperiments::postRenderRestore(view_t& camera, int player)
 	return;
 	/*players[player]->entity->x = playerBodypartOffsets[player].entity_ox;
 	players[player]->entity->y = playerBodypartOffsets[player].entity_oy;
-	for ( Entity *bodypart : players[player]->entity->bodyparts )
+	for ( Entity *bodypart : players[player]->entity->getBodyparts() )
 	{
 		if ( players[player]->isLocalPlayer() )
 		{
@@ -3386,7 +3386,7 @@ void gameLogic(void)
 											if ( entity->behavior == &actPlayer || entity->behavior == &actMonster
 												|| entity->behavior == &actDeathGhost )
 											{
-												for ( Entity *bodypart : entity->bodyparts )
+												for ( Entity *bodypart : entity->getBodyparts() )
 												{
 													bodypart->x += entity->x - ox;
 													bodypart->y += entity->y - oy;
@@ -3414,7 +3414,7 @@ void gameLogic(void)
 										if ( entity->behavior == &actPlayer || entity->behavior == &actMonster
 											|| entity->behavior == &actDeathGhost )
 										{
-											for (Entity *bodypart : entity->bodyparts)
+											for (Entity *bodypart : entity->getBodyparts())
 											{
 												bodypart->x += entity->x - ox;
 												bodypart->y += entity->y - oy;

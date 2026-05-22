@@ -130,7 +130,7 @@ void initLich(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// left arm
 	entity = newEntity(275, 1, map.entities, nullptr); //Limb entity.
@@ -149,7 +149,7 @@ void initLich(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// head
 	entity = newEntity(277, 1, map.entities, nullptr); //Limb entity.
@@ -169,7 +169,7 @@ void initLich(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 }
 
 void lichDie(Entity* my)

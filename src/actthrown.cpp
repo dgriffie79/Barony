@@ -2456,7 +2456,7 @@ void actThrown(Entity* my)
 			{
 				// become passable, go through creatures
 				//my->flags[NOCLIP_CREATURES] = true;
-				my->collisionIgnoreTargets.insert(hit.entity->getUID());
+				my->getCollisionTargets().insert(hit.entity->getUID());
 			}
 			else
 			{

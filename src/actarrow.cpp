@@ -521,7 +521,7 @@ void actArrow(Entity* my)
 						if ( hit.entity->getStats() || hit.entity->isDamageableCollider() )
 						{
 							ARROW_STUCK = 0;
-							my->collisionIgnoreTargets.insert(hit.entity->getUID());
+							my->getCollisionTargets().insert(hit.entity->getUID());
 						}
 					}
 				}

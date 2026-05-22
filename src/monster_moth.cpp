@@ -141,7 +141,7 @@ void initMoth(Entity* my, Stat* myStats)
 		node->element = entity;
 		node->deconstructor = &emptyDeconstructor;
 		node->size = sizeof(Entity*);
-		my->bodyparts.push_back(entity);
+		my->getBodyparts().push_back(entity);
 
 		// wingleft
 		entity = newEntity(my->sprite + 1, 1, map.entities, nullptr); //Limb entity.
@@ -163,7 +163,7 @@ void initMoth(Entity* my, Stat* myStats)
 		node->element = entity;
 		node->deconstructor = &emptyDeconstructor;
 		node->size = sizeof(Entity*);
-		my->bodyparts.push_back(entity);
+		my->getBodyparts().push_back(entity);
 
 		// wingright
 		entity = newEntity(my->sprite + 2, 1, map.entities, nullptr); //Limb entity.
@@ -185,7 +185,7 @@ void initMoth(Entity* my, Stat* myStats)
 		node->element = entity;
 		node->deconstructor = &emptyDeconstructor;
 		node->size = sizeof(Entity*);
-		my->bodyparts.push_back(entity);
+		my->getBodyparts().push_back(entity);
 	}
 }
 
@@ -274,11 +274,11 @@ int mothGetAttackPose(Entity* my, int basePose)
 	{
 		// find a body available to attack
 		std::vector<int> available;
-		for ( int i = 0; i < my->bodyparts.size(); i += 3 )
+		for ( int i = 0; i < my->getBodyparts().size(); i += 3 )
 		{
 			if ( (i / 3) < 4 )
 			{
-				Entity* body = my->bodyparts.at(i);
+				Entity* body = my->getBodyparts().at(i);
 				if ( BODY_ATTACK == 0 && !body->flags[INVISIBLE] )
 				{
 					available.push_back(i);
@@ -313,9 +313,9 @@ int mothGetAttackPose(Entity* my, int basePose)
 		Stat* myStats = my->getStats();
 		if ( myStats && myStats->getAttribute("fire_sprite") != "" )
 		{
-			if ( my->bodyparts.size() > 0 )
+			if ( my->getBodyparts().size() > 0 )
 			{
-				Entity* body = my->bodyparts.at(0);
+				Entity* body = my->getBodyparts().at(0);
 				if ( BODY_ATTACK == 0 && !body->flags[INVISIBLE] )
 				{
 					return MONSTER_POSE_MAGIC_WINDUP1;
@@ -326,11 +326,11 @@ int mothGetAttackPose(Entity* my, int basePose)
 
 		// find a body available to attack
 		std::vector<int> available;
-		for ( int i = 0; i < my->bodyparts.size(); i += 3 )
+		for ( int i = 0; i < my->getBodyparts().size(); i += 3 )
 		{
 			if ( (i / 3) >= 4 )
 			{
-				Entity* body = my->bodyparts.at(i);
+				Entity* body = my->getBodyparts().at(i);
 				if ( BODY_ATTACK == 0 && !body->flags[INVISIBLE] )
 				{
 					available.push_back(i);
@@ -491,36 +491,36 @@ void mothAnimate(Entity* my, Stat* myStats, double dist)
 			toDisappear.insert(4);
 		}
 		
-		for ( int i = 0; i < my->bodyparts.size(); i += 3 )
+		for ( int i = 0; i < my->getBodyparts().size(); i += 3 )
 		{
 			int index = i / 3;
-			Entity* body = my->bodyparts.at(i);
+			Entity* body = my->getBodyparts().at(i);
 			if ( toDisappear.find(index) != toDisappear.end() )
 			{
-				if ( !my->bodyparts.at(i)->flags[INVISIBLE] )
+				if ( !my->getBodyparts().at(i)->flags[INVISIBLE] )
 				{
-					my->bodyparts.at(i)->flags[INVISIBLE] = true;
+					my->getBodyparts().at(i)->flags[INVISIBLE] = true;
 					serverUpdateEntityBodypart(my, i + MOTH_BODY);
 					for ( int c = 0; c < 3; c++ )
 					{
 						Entity* entity = spawnGib(my);
 						if ( entity )
 						{
-							entity->x = my->bodyparts.at(i)->x;
-							entity->y = my->bodyparts.at(i)->y;
-							entity->z = my->bodyparts.at(i)->z;
+							entity->x = my->getBodyparts().at(i)->x;
+							entity->y = my->getBodyparts().at(i)->y;
+							entity->z = my->getBodyparts().at(i)->z;
 							entity->skill[5] = 1; // poof
 
 							switch ( c )
 							{
 							case 0:
-								entity->sprite = my->bodyparts.at(i)->sprite;
+								entity->sprite = my->getBodyparts().at(i)->sprite;
 								break;
 							case 1:
-								entity->sprite = my->bodyparts.at(i)->sprite + 1;
+								entity->sprite = my->getBodyparts().at(i)->sprite + 1;
 								break;
 							case 2:
-								entity->sprite = my->bodyparts.at(i)->sprite + 2;
+								entity->sprite = my->getBodyparts().at(i)->sprite + 2;
 								break;
 							default:
 								break;
@@ -551,9 +551,9 @@ void mothAnimate(Entity* my, Stat* myStats, double dist)
 		if ( fireSprite )
 		{
 			// catch all for extra limbs hide
-			for ( int i = 3; i < my->bodyparts.size(); ++i )
+			for ( int i = 3; i < my->getBodyparts().size(); ++i )
 			{
-				Entity* bodypart = my->bodyparts.at(i);
+				Entity* bodypart = my->getBodyparts().at(i);
 				bodypart->flags[INVISIBLE] = true;
 				bodypart->flags[INVISIBLE_DITHER] = false;
 			}
@@ -561,9 +561,9 @@ void mothAnimate(Entity* my, Stat* myStats, double dist)
 	}
 
 	int numBodies = 0;
-	for ( int i = 0; i < my->bodyparts.size(); i += 3 )
+	for ( int i = 0; i < my->getBodyparts().size(); i += 3 )
 	{
-		Entity* body = my->bodyparts.at(i);
+		Entity* body = my->getBodyparts().at(i);
 		if ( !body->flags[INVISIBLE] )
 		{
 			++numBodies;
@@ -574,9 +574,9 @@ void mothAnimate(Entity* my, Stat* myStats, double dist)
 		&& MONSTER_ATTACKTIME == 0 )
 	{
 		int bodypart = (MONSTER_ATTACK - MONSTER_POSE_MELEE_WINDUP1) * 3;
-		if ( bodypart < my->bodyparts.size() )
+		if ( bodypart < my->getBodyparts().size() )
 		{
-			Entity* body = my->bodyparts.at(bodypart);
+			Entity* body = my->getBodyparts().at(bodypart);
 			BODY_ATTACK = MONSTER_POSE_MELEE_WINDUP1;
 			BODY_ATTACKTIME = 0;
 		}
@@ -589,16 +589,16 @@ void mothAnimate(Entity* my, Stat* myStats, double dist)
 		{
 			bodypart = 0;
 		}
-		if ( bodypart < my->bodyparts.size() )
+		if ( bodypart < my->getBodyparts().size() )
 		{
-			Entity* body = my->bodyparts.at(bodypart);
+			Entity* body = my->getBodyparts().at(bodypart);
 			BODY_ATTACK = MONSTER_POSE_MAGIC_WINDUP1;
 			BODY_ATTACKTIME = 0;
 		}
 		/*int bodypart = (local_rng.rand() % 6) * 3;
-		if ( bodypart < my->bodyparts.size() )
+		if ( bodypart < my->getBodyparts().size() )
 		{
-			Entity* body = my->bodyparts.at(bodypart);
+			Entity* body = my->getBodyparts().at(bodypart);
 			BODY_ATTACK = MONSTER_POSE_MAGIC_WINDUP1;
 			BODY_ATTACKTIME = 0;
 		}*/
@@ -1174,9 +1174,9 @@ void mothAnimate(Entity* my, Stat* myStats, double dist)
 		// do nothing, don't reset attacktime or increment it.
 	}
 
-	for (int i = 0; i < my->bodyparts.size(); i += 3)
+	for (int i = 0; i < my->getBodyparts().size(); i += 3)
 	{
-		Entity* body = my->bodyparts.at(i);
+		Entity* body = my->getBodyparts().at(i);
 		if ( BODY_ATTACK > 0 )
 		{
 			BODY_ATTACKTIME++;

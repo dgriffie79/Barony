@@ -90,7 +90,7 @@ int StatueManager_t::processStatueExport()
 	std::vector<Entity*> allLimbs;
 	allLimbs.push_back(player);
 
-	for ( auto& bodypart : player->bodyparts )
+	for ( auto& bodypart : player->getBodyparts() )
 	{
 		allLimbs.push_back(bodypart);
 	}

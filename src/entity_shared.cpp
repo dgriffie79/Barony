@@ -402,6 +402,14 @@ Entity::Entity(Sint32 in_sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 	{
 		dithering = new std::unordered_map<view_t*, Entity::Dither>();
 	}
+	if ( !bodyparts )
+	{
+		bodyparts = new std::vector<Entity*>();
+	}
+	if ( !collisionIgnoreTargets )
+	{
+		collisionIgnoreTargets = new std::set<Uint32>();
+	}
 	// add the entity to the entity list
 	if ( !pos )
 	{

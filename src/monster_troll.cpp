@@ -157,7 +157,7 @@ void initTroll(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// right leg
 	entity = newEntity(my->sprite == 1132 ? 1134 : 209, 1, map.entities, nullptr); //Limb entity.
@@ -176,7 +176,7 @@ void initTroll(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// left leg
 	entity = newEntity(my->sprite == 1132 ? 1133 : 208, 1, map.entities, nullptr); //Limb entity.
@@ -195,7 +195,7 @@ void initTroll(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// right arm
 	entity = newEntity(my->sprite == 1132 ? 1131 : 207, 1, map.entities, nullptr); //Limb entity.
@@ -214,7 +214,7 @@ void initTroll(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// left arm
 	entity = newEntity(my->sprite == 1132 ? 1130 : 206, 1, map.entities, nullptr); //Limb entity.
@@ -233,7 +233,7 @@ void initTroll(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 }
 
 void actTrollLimb(Entity* my)

@@ -217,7 +217,7 @@ void initScarab(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// left wing
 	entity = newEntity(my->sprite == 1078 ? 1076 : 484, 1, map.entities, nullptr); //Limb entity.
@@ -236,7 +236,7 @@ void initScarab(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 }
 
 void scarabAnimate(Entity* my, Stat* myStats, double dist)

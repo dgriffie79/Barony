@@ -1324,8 +1324,20 @@ public:
 
 	void addToCreatureList(list_t* list);
 	void addToWorldUIList(list_t *list);
-	std::vector<Entity*> bodyparts;
-	std::set<Uint32> collisionIgnoreTargets;
+	void* bodyparts = nullptr;
+	auto& getBodyparts() {
+		return *static_cast<std::vector<Entity*>*>(bodyparts);
+	}
+	const auto& getBodyparts() const {
+		return *static_cast<const std::vector<Entity*>*>(bodyparts);
+	}
+	void* collisionIgnoreTargets = nullptr;
+	auto& getCollisionTargets() {
+		return *static_cast<std::set<Uint32>*>(collisionIgnoreTargets);
+	}
+	const auto& getCollisionTargets() const {
+		return *static_cast<const std::set<Uint32>*>(collisionIgnoreTargets);
+	}
 
 	bool collisionProjectileMiss(Entity* parent, Entity* projectile);
 
@@ -2497,22 +2509,11 @@ typedef struct Entity
     void (*behavior)(struct Entity* my);
     bool ranbehavior;
 
-    /* -- bodyparts -- */
-    struct
-    {
-        struct Entity** data;
-        size_t len;
-        size_t cap;
-        size_t elem_size;
-    } bodyparts;
+    /* -- bodyparts (void* in C++ too) -- */
+    void* bodyparts;
 
-    struct
-    {
-        Uint32* data;
-        size_t len;
-        size_t cap;
-        size_t elem_size;
-    } collisionIgnoreTargets;
+    /* -- collisionIgnoreTargets (void* in C++ too) -- */
+    void* collisionIgnoreTargets;
 } Entity;
 
 /* ----------------------------------------------------------------------- */

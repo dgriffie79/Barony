@@ -567,12 +567,12 @@ void spellcasting_animation_manager_t::setRangeFinderLocation()
 			}
 		}
 
-		if ( caster->bodyparts.size() && (*cvar_rangefinder_linetrace || !(svFlags & SV_FLAG_CHEATS)) )
+		if ( caster->getBodyparts().size() && (*cvar_rangefinder_linetrace || !(svFlags & SV_FLAG_CHEATS)) )
 		{
 			real_t lineTraceDist = sqrt(pow(previousx - caster->x, 2) + pow(previousy - caster->y, 2));
 			Entity* ohit = hit.entity;
 			real_t tangent = atan2(caster->y - previousy, caster->x - previousx);
-			auto bodypart = caster->bodyparts[0]; // temporary entity for lineTraceTarget
+			auto bodypart = caster->getBodyparts()[0]; // temporary entity for lineTraceTarget
 			real_t tempx = bodypart->x;
 			real_t tempy = bodypart->y;
 			bodypart->x = previousx;
@@ -1493,14 +1493,14 @@ void actLeftHandMagic(Entity* my)
 	}
 
 	Entity*& hudarm = players[HANDMAGIC_PLAYERNUM]->hud.arm;
-	if ( playerRace == SPIDER && hudarm && players[HANDMAGIC_PLAYERNUM]->entity->bodyparts.at(0) )
+	if ( playerRace == SPIDER && hudarm && players[HANDMAGIC_PLAYERNUM]->entity->getBodyparts().at(0) )
 	{
 		my->x = hudarm->x;
 		my->y = -hudarm->y;
 		//my->z = hudArm->z;
 		my->pitch = hudarm->pitch;
 		my->roll = -hudarm->roll;
-		my->yaw = -players[HANDMAGIC_PLAYERNUM]->entity->bodyparts.at(0)->yaw;
+		my->yaw = -players[HANDMAGIC_PLAYERNUM]->entity->getBodyparts().at(0)->yaw;
 		my->scalex = hudarm->scalex;
 		my->scaley = hudarm->scaley;
 		my->scalez = hudarm->scalez;
@@ -1894,14 +1894,14 @@ void actLeftHandMagic(Entity* my)
 	//defaultpitch = (0 - 2.8);
 	//my->x = 6 + HUDWEAPON_MOVEX;
 
-	if ( playerRace == SPIDER && hudarm && players[HANDMAGIC_PLAYERNUM]->entity->bodyparts.at(0) )
+	if ( playerRace == SPIDER && hudarm && players[HANDMAGIC_PLAYERNUM]->entity->getBodyparts().at(0) )
 	{
 		my->x = hudarm->x;
 		my->y = -hudarm->y;
 		my->z = hudarm->z;
 		my->pitch = hudarm->pitch;
 		my->roll = -hudarm->roll;
-		my->yaw = -players[HANDMAGIC_PLAYERNUM]->entity->bodyparts.at(0)->yaw;
+		my->yaw = -players[HANDMAGIC_PLAYERNUM]->entity->getBodyparts().at(0)->yaw;
 		my->scalex = hudarm->scalex;
 		my->scaley = hudarm->scaley;
 		my->scalez = hudarm->scalez;
@@ -2332,14 +2332,14 @@ void actRightHandMagic(Entity* my)
 
 	Entity*& hudarm = players[HANDMAGIC_PLAYERNUM]->hud.arm;
 
-	if ( playerRace == SPIDER && hudarm && players[HANDMAGIC_PLAYERNUM]->entity->bodyparts.at(0) )
+	if ( playerRace == SPIDER && hudarm && players[HANDMAGIC_PLAYERNUM]->entity->getBodyparts().at(0) )
 	{
 		my->x = hudarm->x;
 		my->y = hudarm->y;
 		//my->z = hudArm->z;
 		my->pitch = hudarm->pitch;
 		my->roll = hudarm->roll;
-		my->yaw = players[HANDMAGIC_PLAYERNUM]->entity->bodyparts.at(0)->yaw;
+		my->yaw = players[HANDMAGIC_PLAYERNUM]->entity->getBodyparts().at(0)->yaw;
 		my->scalex = hudarm->scalex;
 		my->scaley = hudarm->scaley;
 		my->scalez = hudarm->scalez;
@@ -2400,14 +2400,14 @@ void actRightHandMagic(Entity* my)
 		return;
 	}
 
-	if ( playerRace == SPIDER && hudarm && players[HANDMAGIC_PLAYERNUM]->entity->bodyparts.at(0) )
+	if ( playerRace == SPIDER && hudarm && players[HANDMAGIC_PLAYERNUM]->entity->getBodyparts().at(0) )
 	{
 		my->x = hudarm->x;
 		my->y = hudarm->y;
 		my->z = hudarm->z;
 		my->pitch = hudarm->pitch;
 		my->roll = hudarm->roll;
-		my->yaw = players[HANDMAGIC_PLAYERNUM]->entity->bodyparts.at(0)->yaw;
+		my->yaw = players[HANDMAGIC_PLAYERNUM]->entity->getBodyparts().at(0)->yaw;
 		my->scalex = hudarm->scalex;
 		my->scaley = hudarm->scaley;
 		my->scalez = hudarm->scalez;

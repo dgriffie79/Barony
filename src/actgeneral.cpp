@@ -818,7 +818,7 @@ void actColliderMushroomCap(Entity* my)
 								(effectType == 3 || effectType == 7) ? SPELL_SPORE_BOMB : SPELL_MYCELIUM_BOMB
 							), false, true) )
 						{
-							missile->collisionIgnoreTargets.insert(parent->getUID());
+							missile->getCollisionTargets().insert(parent->getUID());
 							missile->x = parent->x;
 							missile->y = parent->y;
 							missile->z = 6.0;
@@ -6092,11 +6092,11 @@ void actBell(Entity* my)
 												continue;
 											}
 
-											if ( child->collisionIgnoreTargets.find(entity->getUID()) != child->collisionIgnoreTargets.end() )
+											if ( child->getCollisionTargets().find(entity->getUID()) != child->getCollisionTargets().end() )
 											{
 												continue;
 											}
-											child->collisionIgnoreTargets.insert(entity->getUID());
+											child->getCollisionTargets().insert(entity->getUID());
 
 											if ( entity->behavior == &actPlayer )
 											{

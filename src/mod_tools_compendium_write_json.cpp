@@ -256,7 +256,7 @@ void Compendium_t::exportCurrentMonster(Entity* monster)
 	std::vector<Entity*> allLimbs;
 	allLimbs.push_back(monster);
 
-	for ( auto& bodypart : monster->bodyparts )
+	for ( auto& bodypart : monster->getBodyparts() )
 	{
 		allLimbs.push_back(bodypart);
 	}

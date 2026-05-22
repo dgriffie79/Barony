@@ -4582,7 +4582,7 @@ bool AchievementObserver::PlayerAchievements::checkPathBetweenObjects(Entity* pl
 		// use a bodypart entity
 		if ( !target )
 		{
-			target = player->bodyparts.at(0);
+			target = player->getBodyparts().at(0);
 			oldx = target->x;
 			oldy = target->y;
 		}

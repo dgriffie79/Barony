@@ -179,7 +179,7 @@ void initSpider(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// left pedipalp
 	model = arachnophobia_filter ? 998 : (my->sprite == 1118 ? 1119 : 268);
@@ -208,7 +208,7 @@ void initSpider(Entity* my, Stat* myStats)
 	node->element = entity;
 	node->deconstructor = &emptyDeconstructor;
 	node->size = sizeof(Entity*);
-	my->bodyparts.push_back(entity);
+	my->getBodyparts().push_back(entity);
 
 	// eight legs :)
 	for ( c = 0; c < 8; c++ )
@@ -241,7 +241,7 @@ void initSpider(Entity* my, Stat* myStats)
 		node->element = entity;
 		node->deconstructor = &emptyDeconstructor;
 		node->size = sizeof(Entity*);
-	    my->bodyparts.push_back(entity);
+	    my->getBodyparts().push_back(entity);
 
 		// "shin"
 	    model = arachnophobia_filter ? 1000 : (my->sprite == 1118 ? 1120 : 270);
@@ -270,7 +270,7 @@ void initSpider(Entity* my, Stat* myStats)
 		node->element = entity;
 		node->deconstructor = &emptyDeconstructor;
 		node->size = sizeof(Entity*);
-	    my->bodyparts.push_back(entity);
+	    my->getBodyparts().push_back(entity);
 	}
 }
 
