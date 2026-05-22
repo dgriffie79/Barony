@@ -14,4 +14,10 @@ comptime {
     _ = @import("zig_actwallbuster.zig");
     _ = @import("zig_actheadstone.zig");
     _ = @import("zig_actflame.zig");
+    _ = @import("zig_acttorch.zig");
+    _ = @import("zig_actspeartrap.zig");
+    _ = @import("zig_actpowercrystal.zig");
+    _ = @import("zig_actgold.zig");
+    _ = @import("zig_actarrowtrap.zig");
+    _ = @import("zig_actcampfire.zig");
 }

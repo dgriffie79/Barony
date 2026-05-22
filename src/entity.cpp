@@ -32938,6 +32938,13 @@ extern "C" Entity* entityCreateParticleFlameOrbit(Entity* parentent, Sint32 spri
 	return createParticleAestheticOrbit(parentent, sprite, 10, PARTICLE_EFFECT_FLAMES_BURNING);
 }
 
+extern "C" Stat* entityGetStats(Entity* e)
+{
+	return e->getStats();
+}
+
+bool flickerLights = true;
+
 extern "C" bool entitySpawnFlameVismapCheck(Entity* parentent)
 {
 	static ConsoleVariable<bool> cvar_flame_use_vismap("/flame_use_vismap", true);
@@ -32972,4 +32979,438 @@ extern "C" bool entitySpawnFlameVismapCheck(Entity* parentent)
 		}
 	}
 	return true;
+}
+
+extern "C" Item* entityNewItemWrap(int type, int status, Sint16 beatitude, Sint16 count, Uint32 appearance, bool identified)
+{
+	return newItem((ItemType)type, (Status)status, beatitude, count, appearance, identified, NULL);
+}
+
+extern "C" Item* entityItemPickup(int player, Item* item)
+{
+	return itemPickup(player, item);
+}
+
+extern "C" Entity* entityDropItemMonsterWrap(Item* item, Entity* monster, Stat* monsterStats)
+{
+	return dropItemMonster(item, monster, monsterStats);
+}
+
+extern "C" light_t* entityLightSphereShadowWrap(Sint32 x, Sint32 y, Sint32 radius, float r, float g, float b)
+{
+	return lightSphereShadow(0, x, y, radius, r, g, b, 0.f, 0.5f);
+}
+
+extern "C" int entityGetMapHeight(void)
+{
+	return map.height;
+}
+
+extern "C" Entity* entityGetPlayerEntity(int player)
+{
+	if ( player >= 0 && player < MAXPLAYERS && players[player] )
+	{
+		return players[player]->entity;
+	}
+	return NULL;
+}
+
+extern "C" bool entityTorchTrySalvage(int player, Item* item)
+{
+	if ( GenericGUI[0].isItemSalvageable(item, player) )
+	{
+		return GenericGUI[0].tinkeringSalvageItem(item, true, player);
+	}
+	return false;
+}
+
+extern "C" void entityCompendiumTorchEvent(int player, int itemType)
+{
+	Compendium_t::Events_t::eventUpdate(player, Compendium_t::CPDM_TORCH_WALLS, static_cast<ItemType>(itemType), 1);
+}
+
+extern "C" void entityModHP(Entity* e, int amount)
+{
+	e->modHP(amount);
+}
+
+extern "C" bool entityIsActPlayer(Entity* e)
+{
+	return e->behavior == &actPlayer;
+}
+
+extern "C" bool entityIsActMonster(Entity* e)
+{
+	return e->behavior == &actMonster;
+}
+
+extern "C" void entityRemoveLightNode(Entity* my)
+{
+	if ( my && my->light && my->light->node )
+	{
+		list_RemoveNode(my->light->node);
+	}
+}
+
+extern "C" list_t* entityGetMapCreatures(void)
+{
+	return map.creatures;
+}
+
+extern "C" void entityStopSound(Entity* my)
+{
+	my->stopEntitySound();
+}
+
+extern "C" void entitySpawnGib(Entity* entity)
+{
+	spawnGib(entity);
+}
+
+extern "C" void entitySetObituary(Entity* entity, const char* obituary)
+{
+	entity->setObituary(obituary);
+}
+
+extern "C" int entityGetEntityBonusTrapResist(Entity* entity)
+{
+	return entity->getEntityBonusTrapResist();
+}
+
+extern "C" bool entityOnEntityTrapHitSacredPath(Entity* entity, Entity* trap)
+{
+	return entity->onEntityTrapHitSacredPath(trap);
+}
+
+extern "C" Entity* entityMonsterAllyGetPlayerLeader(Entity* entity)
+{
+	return entity->monsterAllyGetPlayerLeader();
+}
+
+extern "C" void entityAttack(Entity* entity, int pose, int charge, Entity* target)
+{
+	entity->attack(pose, charge, target);
+}
+
+extern "C" void entityMessagePlayerColor(int player, Uint32 type, Uint32 color, const char* msg)
+{
+	messagePlayerColor(player, type, color, msg);
+}
+
+extern "C" bool entityPlayerIsLocalPlayer(int player)
+{
+	if ( player >= 0 && player < MAXPLAYERS && players[player] )
+	{
+		return players[player]->isLocalPlayer();
+	}
+	return false;
+}
+
+extern "C" void entityCameraShakeAdd(int player, double shakex, double shakey)
+{
+	if ( player >= 0 && player < MAXPLAYERS )
+	{
+		cameravars[player].shakex += shakex;
+		cameravars[player].shakey += shakey;
+	}
+}
+
+extern "C" bool entityChallengeRunStrongTrapsActive(void)
+{
+	return gameModeManager.currentSession.challengeRun.isActive(GameModeManager_t::CurrentSession_t::ChallengeRun_t::CHEVENT_STRONG_TRAPS);
+}
+
+extern "C" void entityEventUpdateWorldTrapDamage(int player, const char* trapType, int damage)
+{
+	Compendium_t::Events_t::eventUpdateWorld(player, Compendium_t::CPDM_TRAP_DAMAGE, trapType, damage);
+}
+
+extern "C" void entityEventUpdateWorldTrapKilledBy(int player, const char* trapType, int count)
+{
+	Compendium_t::Events_t::eventUpdateWorld(player, Compendium_t::CPDM_TRAP_KILLED_BY, trapType, count);
+}
+
+extern "C" void entityEventUpdateWorldTrapFollowersKilled(int player, const char* trapType, int count)
+{
+	Compendium_t::Events_t::eventUpdateWorld(player, Compendium_t::CPDM_TRAP_FOLLOWERS_KILLED, trapType, count);
+}
+
+extern "C" void entitySendShakePacket(int player, Uint8 shakex_byte, Uint8 shakey_byte)
+{
+	if ( player > 0 && player < MAXPLAYERS && !players[player]->isLocalPlayer() )
+	{
+		strcpy((char*)net_packet->data, "SHAK");
+		net_packet->data[4] = shakex_byte;
+		net_packet->data[5] = shakey_byte;
+		net_packet->address.host = net_clients[player - 1].host;
+		net_packet->address.port = net_clients[player - 1].port;
+		net_packet->len = 6;
+		sendPacketSafe(net_sock, -1, net_packet, player - 1);
+	}
+}
+
+extern "C" Entity* entitySpawnAmbientParticles(Entity* my, int chance, int particleSprite, int duration, double particleScale, bool shrink)
+{
+	return my->spawnAmbientParticles(chance, particleSprite, duration, particleScale, shrink);
+}
+
+extern "C" void tileEntityListAddEntity(Entity* entity)
+{
+	TileEntityList.addEntity(*entity);
+}
+
+extern "C" void entityUpdateCircuitNeighbors(Entity* my)
+{
+	my->updateCircuitNeighbors();
+}
+
+extern "C" void entityActCircuit(Entity* my)
+{
+	actCircuit(my);
+}
+
+extern "C" bool entityIsBlind(Entity* e)
+{
+	return e->isBlind();
+}
+
+extern "C" bool entityIsBoulderSprite(Entity* e)
+{
+	return e->isBoulderSprite();
+}
+
+extern "C" bool entityGoldPickupForPlayer(Entity* my, int i)
+{
+	if ( achievementPenniless && i == clientnum )
+	{
+		messagePlayer(clientnum, MESSAGE_MISC, "%s", Language::get(6058));
+		return false;
+	}
+	if ( players[i] && players[i]->entity )
+	{
+		playSoundEntity(players[i]->entity, 242 + local_rng.rand() % 4, 64);
+	}
+	if ( stats[i]->type == GNOME )
+	{
+		my->goldAmount += my->goldAmountBonus;
+		my->goldAmountBonus = 0;
+	}
+	stats[i]->GOLD += my->goldAmount;
+	if ( multiplayer == SERVER && i > 0 && !players[i]->isLocalPlayer() )
+	{
+		strcpy((char*)net_packet->data, "GOLD");
+		SDLNet_Write32(stats[i]->GOLD, &net_packet->data[4]);
+		net_packet->address.host = net_clients[i - 1].host;
+		net_packet->address.port = net_clients[i - 1].port;
+		net_packet->len = 8;
+		sendPacketSafe(net_sock, -1, net_packet, i - 1);
+	}
+	if ( my->goldAmount == 1 )
+	{
+		messagePlayer(i, MESSAGE_INTERACTION | MESSAGE_INVENTORY, "%s", Language::get(483));
+	}
+	else
+	{
+		messagePlayer(i, MESSAGE_INTERACTION | MESSAGE_INVENTORY, Language::get(484), my->goldAmount);
+	}
+	for ( int player = 0; player < MAXPLAYERS; ++player )
+	{
+		if ( players[player] && players[player]->mechanics.donationRevealedOnFloor == my->getUID() )
+		{
+			messagePlayerColor(i, MESSAGE_HINT, makeColorRGB(255, 255, 0), "%s", Language::get(6943));
+			for ( int player2 = 0; player2 < MAXPLAYERS; ++player2 )
+			{
+				if ( player2 != i && !client_disconnected[player2] )
+				{
+					messagePlayerColor(player2, MESSAGE_HINT, makeColorRGB(255, 255, 0), Language::get(6944), stats[i]->name);
+				}
+			}
+			players[player]->mechanics.updateSustainedSpellEvent(SPELL_DONATION, 150.0, 1.0, nullptr);
+			break;
+		}
+	}
+	if ( my->goldDroppedByPlayer == 0 )
+	{
+		Compendium_t::Events_t::eventUpdateCodex(i, Compendium_t::CPDM_GOLD_COLLECTED, "gold", my->goldAmount);
+		Compendium_t::Events_t::eventUpdateCodex(i, Compendium_t::CPDM_GOLD_COLLECTED_RUN, "gold", my->goldAmount);
+	}
+	list_RemoveNode(my->mynode);
+	return true;
+}
+
+extern "C" void entitySteamAchievementClient(int player, const char* name)
+{
+	steamAchievementClient(player, name);
+}
+
+extern "C" const char* entityGetMapName(void)
+{
+	return map.name;
+}
+
+extern "C" bool entityIsPlayerGnome(int player)
+{
+	if ( player >= 0 && player < MAXPLAYERS )
+	{
+		return stats[player]->type == GNOME;
+	}
+	return false;
+}
+
+extern "C" Entity* entityNewEntity(Sint32 sprite, Uint32 pos, list_t* entlist, list_t* creaturelist)
+{
+	return newEntity(sprite, pos, entlist, creaturelist);
+}
+
+extern "C" void entitySetBehaviorArrow(Entity* entity)
+{
+	entity->behavior = &actArrow;
+}
+
+extern "C" Entity* entityDropItemMonsterWrapCount(Item* item, Entity* monster, Stat* monsterStats, Sint16 count)
+{
+	return dropItemMonster(item, monster, monsterStats, count);
+}
+
+extern "C" void entityEventUpdateWorldArrowPilfered(int playernum, Sint32 qty)
+{
+	Compendium_t::Events_t::eventUpdateWorld(playernum, Compendium_t::CPDM_ARROWS_PILFERED, "arrow trap", qty);
+}
+
+extern "C" Uint32 entityAchievementObserverGetUid(int playernum)
+{
+	if ( playernum >= 0 && playernum < MAXPLAYERS )
+	{
+		return achievementObserver.playerUids[playernum];
+	}
+	return 0;
+}
+
+extern "C" void entityCauldronCloseMenu(int playernum)
+{
+	if ( playernum >= 0 && playernum < MAXPLAYERS )
+	{
+		GenericGUI[playernum].alchemyGUI.closeAlchemyMenu();
+	}
+}
+
+extern "C" void entityCauldronOpenGUI(int playernum, Entity* my)
+{
+	if ( playernum >= 0 && playernum < MAXPLAYERS )
+	{
+		GenericGUI[playernum].openGUI(GUI_TYPE_ALCHEMY, my);
+	}
+}
+
+extern "C" void entityWorkbenchCloseMenu(int playernum)
+{
+	if ( playernum >= 0 && playernum < MAXPLAYERS )
+	{
+		GenericGUI[playernum].tinkerGUI.closeTinkerMenu();
+	}
+}
+
+extern "C" void entityWorkbenchOpenGUI(int playernum, Entity* my)
+{
+	if ( playernum >= 0 && playernum < MAXPLAYERS )
+	{
+		GenericGUI[playernum].openGUI(GUI_TYPE_TINKERING, my);
+	}
+}
+
+extern "C" void entityMailboxCloseMenu(int playernum)
+{
+	if ( playernum >= 0 && playernum < MAXPLAYERS )
+	{
+		GenericGUI[playernum].mailboxGUI.closeMailMenu();
+	}
+}
+
+extern "C" void entityMailboxOpenGUI(int playernum, Entity* my)
+{
+	if ( playernum >= 0 && playernum < MAXPLAYERS )
+	{
+		GenericGUI[playernum].openGUI(GUI_TYPE_MAILBOX, my);
+	}
+}
+
+extern "C" void entitySendPacketCauldronClose(Uint32 uid, int playernum)
+{
+	if ( multiplayer == SERVER && playernum > 0 )
+	{
+		strcpy((char*)net_packet->data, "CAUC");
+		net_packet->data[4] = playernum;
+		SDLNet_Write32(uid, &net_packet->data[5]);
+		net_packet->address.host = net_clients[playernum - 1].host;
+		net_packet->address.port = net_clients[playernum - 1].port;
+		net_packet->len = 9;
+		sendPacketSafe(net_sock, -1, net_packet, playernum - 1);
+	}
+}
+
+extern "C" void entitySendPacketCauldronOpen(Uint32 uid, int playernum)
+{
+	if ( multiplayer == SERVER && playernum > 0 )
+	{
+		strcpy((char*)net_packet->data, "CAUO");
+		SDLNet_Write32(uid, &net_packet->data[4]);
+		net_packet->address.host = net_clients[playernum - 1].host;
+		net_packet->address.port = net_clients[playernum - 1].port;
+		net_packet->len = 8;
+		sendPacketSafe(net_sock, -1, net_packet, playernum - 1);
+	}
+}
+
+extern "C" void entitySendPacketWorkbenchClose(Uint32 uid, int playernum)
+{
+	if ( multiplayer == SERVER && playernum > 0 )
+	{
+		strcpy((char*)net_packet->data, "WRKC");
+		net_packet->data[4] = playernum;
+		SDLNet_Write32(uid, &net_packet->data[5]);
+		net_packet->address.host = net_clients[playernum - 1].host;
+		net_packet->address.port = net_clients[playernum - 1].port;
+		net_packet->len = 9;
+		sendPacketSafe(net_sock, -1, net_packet, playernum - 1);
+	}
+}
+
+extern "C" void entitySendPacketWorkbenchOpen(Uint32 uid, int playernum)
+{
+	if ( multiplayer == SERVER && playernum > 0 )
+	{
+		strcpy((char*)net_packet->data, "WRKO");
+		SDLNet_Write32(uid, &net_packet->data[4]);
+		net_packet->address.host = net_clients[playernum - 1].host;
+		net_packet->address.port = net_clients[playernum - 1].port;
+		net_packet->len = 8;
+		sendPacketSafe(net_sock, -1, net_packet, playernum - 1);
+	}
+}
+
+extern "C" void entitySendPacketMailboxClose(Uint32 uid, int playernum)
+{
+	if ( multiplayer == SERVER && playernum > 0 )
+	{
+		strcpy((char*)net_packet->data, "MBXC");
+		net_packet->data[4] = playernum;
+		SDLNet_Write32(uid, &net_packet->data[5]);
+		net_packet->address.host = net_clients[playernum - 1].host;
+		net_packet->address.port = net_clients[playernum - 1].port;
+		net_packet->len = 9;
+		sendPacketSafe(net_sock, -1, net_packet, playernum - 1);
+	}
+}
+
+extern "C" void entitySendPacketMailboxOpen(Uint32 uid, int playernum)
+{
+	if ( multiplayer == SERVER && playernum > 0 )
+	{
+		strcpy((char*)net_packet->data, "MBXO");
+		SDLNet_Write32(uid, &net_packet->data[4]);
+		net_packet->address.host = net_clients[playernum - 1].host;
+		net_packet->address.port = net_clients[playernum - 1].port;
+		net_packet->len = 8;
+		sendPacketSafe(net_sock, -1, net_packet, playernum - 1);
+	}
 }
