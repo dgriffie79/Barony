@@ -398,6 +398,10 @@ Entity::Entity(Sint32 in_sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 	statueId(skill[3])
 {
 	int c;
+	if ( !dithering )
+	{
+		dithering = new std::unordered_map<view_t*, Entity::Dither>();
+	}
 	// add the entity to the entity list
 	if ( !pos )
 	{

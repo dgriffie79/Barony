@@ -130,6 +130,11 @@ const std::vector<ClassBaseGrowths::ClassHPMPValues> ClassBaseGrowths::classBase
 
 Entity::~Entity()
 {
+	if ( dithering )
+	{
+		delete static_cast<std::unordered_map<view_t*, Entity::Dither>*>(dithering);
+		dithering = nullptr;
+	}
 	node_t* node;
 	//node_t *node2;
 	int i;

@@ -18,7 +18,7 @@
 | 11 | C++→Zig bridge proof (7 Zig files, 21 functions) | ✅ Complete |
 | 12a-c | first wave Zig files (utils, entity, collision, mechanisms, item, objects, scores) | ✅ Complete |
 | 12d | Remaining C file conversion (hash, savepng, shader, cursors, prng, defines) | ❌ **Blocked** — @cImport can't handle SDL/libpng/OpenGL macro-heavy headers; translate-c produces too much noise (109 @compileError lines). These 6 C files are kept as system-API glue layer. |
-| 13 | STL container replacement (std::set, std::map → Zig AutoHashMap/IntHashSet) | 🚧 **In Progress** |
+| 13 | STL container replacement (std::set, std::map → Zig AutoHashMap/IntHashSet) | ✅ **map_t fully C-compatible** — liquidSfxPlayedTiles, tileAttributes, entities_map converted |
 | 14 | Header conversion (.hpp → .h) | ⏳ Pending |
 | 15 | Full .cpp → .zig conversion | ⏳ Pending |
 | 16 | WASM target | ⏳ Pending |
@@ -27,9 +27,9 @@
 
 | Language | File Count | Status |
 |----------|-----------|--------|
-| **Zig** 🦎 | 8 files (6 active + 2 empty) | ✅ Working (utils, entity, item, objects, scores, set) |
+| **Zig** 🦎 | 10 files (8 active + 2 empty) | ✅ Working (utils, entity, item, objects, scores, set, map) |
 | **C** 🔧 | 6 files (hash, savepng, shader, cursors, prng, defines) | ✅ Working (system-API glue layer) |
-| **C++** 📦 | 148 files | ✅ Working |
+| **C++** 📦 | 148 files | ✅ Working (map_t now STL-free; Entity/Stat/Item STL containers opaque-ized) |
 | **Headers** | 25 dual-mode .h + ~30 .hpp | ✅ Working |
 
 ## Build Commands
@@ -59,4 +59,4 @@ DLLs must be in PATH: `$env:PATH += ";C:\dev\barony-deps\bin"`
 1. **Debug mode crashes** — Zig safety checks fire on benign null-pointer-offset arithmetic.
 2. **@cImport limitations** — Works for our C-compatible headers (entity.h, defs.h) but fails on libpng/SDL/GLEW macro-heavy headers.
 3. **Zig 0.16 quirks** — `callconv(.C)` must be lowercase `.c`. `[*c]` pointer semantics differ from `*`.
-4. **Entity struct layout mismatch** — The dual-mode `Entity` in `entity.h` uses `void* dithering` (8 bytes) in the C struct vs `std::unordered_map<view_t*, Dither>` (~48 bytes) in the C++ class. This ~40-byte offset shift causes ALL subsequent fields (`x`, `y`, `sizex`, `sizey`, `skill[]`, etc.) to be at wrong offsets when read from Zig via @cImport. **Fix**: Any Zig function that accesses Entity fields must be moved to C++ with `extern "C"` linkage. Currently affected functions (`entityDist`, `entityInsideEntity`, `getPowerablesOnTile`) have been moved back to C++.
+4. **Entity struct layout mismatch** — The dual-mode `Entity` in `entity.h` had `void* dithering` (8 bytes) in the C struct vs `std::unordered_map<view_t*, Dither>` (~48 bytes) in the C++ class, causing a ~40-byte offset shift. **Partially fixed**: `dithering` is now `void*` in both C++ and C structs (heap-allocated map). Remaining mismatches: `bodyparts` (std::vector 24 bytes vs C struct 32 bytes) and `collisionIgnoreTargets` (std::set vs custom C struct). Any Zig function reading Entity fields past `bodyparts` will still get garbage.

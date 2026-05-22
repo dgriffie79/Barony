@@ -18596,15 +18596,15 @@ void drawCharacterPreview(const int player, SDL_Rect pos, int fov, real_t offset
 			bool b = playerEntity->flags[BRIGHT];
 			if (!dark) { playerEntity->flags[BRIGHT] = true; }
 
-			int oldDither = playerEntity->dithering[&view].value;
+			int oldDither = playerEntity->getDitherMap()[&view].value;
 			if ( (playerEntity->flags[INVISIBLE] && playerEntity->flags[INVISIBLE_DITHER]) )
 			{
-				playerEntity->dithering[&view].value = ditherVal;
+				playerEntity->getDitherMap()[&view].value = ditherVal;
 				//playerEntity->flags[BRIGHT] = false;
 			}
 			glDrawVoxel(&view, playerEntity, REALCOLORS);
 			playerEntity->flags[BRIGHT] = b;
-			playerEntity->dithering[&view].value = oldDither;
+			playerEntity->getDitherMap()[&view].value = oldDither;
 		}
 		int c = 0;
 		if ( multiplayer != CLIENT )
@@ -18633,19 +18633,19 @@ void drawCharacterPreview(const int player, SDL_Rect pos, int fov, real_t offset
 					bool b = entity->flags[BRIGHT];
                     if (!dark) { entity->flags[BRIGHT] = true; }
 
-					int oldDither = entity->dithering[&view].value;
+					int oldDither = entity->getDitherMap()[&view].value;
 					if ( entity->ditheringOverride >= 0 )
 					{
-						entity->dithering[&view].value = entity->ditheringOverride;
+						entity->getDitherMap()[&view].value = entity->ditheringOverride;
 					}
 					else if ( entity->flags[INVISIBLE] && entity->flags[INVISIBLE_DITHER] )
 					{
-						entity->dithering[&view].value = ditherVal;
+						entity->getDitherMap()[&view].value = ditherVal;
 						//entity->flags[BRIGHT] = false;
 					}
 					glDrawVoxel(&view, entity, REALCOLORS);
 					entity->flags[BRIGHT] = b;
-					entity->dithering[&view].value = oldDither;
+					entity->getDitherMap()[&view].value = oldDither;
 				}
 				c++;
 			}
@@ -18663,15 +18663,15 @@ void drawCharacterPreview(const int player, SDL_Rect pos, int fov, real_t offset
 						bool b = entity->flags[BRIGHT];
 						if (!dark) { entity->flags[BRIGHT] = true; }
 
-						int oldDither = entity->dithering[&view].value;
+						int oldDither = entity->getDitherMap()[&view].value;
 						if ( entity->flags[INVISIBLE] && entity->flags[INVISIBLE_DITHER] )
 						{
-							entity->dithering[&view].value = ditherVal;
+							entity->getDitherMap()[&view].value = ditherVal;
 							//entity->flags[BRIGHT] = false;
 						}
 						glDrawSprite(&view, entity, REALCOLORS);
 						entity->flags[BRIGHT] = b;
-						entity->dithering[&view].value = oldDither;
+						entity->getDitherMap()[&view].value = oldDither;
 					}
 				}
 			}
@@ -18695,36 +18695,36 @@ void drawCharacterPreview(const int player, SDL_Rect pos, int fov, real_t offset
 							bool b = entity->flags[BRIGHT];
 							if (!dark) { entity->flags[BRIGHT] = true; }
 
-							int oldDither = entity->dithering[&view].value;
+							int oldDither = entity->getDitherMap()[&view].value;
 							if ( entity->flags[INVISIBLE] && entity->flags[INVISIBLE_DITHER] )
 							{
-								entity->dithering[&view].value = ditherVal;
+								entity->getDitherMap()[&view].value = ditherVal;
 								//entity->flags[BRIGHT] = false;
 							}
 
 							glDrawSprite(&view, entity, REALCOLORS);
 							entity->flags[BRIGHT] = b;
-							entity->dithering[&view].value = oldDither;
+							entity->getDitherMap()[&view].value = oldDither;
 						}
 						else
 						{
 							bool b = entity->flags[BRIGHT];
 							if (!dark) { entity->flags[BRIGHT] = true; }
 
-							int oldDither = entity->dithering[&view].value;
+							int oldDither = entity->getDitherMap()[&view].value;
 							if ( entity->ditheringOverride >= 0 )
 							{
-								entity->dithering[&view].value = entity->ditheringOverride;
+								entity->getDitherMap()[&view].value = entity->ditheringOverride;
 							}
 							else if ( entity->flags[INVISIBLE] && entity->flags[INVISIBLE_DITHER] )
 							{
-								entity->dithering[&view].value = ditherVal;
+								entity->getDitherMap()[&view].value = ditherVal;
 								//entity->flags[BRIGHT] = false;
 							}
 
 							glDrawVoxel(&view, entity, REALCOLORS);
 							entity->flags[BRIGHT] = b;
-							entity->dithering[&view].value = oldDither;
+							entity->getDitherMap()[&view].value = oldDither;
 						}
 
 					}
@@ -18737,16 +18737,16 @@ void drawCharacterPreview(const int player, SDL_Rect pos, int fov, real_t offset
 						bool b = entity->flags[BRIGHT];
 						if ( !dark ) { entity->flags[BRIGHT] = true; }
 
-						int oldDither = entity->dithering[&view].value;
+						int oldDither = entity->getDitherMap()[&view].value;
 						if ( entity->flags[INVISIBLE] && entity->flags[INVISIBLE_DITHER] )
 						{
-							entity->dithering[&view].value = ditherVal;
+							entity->getDitherMap()[&view].value = ditherVal;
 							//entity->flags[BRIGHT] = false;
 						}
 
 						glDrawVoxel(&view, entity, REALCOLORS);
 						entity->flags[BRIGHT] = b;
-						entity->dithering[&view].value = oldDither;
+						entity->getDitherMap()[&view].value = oldDither;
 					}
 				}
 			}

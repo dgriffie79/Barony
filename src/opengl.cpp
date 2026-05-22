@@ -1294,7 +1294,7 @@ void glDrawVoxel(view_t* camera, Entity* entity, int mode) {
 	}
     
     // bind shader
-    auto& dither = entity->dithering[camera];
+    auto& dither = entity->getDitherMap()[camera];
     auto& shader = !entity->flags[BRIGHT] && !telepath ?
         (dither.value < Entity::Dither::MAX ? voxelDitheredShader : voxelShader) :
         ((((entity->flags[INVISIBLE] && entity->flags[INVISIBLE_DITHER])
@@ -1894,7 +1894,7 @@ void glDrawSprite(view_t* camera, Entity* entity, int mode)
     }
     
     // bind shader
-    auto& dither = entity->dithering[camera];
+    auto& dither = entity->getDitherMap()[camera];
     auto& shader = !entity->flags[BRIGHT] ?
         (dither.value < Entity::Dither::MAX ? spriteDitheredShader : spriteShader):
         spriteBrightShader;

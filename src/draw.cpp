@@ -2173,7 +2173,7 @@ void drawEntities3D(view_t* camera, int mode)
 		}
         
         // update dithering
-        auto& dither = entity->dithering[camera];
+        auto& dither = entity->getDitherMap()[camera];
         if (ticks != dither.lastUpdateTick) {
             dither.lastUpdateTick = ticks;
             bool decrease = false;

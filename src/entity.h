@@ -161,7 +161,10 @@ public:
         Uint32 lastUpdateTick = 0;
         static constexpr int MAX = 10;
     };
-    std::unordered_map<view_t*, Dither> dithering;
+    void* dithering = nullptr;
+	auto& getDitherMap() {
+		return *static_cast<std::unordered_map<view_t*, Entity::Dither>*>(dithering);
+	}
 	vec4_t lightBonus;
 
 #ifdef USE_FMOD
