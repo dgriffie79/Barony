@@ -2560,6 +2560,7 @@ typedef struct PlayerSettings_t
 } PlayerSettings_t;
 
 extern PlayerSettings_t playerSettings[MAXPLAYERS];
+extern Entity* selectedEntity[MAXPLAYERS];
 
 void playerSettings_init(PlayerSettings_t* ps, int _player);
 

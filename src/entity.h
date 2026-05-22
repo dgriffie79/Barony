@@ -1039,7 +1039,6 @@ public:
 	//Act functions.
 	void actChest();
 	void actPowerCrystal();
-	void actGate();
 	void actPedestalBase();
 	void actPedestalOrb();
 	void actMidGamePortal();
@@ -1513,7 +1512,6 @@ bool entityInsideWind(struct Entity* entity1, struct Entity* wind);
 #ifdef __cplusplus
 }
 #endif
-void actGate(Entity* my);
 void actArrowTrap(Entity* my);
 void actTrap(Entity* my);
 void actTrapPermanent(Entity* my);
@@ -1582,6 +1580,43 @@ extern "C" {
 #endif
 int checkSpriteType(Sint32 sprite);
 Monster editorSpriteTypeToMonster(Sint32 sprite);
+void actGate(Entity* my);
+void actHeadstone(Entity* my);
+list_t* entityGetMapEntities(void);
+void serverUpdateEntitySkillWrap(Entity* entity, int skill);
+bool messagePlayerSimple(int player, Uint32 type, const char* message);
+void entityPlaySoundEntity(Entity* e, Uint16 snd, Uint8 vol);
+const char* languageGet(int line);
+bool entityIsValidColliderForGate(Entity* gate, Entity* other);
+void actTeleporter(Entity* my);
+void actWallBuster(Entity* my);
+void actWallBuilder(Entity* my);
+void entitySpawnExplosionWrap(Sint16 x, Sint16 y, Sint16 z);
+void entitySpawnPoofWrap(Sint16 x, Sint16 y, Sint16 z, real_t scale);
+void entityGeneratePathMaps(void);
+void entitySendWallBusterPacket(Uint16 x, Uint16 y);
+void entitySendWallBuilderPacket(Uint16 x, Uint16 y);
+bool entityWallBuilderOccupied(Entity* my);
+unsigned int entityMapGetWidth(void);
+unsigned int entityMapGetHeight(void);
+Sint32 entityMapGetTile(int index);
+void entityMapSetTile(int index, Sint32 value);
+void entityServerUpdateEntityFlag(Entity* entity, int flag);
+void entityHeadstoneCreateDialogue(int player, Entity* my, int msgIndex);
+bool entityHeadstoneMessageColor(int player, Uint32 type, Uint32 color, const char* msg);
+struct Entity* entitySummonMonsterNoSmoke(int creature, long x, long y);
+void entitySeedEntityRNG(struct Entity* e, Uint32 seed);
+bool entityMapIsHauntedCastle(void);
+bool entityHeadstoneCheckInside(struct Entity* my);
+void entityHeadstoneGhoulEnslaved(struct Entity* monster, int triggeredPlayer);
+void entityHeadstoneGhoulDefault(int triggeredPlayer);
+void actFlame(struct Entity* my);
+struct Entity* spawnFlame(struct Entity* parentent, Sint32 sprite);
+struct Entity* spawnFlameSprites(struct Entity* parentent, Sint32 sprite);
+bool entitySpawnFlameVismapCheck(struct Entity* parentent);
+struct Entity* entityCreateParticleFlameOrbit(struct Entity* parentent, Sint32 sprite);
+float entityGetFlameLightBonus(void);
+void entitySetUID(struct Entity* e, Uint32 new_uid);
 #ifdef __cplusplus
 }
 #endif
@@ -2581,11 +2616,18 @@ void playerAnimateRat(Entity* my);
 void playerAnimateSpider(Entity* my);
 void actFountain(Entity* my);
 void actSink(Entity* my);
+void actFlame(Entity* my);
+Entity* spawnFlame(Entity* parentent, Sint32 sprite);
+Entity* spawnFlameSprites(Entity* parentent, Sint32 sprite);
 void actCircuit(Entity* my);
 void actSwitch(Entity* my);
 void getPowerablesOnTile(int x, int y, list_t** list);
 bool entityInsideWind(Entity* entity1, Entity* wind);
 void actGate(Entity* my);
+void actHeadstone(Entity* my);
+void actTeleporter(Entity* my);
+void actWallBuster(Entity* my);
+void actWallBuilder(Entity* my);
 void actArrowTrap(Entity* my);
 void actTrap(Entity* my);
 void actTrapPermanent(Entity* my);
@@ -2609,6 +2651,11 @@ void actMagiclightBall(Entity* my);
 void actMagiclightMoving(Entity* my);
 void actAmbientParticleEffectIdle(Entity* my);
 void actTextSource(Entity* my);
+
+/* -- Flames -- */
+bool entitySpawnFlameVismapCheck(Entity* parentent);
+Entity* entityCreateParticleFlameOrbit(Entity* parentent, Sint32 sprite);
+float entityGetFlameLightBonus(void);
 
 /* -- Sprite editor -- */
 int editorSpriteTypeToMonster(Sint32 sprite);
@@ -2681,6 +2728,41 @@ Sint32 entityPlayerInsectoidHungerValueOfManaPoint(Stat* myStats);
 void entityPlayerInsectoidIncrementHungerToMP(int mpAmount);
 bool entityIsBoulderSprite(Entity* e);
 void entityCreateWorldUITooltip(Entity* e);
+list_t* entityGetMapEntities(void);
+void serverUpdateEntitySkillWrap(Entity* entity, int skill);
+bool messagePlayerSimple(int player, Uint32 type, const char* message);
+void entityPlaySoundEntity(Entity* e, Uint16 snd, Uint8 vol);
+const char* languageGet(int line);
+bool entityIsValidColliderForGate(Entity* gate, Entity* other);
+void entityRemoveLightField(Entity* my);
+void entityPlaySoundEntityLocal(Entity* e, Uint16 snd, Uint8 vol);
+bool entityIsInteractWithMonster(Entity* my);
+void entityClearMonsterInteract(Entity* my);
+bool entityTeleport(Entity* my, int x, int y);
+bool entityTeleporterMove(Entity* my, int x, int y, int type);
+void entityTeleporterMagicEvent(Entity* my);
+Entity* entityGetPlayerInteractEntity(int playernum);
+light_t* entityAddLight(Sint32 x, Sint32 y, const char* name);
+Entity* entityUidToEntity(Sint32 uidnum);
+void entitySpawnExplosionWrap(Sint16 x, Sint16 y, Sint16 z);
+void entitySpawnPoofWrap(Sint16 x, Sint16 y, Sint16 z, real_t scale);
+void entityGeneratePathMaps(void);
+void entitySendWallBusterPacket(Uint16 x, Uint16 y);
+void entitySendWallBuilderPacket(Uint16 x, Uint16 y);
+bool entityWallBuilderOccupied(Entity* my);
+unsigned int entityMapGetWidth(void);
+unsigned int entityMapGetHeight(void);
+Sint32 entityMapGetTile(int index);
+void entityMapSetTile(int index, Sint32 value);
+void entityServerUpdateEntityFlag(Entity* entity, int flag);
+void entityHeadstoneCreateDialogue(int player, Entity* my, int msgIndex);
+bool entityHeadstoneMessageColor(int player, Uint32 type, Uint32 color, const char* msg);
+Entity* entitySummonMonsterNoSmoke(int creature, long x, long y);
+void entitySeedEntityRNG(Entity* e, Uint32 seed);
+bool entityMapIsHauntedCastle(void);
+bool entityHeadstoneCheckInside(Entity* my);
+void entityHeadstoneGhoulEnslaved(Entity* monster, int triggeredPlayer);
+void entityHeadstoneGhoulDefault(int triggeredPlayer);
 bool entityBEntityTooltipRequiresButtonHeld(Entity* e);
 bool entityBEntityHighlightedForPlayer(Entity* e, int player);
 void entityUpdateEntityOnHit(Entity* e, Entity* attacker, bool alertTarget);

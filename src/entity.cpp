@@ -32621,3 +32621,355 @@ real_t Entity::getHealingSpellPotionModifierFromEffects(bool processLevelup)
 
 	return result;
 }
+
+extern "C" list_t* entityGetMapEntities(void)
+{
+	return map.entities;
+}
+
+extern "C" void serverUpdateEntitySkillWrap(Entity* entity, int skill)
+{
+	serverUpdateEntitySkill(entity, skill);
+}
+
+extern "C" bool messagePlayerSimple(int player, Uint32 type, const char* message)
+{
+	return messagePlayer(player, type, "%s", message);
+}
+
+extern "C" void entityCreateWorldUITooltip(Entity* e)
+{
+	e->createWorldUITooltip();
+}
+
+extern "C" void entityPlaySoundEntity(Entity* e, Uint16 snd, Uint8 vol)
+{
+	playSoundEntity(e, snd, vol);
+}
+
+extern "C" const char* languageGet(int line)
+{
+	return Language::get(line);
+}
+
+extern "C" bool entityIsValidColliderForGate(Entity* gate, Entity* other)
+{
+	if (other == gate) return false;
+	if (other->flags[PASSABLE] && other->behavior != &actDeathGhost) return false;
+	if (other->behavior == &actDoorFrame) return false;
+	if (other->behavior == &actGate) return false;
+	return true;
+}
+
+extern "C" void entityRemoveLightField(Entity* my)
+{
+	my->removeLightField();
+}
+
+extern "C" void entityPlaySoundEntityLocal(Entity* e, Uint16 snd, Uint8 vol)
+{
+	playSoundEntityLocal(e, snd, vol);
+}
+
+extern "C" bool entityIsInteractWithMonster(Entity* my)
+{
+	return my->isInteractWithMonster();
+}
+
+extern "C" void entityClearMonsterInteract(Entity* my)
+{
+	my->clearMonsterInteract();
+}
+
+extern "C" bool entityTeleport(Entity* my, int x, int y)
+{
+	return my->teleport(x, y);
+}
+
+extern "C" bool entityTeleporterMove(Entity* my, int x, int y, int type)
+{
+	return my->teleporterMove(x, y, type);
+}
+
+extern "C" void entityTeleporterMagicEvent(Entity* my)
+{
+	if ( auto hitprops = getParticleEmitterHitProps(my->getUID(), my) )
+	{
+		if ( hitprops->hits == 0 )
+		{
+			Entity* caster = uidToEntity(my->parent);
+			if ( caster )
+			{
+				magicOnSpellCastEvent(caster, caster, nullptr, SPELL_TUNNEL, spell_t::SPELL_LEVEL_EVENT_DEFAULT, 1);
+				++hitprops->hits;
+			}
+		}
+	}
+}
+
+extern "C" Entity* entityGetPlayerInteractEntity(int playernum)
+{
+	return Player::getPlayerInteractEntity(playernum);
+}
+
+extern "C" light_t* entityAddLight(Sint32 x, Sint32 y, const char* name)
+{
+	return addLight(x, y, name, 0, 0);
+}
+
+extern "C" Entity* entityUidToEntity(Sint32 uidnum)
+{
+	return uidToEntity(uidnum);
+}
+
+extern "C" unsigned int entityMapGetWidth(void)
+{
+	return map.width;
+}
+
+extern "C" unsigned int entityMapGetHeight(void)
+{
+	return map.height;
+}
+
+extern "C" Sint32 entityMapGetTile(int index)
+{
+	return map.tiles[index];
+}
+
+extern "C" void entityMapSetTile(int index, Sint32 value)
+{
+	map.tiles[index] = value;
+}
+
+extern "C" void entitySpawnExplosionWrap(Sint16 x, Sint16 y, Sint16 z)
+{
+	spawnExplosion(x, y, z);
+}
+
+extern "C" void entitySpawnPoofWrap(Sint16 x, Sint16 y, Sint16 z, real_t scale)
+{
+	spawnPoof(x, y, z, scale);
+}
+
+extern "C" void entityGeneratePathMaps(void)
+{
+	generatePathMaps();
+}
+
+extern "C" void entitySendWallBusterPacket(Uint16 x, Uint16 y)
+{
+	int c;
+	for ( c = 1; c < MAXPLAYERS; c++ )
+	{
+		if ( client_disconnected[c] == true || players[c]->isLocalPlayer() )
+		{
+			continue;
+		}
+		strcpy((char*)net_packet->data, "WACD");
+		SDLNet_Write16(x, &net_packet->data[4]);
+		SDLNet_Write16(y, &net_packet->data[6]);
+		net_packet->address.host = net_clients[c - 1].host;
+		net_packet->address.port = net_clients[c - 1].port;
+		net_packet->len = 8;
+		sendPacketSafe(net_sock, -1, net_packet, c - 1);
+	}
+}
+
+extern "C" void entitySendWallBuilderPacket(Uint16 x, Uint16 y)
+{
+	int c;
+	for ( c = 1; c < MAXPLAYERS; c++ )
+	{
+		if ( client_disconnected[c] == true || players[c]->isLocalPlayer() )
+		{
+			continue;
+		}
+		strcpy((char*)net_packet->data, "WALC");
+		SDLNet_Write16(x, &net_packet->data[4]);
+		SDLNet_Write16(y, &net_packet->data[6]);
+		net_packet->address.host = net_clients[c - 1].host;
+		net_packet->address.port = net_clients[c - 1].port;
+		net_packet->len = 8;
+		sendPacketSafe(net_sock, -1, net_packet, c - 1);
+	}
+}
+
+extern "C" bool entityWallBuilderOccupied(Entity* my)
+{
+	bool somebodyinside = false;
+	std::vector<list_t*> entLists = TileEntityList.getEntitiesWithinRadiusAroundEntity(my, 1);
+	for ( std::vector<list_t*>::iterator it = entLists.begin(); it != entLists.end() && !somebodyinside; ++it )
+	{
+		list_t* currentList = *it;
+		for ( node_t* node = currentList->first; node != nullptr; node = node->next )
+		{
+			Entity* entity = (Entity*)node->element;
+			if ( entity == my || (entity->flags[PASSABLE] && entity->behavior != &actDeathGhost)
+				|| entity->behavior == &actDoorFrame 
+				|| (entity->behavior != &actMonster 
+					&& entity->behavior != &actPlayer
+					&& entity->behavior != &actDeathGhost) )
+			{
+				continue;
+			}
+			if ( my->x + 8 > entity->x - entity->sizex )
+			{
+				if ( my->x - 8 < entity->x + entity->sizex )
+				{
+					if ( my->y + 8 > entity->y - entity->sizey )
+					{
+						if ( my->y - 8 < entity->y + entity->sizey )
+						{
+							somebodyinside = true;
+							if ( entity->behavior == &actMonster )
+							{
+								if ( !strncmp(map.name, "Sanctum", 7)
+									|| !strncmp(map.name, "Boss", 4) )
+								{
+									somebodyinside = false;
+								}
+							}
+							if ( somebodyinside )
+							{
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return somebodyinside;
+}
+
+extern "C" void entityServerUpdateEntityFlag(Entity* entity, int flag)
+{
+	serverUpdateEntityFlag(entity, flag);
+}
+
+extern "C" void entityHeadstoneCreateDialogue(int player, Entity* my, int msgIndex)
+{
+	players[player]->worldUI.worldTooltipDialogue.createDialogueTooltip(my->getUID(),
+		Player::WorldUI_t::WorldTooltipDialogue_t::DIALOGUE_GRAVE,
+		Language::get(485 + msgIndex % 17));
+	Compendium_t::Events_t::eventUpdateWorld(player, Compendium_t::CPDM_GRAVE_EPITAPHS_READ, "gravestone", 1);
+	Compendium_t::Events_t::eventUpdateWorld(player, Compendium_t::CPDM_GRAVE_EPITAPHS_PERCENT, "gravestone", (1 << (msgIndex % 17)));
+}
+
+extern "C" bool entityHeadstoneMessageColor(int player, Uint32 type, Uint32 color, const char* msg)
+{
+	return messagePlayerColor(player, type, color, msg);
+}
+
+extern "C" Entity* entitySummonMonsterNoSmoke(int creature, long x, long y)
+{
+	return summonMonsterNoSmoke(static_cast<Monster>(creature), x, y, false);
+}
+
+extern "C" void entitySeedEntityRNG(Entity* e, Uint32 seed)
+{
+	e->seedEntityRNG(seed);
+}
+
+extern "C" bool entityMapIsHauntedCastle(void)
+{
+	return !strncmp(map.name, "The Haunted Castle", 18);
+}
+
+extern "C" bool entityHeadstoneCheckInside(Entity* my)
+{
+	bool somebodyinside = false;
+	auto entLists = TileEntityList.getEntitiesWithinRadiusAroundEntity(my, 1);
+	for ( std::vector<list_t*>::iterator it = entLists.begin(); it != entLists.end() && !somebodyinside; ++it )
+	{
+		list_t* currentList = *it;
+		for ( node_t* node = currentList->first; node != nullptr; node = node->next )
+		{
+			Entity* entity = (Entity*)node->element;
+			if ( entity->behavior == &actPlayer || entity->behavior == &actMonster )
+			{
+				if ( entityInsideEntity(my, entity) )
+				{
+					somebodyinside = true;
+					break;
+				}
+			}
+		}
+	}
+	return somebodyinside;
+}
+
+extern "C" void entityHeadstoneGhoulEnslaved(Entity* monster, int triggeredPlayer)
+{
+	Stat* tmpStats = monster->getStats();
+	if ( tmpStats )
+	{
+		strcpy(tmpStats->name, "enslaved ghoul");
+		tmpStats->setAttribute("special_npc", "enslaved ghoul");
+	}
+	if ( triggeredPlayer >= 0 )
+	{
+		Compendium_t::Events_t::eventUpdateWorld(triggeredPlayer, Compendium_t::CPDM_GRAVE_GHOULS_ENSLAVED, "gravestone", 1);
+	}
+}
+
+extern "C" void entityHeadstoneGhoulDefault(int triggeredPlayer)
+{
+	if ( triggeredPlayer >= 0 )
+	{
+		Compendium_t::Events_t::eventUpdateWorld(triggeredPlayer, Compendium_t::CPDM_GRAVE_GHOULS, "gravestone", 1);
+	}
+}
+
+extern "C" void entitySetUID(Entity* e, Uint32 new_uid)
+{
+	e->setUID(new_uid);
+}
+
+extern "C" float entityGetFlameLightBonus(void)
+{
+	static ConsoleVariable<float> cvar_flameLightBonus("/flame_light_bonus", 0.5f);
+	return *cvar_flameLightBonus;
+}
+
+extern "C" Entity* entityCreateParticleFlameOrbit(Entity* parentent, Sint32 sprite)
+{
+	return createParticleAestheticOrbit(parentent, sprite, 10, PARTICLE_EFFECT_FLAMES_BURNING);
+}
+
+extern "C" bool entitySpawnFlameVismapCheck(Entity* parentent)
+{
+	static ConsoleVariable<bool> cvar_flame_use_vismap("/flame_use_vismap", true);
+	if ( *cvar_flame_use_vismap && !intro )
+	{
+		if ( parentent->behavior != actPlayer
+			&& parentent->behavior != actPlayerLimb
+			&& !parentent->flags[OVERDRAW]
+			&& !parentent->flags[GENIUS] )
+		{
+			int x = parentent->x / 16.0;
+			int y = parentent->y / 16.0;
+			if ( x >= 0 && x < map.width && y >= 0 && y < map.height )
+			{
+				bool anyVismap = false;
+				for ( int i = 0; i < MAXPLAYERS; ++i )
+				{
+					if ( !client_disconnected[i] && players[i]->isLocalPlayer() )
+					{
+						if ( cameras[i].vismap && cameras[i].vismap[y + x * map.height] )
+						{
+							anyVismap = true;
+							break;
+						}
+					}
+				}
+				if ( !anyVismap )
+				{
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}

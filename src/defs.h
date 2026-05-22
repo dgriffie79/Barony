@@ -621,6 +621,9 @@ int longestline(char const * const str);
 #endif
 int concatedStringLength(char* str, ...);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void list_FreeAll(list_t* list);
 void list_RemoveNode(node_t* node);
 node_t* list_AddNodeFirst(list_t* list);
@@ -631,10 +634,6 @@ list_t* list_Copy(list_t* destlist, list_t* srclist);
 list_t* list_CopyNew(list_t* srclist);
 Uint32 list_Index(node_t* node);
 node_t* list_Node(list_t* list, int index);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 void defaultDeconstructor(void* data);
 void stringDeconstructor(void* data);
 void emptyDeconstructor(void* data);
