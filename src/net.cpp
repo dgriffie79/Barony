@@ -33,6 +33,7 @@
 #include "mod_tools.hpp"
 #include "lobbies.h"
 #include "ui/MainMenu.hpp"
+#include "map.h"
 #include "cJSON.h"
 #include "ui/LoadingScreen.hpp"
 #include "ui/GameUI.hpp"
@@ -6639,14 +6640,24 @@ static std::unordered_map<Uint32, void(*)()> clientPacketHandlers = {
 			{
 				if ( !map.tileHasAttribute(x, y, layer, flagSet) )
 				{
-					map.tileAttributes[layer + (y * MAPLAYERS) + (x * MAPLAYERS * map.height)] |= flagSet;
+					{
+					int key = layer + (y * MAPLAYERS) + (x * MAPLAYERS * map.height);
+					Uint32 val = intmap_get(map.tileAttributes, key);
+					val |= flagSet;
+					intmap_set(map.tileAttributes, key, val);
+				}
 				}
 			}
 			if ( flagRemove )
 			{
 				if ( map.tileHasAttribute(x, y, layer, flagRemove) )
 				{
-					map.tileAttributes[layer + (y * MAPLAYERS) + (x * MAPLAYERS * map.height)] &= ~flagRemove;
+					{
+					int key = layer + (y * MAPLAYERS) + (x * MAPLAYERS * map.height);
+					Uint32 val = intmap_get(map.tileAttributes, key);
+					val &= ~flagRemove;
+					intmap_set(map.tileAttributes, key, val);
+				}
 				}
 			}
 		}

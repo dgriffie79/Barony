@@ -20,6 +20,7 @@
 #include "prng.h"
 #include "ui/GameUI.hpp"
 #include "scores.hpp"
+#include "map.h"
 
 /*-------------------------------------------------------------------------------
 
@@ -1759,7 +1760,12 @@ void actGreasePuddleSpawner(Entity* my)
 				{
 					if ( map.tileHasAttribute(x, y, 0, map_t::TILE_ATTRIBUTE_GREASE) )
 					{
-						map.tileAttributes[0 + (y * MAPLAYERS) + (x * MAPLAYERS * map.height)] &= ~map_t::TILE_ATTRIBUTE_GREASE;
+						{
+							int key = 0 + (y * MAPLAYERS) + (x * MAPLAYERS * map.height);
+							Uint32 val = intmap_get(map.tileAttributes, key);
+							val &= ~map_t::TILE_ATTRIBUTE_GREASE;
+							intmap_set(map.tileAttributes, key, val);
+						}
 						serverUpdateMapTileFlag(x, y, 0, 0, map_t::TILE_ATTRIBUTE_GREASE);
 					}
 				}
@@ -1772,7 +1778,12 @@ void actGreasePuddleSpawner(Entity* my)
 		{
 			if ( !map.tileHasAttribute(x, y, 0, map_t::TILE_ATTRIBUTE_GREASE) )
 			{
-				map.tileAttributes[0 + (y * MAPLAYERS) + (x * MAPLAYERS * map.height)] |= map_t::TILE_ATTRIBUTE_GREASE;
+				{
+					int key = 0 + (y * MAPLAYERS) + (x * MAPLAYERS * map.height);
+					Uint32 val = intmap_get(map.tileAttributes, key);
+					val |= map_t::TILE_ATTRIBUTE_GREASE;
+					intmap_set(map.tileAttributes, key, val);
+				}
 				serverUpdateMapTileFlag(x, y, 0, map_t::TILE_ATTRIBUTE_GREASE, 0);
 			}
 

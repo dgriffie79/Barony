@@ -28,6 +28,7 @@
 #include "book.hpp"
 #include "menu.h"
 #include "items.h"
+#include "map.h"
 #include "interface/interface.hpp"
 #include "init.h"
 #include "mod_tools.hpp"
@@ -2493,7 +2494,11 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 			destmap->liquidSfxPlayedTiles = set_create();
 		}
 		set_clear(destmap->liquidSfxPlayedTiles);
-		destmap->tileAttributes.clear();
+		if ( !destmap->tileAttributes )
+		{
+			destmap->tileAttributes = intmap_create();
+		}
+		intmap_clear(destmap->tileAttributes);
 	}
 	if ( destmap->tiles != nullptr )
 	{

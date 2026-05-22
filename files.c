@@ -17,6 +17,7 @@
 
 
 #include "files.hpp"
+#include "map.h"
 #include "engine/audio/sound.hpp"
 #include "entity.hpp"
 #include "book.hpp"
@@ -2483,7 +2484,11 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 			list_FreeAll(map.worldUI);
 		}
 		destmap->liquidSfxPlayedTiles.clear();
-		destmap->tileAttributes.clear();
+		if ( !destmap->tileAttributes )
+		{
+			destmap->tileAttributes = intmap_create();
+		}
+		intmap_clear(destmap->tileAttributes);
 	}
 	if ( destmap->tiles != NULL )
 	{

@@ -28,6 +28,7 @@
 #include "mod_tools.hpp"
 #include "menu.h"
 #include "ui/MainMenu.hpp"
+#include "map.h"
 
 int startfloor = 0;
 BaronyRNG map_rng;
@@ -2583,13 +2584,23 @@ int generateDungeon(char* levelset, Uint32 seed, int secretChance, int darknessC
 							{
 								decorationexcludelocations[x0 + y0 * map.width] = true;
 								treasureRoomLocations[x0 + y0 * map.width] = true;
-								map.tileAttributes[(y0)*MAPLAYERS + (x0)*MAPLAYERS * map.height] |= map_t::TILE_ATTRIBUTE_TREASURE_ROOM;
+								{
+									int key = (y0)*MAPLAYERS + (x0)*MAPLAYERS * map.height;
+									Uint32 val = intmap_get(map.tileAttributes, key);
+									val |= map_t::TILE_ATTRIBUTE_TREASURE_ROOM;
+									intmap_set(map.tileAttributes, key, val);
+								}
 							}
 							if ( c == 4 && specialMapRooms.count > 0 )
 							{
 								decorationexcludelocations[x0 + y0 * map.width] = true;
 								treasureRoomLocations[x0 + y0 * map.width] = true;
-								map.tileAttributes[(y0)*MAPLAYERS + (x0)*MAPLAYERS * map.height] |= map_t::TILE_ATTRIBUTE_TREASURE_ROOM;
+								{
+									int key = (y0)*MAPLAYERS + (x0)*MAPLAYERS * map.height;
+									Uint32 val = intmap_get(map.tileAttributes, key);
+									val |= map_t::TILE_ATTRIBUTE_TREASURE_ROOM;
+									intmap_set(map.tileAttributes, key, val);
+								}
 							}
 						}
 
@@ -10333,9 +10344,14 @@ void assignActions(map_t* map)
 					break;
 				}
 
-				map->tileAttributes[OBSTACLELAYER + (nodigtiley)
+			{
+				int key = OBSTACLELAYER + (nodigtiley)
 					*MAPLAYERS + (nodigtilex)
-					*MAPLAYERS * map->height] |= map_t::TILE_ATTRIBUTE_NODIG;
+					*MAPLAYERS * map->height;
+				Uint32 val = intmap_get(map->tileAttributes, key);
+				val |= map_t::TILE_ATTRIBUTE_NODIG;
+				intmap_set(map->tileAttributes, key, val);
+			}
 
 				{
 					Entity* childEntity = newEntity(keySprite, 1, map->entities, nullptr); // lock
@@ -10413,9 +10429,14 @@ void assignActions(map_t* map)
 					break;
 				}
 
-				map->tileAttributes[OBSTACLELAYER + (nodigtiley)
+			{
+				int key = OBSTACLELAYER + (nodigtiley)
 					* MAPLAYERS + (nodigtilex)
-					* MAPLAYERS * map->height] |= map_t::TILE_ATTRIBUTE_NODIG;
+					* MAPLAYERS * map->height;
+				Uint32 val = intmap_get(map->tileAttributes, key);
+				val |= map_t::TILE_ATTRIBUTE_NODIG;
+				intmap_set(map->tileAttributes, key, val);
+			}
 
 				{
 					Entity* childEntity = newEntity(1152, 1, map->entities, nullptr); // button
@@ -10438,9 +10459,14 @@ void assignActions(map_t* map)
 			}
 				break;
 			case 216: // nodig tile
-				map->tileAttributes[OBSTACLELAYER + (static_cast<int>(entity->y) >> 4)
-					* MAPLAYERS + (static_cast<int>(entity->x) >> 4)
-					* MAPLAYERS * map->height] |= map_t::TILE_ATTRIBUTE_NODIG;
+		{
+			int key = OBSTACLELAYER + (static_cast<int>(entity->y) >> 4)
+				* MAPLAYERS + (static_cast<int>(entity->x) >> 4)
+				* MAPLAYERS * map->height;
+			Uint32 val = intmap_get(map->tileAttributes, key);
+			val |= map_t::TILE_ATTRIBUTE_NODIG;
+			intmap_set(map->tileAttributes, key, val);
+		}
 				list_RemoveNode(entity->mynode);
 				entity = nullptr;
 				break;
@@ -10551,9 +10577,14 @@ void assignActions(map_t* map)
 				break;
 			}
 			case 219: // slippery tile
-				map->tileAttributes[0 + (static_cast<int>(entity->y) >> 4)
-					* MAPLAYERS + (static_cast<int>(entity->x) >> 4)
-					* MAPLAYERS * map->height] |= map_t::TILE_ATTRIBUTE_SLIPPERY;
+		{
+			int key = 0 + (static_cast<int>(entity->y) >> 4)
+				* MAPLAYERS + (static_cast<int>(entity->x) >> 4)
+				* MAPLAYERS * map->height;
+			Uint32 val = intmap_get(map->tileAttributes, key);
+			val |= map_t::TILE_ATTRIBUTE_SLIPPERY;
+			intmap_set(map->tileAttributes, key, val);
+		}
 				list_RemoveNode(entity->mynode);
 				entity = nullptr;
 				break;
@@ -10579,9 +10610,14 @@ void assignActions(map_t* map)
 				break;
 			}
 			case 221: // slow tile
-				map->tileAttributes[0 + (static_cast<int>(entity->y) >> 4)
-					* MAPLAYERS + (static_cast<int>(entity->x) >> 4)
-					* MAPLAYERS * map->height] |= map_t::TILE_ATTRIBUTE_SLOW;
+		{
+			int key = 0 + (static_cast<int>(entity->y) >> 4)
+				* MAPLAYERS + (static_cast<int>(entity->x) >> 4)
+				* MAPLAYERS * map->height;
+			Uint32 val = intmap_get(map->tileAttributes, key);
+			val |= map_t::TILE_ATTRIBUTE_SLOW;
+			intmap_set(map->tileAttributes, key, val);
+		}
 				list_RemoveNode(entity->mynode);
 				entity = nullptr;
 				break;
@@ -11267,12 +11303,8 @@ int loadMainMenuMap(bool blessedAdditionMaps, bool forceVictoryMap, int forcemap
 
 bool map_t::tileHasAttribute(int x, int y, int layer, Uint32 attribute)
 {
-	auto find = tileAttributes.find(layer + y * MAPLAYERS + x * MAPLAYERS * height);
-	if ( find != tileAttributes.end() )
-	{
-		return find->second & attribute;
-	}
-	return false;
+	int key = layer + y * MAPLAYERS + x * MAPLAYERS * height;
+	return intmap_find(tileAttributes, key) && (intmap_get(tileAttributes, key) & attribute) != 0;
 }
 
 void map_t::setMapHDRSettings()

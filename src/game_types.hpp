@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <map>
 
 using std::string;
 
@@ -36,7 +35,7 @@ struct map_t
 	unsigned int width, height, skybox;
 	Sint32 flags[16];
 	Sint32* tiles = nullptr;
-	std::unordered_map<Sint32, node_t*> entities_map;
+	void* entities_map;
 	list_t* entities = nullptr;
 	list_t* creatures = nullptr;
 	list_t* worldUI = nullptr;
@@ -44,7 +43,7 @@ struct map_t
 	bool* monsterexcludelocations = nullptr;
 	bool* lootexcludelocations = nullptr;
 	void* liquidSfxPlayedTiles;
-	std::map<int, Uint32> tileAttributes;
+	void* tileAttributes;
 	static const Uint32 TILE_ATTRIBUTE_NODIG = 1 << 0;
 	static const Uint32 TILE_ATTRIBUTE_SLIPPERY = 1 << 1;
 	static const Uint32 TILE_ATTRIBUTE_SLOW = 1 << 2;

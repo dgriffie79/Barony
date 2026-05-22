@@ -34,6 +34,7 @@ See LICENSE for details.
 #endif
 #include "ui/MainMenu.hpp"
 #include "ui/GameUI.hpp"
+#include "map.h"
 
 /*-------------------------------------------------------------------------------
 
@@ -49,8 +50,8 @@ void Entity::setUID(Uint32 new_uid)
 	if ( !mynode ) { return; }
 	if ( mynode->list == map.entities )
 	{
-		map.entities_map.erase(uid);
-		map.entities_map.insert({ new_uid, mynode });
+		ptrmap_erase(map.entities_map, uid);
+		ptrmap_set(map.entities_map, new_uid, mynode);
 	}
 	uid = new_uid;
 }
@@ -3152,9 +3153,9 @@ Entity* uidToEntity(Sint32 uidnum)
 	node_t* node;
 	Entity* entity;
 
-	auto it = map.entities_map.find(uidnum);
-	if ( it != map.entities_map.end() )
-		return (Entity*)it->second->element;
+	node_t* node2 = (node_t*)ptrmap_get(map.entities_map, uidnum);
+	if ( node2 != nullptr )
+		return (Entity*)node2->element;
 
 	return NULL;
 }

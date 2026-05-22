@@ -14,6 +14,7 @@
 #include "items.h"
 #include "interface/interface.hpp"
 #include "player.h"
+#include "map.h"
 /*-------------------------------------------------------------------------------
 
 	list_FreeAll
@@ -30,7 +31,7 @@ void list_FreeAll(list_t* list)
 	}
 	node_t* node, *nextnode;
 	if (list == map.entities)
-		map.entities_map.clear();
+		ptrmap_clear(map.entities_map);
 	for ( node = list->first; node != NULL; node = nextnode )
 	{
 		nextnode = node->next;
@@ -57,7 +58,7 @@ void list_RemoveNode(node_t* node)
 	if (node->list && node->list == map.entities)
 	{
 		Entity* entity = ((Entity*)node->element);
-		map.entities_map.erase(entity->getUID());
+		ptrmap_erase(map.entities_map, entity->getUID());
 		for ( int i = 0; i < MAXPLAYERS; ++i )
 		{
 			if ( FollowerMenu[i].recentEntity == entity )

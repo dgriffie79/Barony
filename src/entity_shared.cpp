@@ -11,6 +11,7 @@ See LICENSE for details.
 
 
 #include "entity.h"
+#include "map.h"
 Entity::Entity(Sint32 in_sprite, Uint32 pos, list_t* entlist, list_t* creaturelist) :
 	lightBonus(0.f),
 	chanceToPutOutFire(skill[37]),
@@ -487,7 +488,7 @@ Entity::Entity(Sint32 in_sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 		{
 			uid = entity_uids;
 			entity_uids++;
-			map.entities_map.insert({ uid, mynode });
+			ptrmap_set(map.entities_map, uid, mynode);
 		}
 		else
 		{
